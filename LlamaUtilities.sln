@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlamaUtilities", "LlamaUtilities.csproj", "{086C0E04-B7B9-460F-8599-0DC6A35CB385}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{086C0E04-B7B9-460F-8599-0DC6A35CB385}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{086C0E04-B7B9-460F-8599-0DC6A35CB385}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{086C0E04-B7B9-460F-8599-0DC6A35CB385}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{086C0E04-B7B9-460F-8599-0DC6A35CB385}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
