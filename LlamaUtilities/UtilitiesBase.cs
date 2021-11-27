@@ -245,20 +245,22 @@ namespace LlamaBotBases.LlamaUtilities
         {
             if (ReduceSettings.Instance.IncludeFish)
             {
-                return (bs.Item.EquipmentCatagory == ItemUiCategory.Seafood && bs.CanDesynthesize);
+                return bs.Item.EquipmentCatagory == ItemUiCategory.Seafood && bs.CanDesynthesize;
             }
+
             return false;
         }
+
         private static bool ShouldDesynth(string name)
         {
             return DesynthList.Any(name.Contains);
         }
+
         private static InventoryBagId[] BagsToCheck()
         {
             return ReduceSettings.Instance.IncludeArmory ? Inventory.InventoryBagIds.Concat(Inventory.ArmoryBagIds).ToArray() : Inventory.InventoryBagIds;
 
             //return inventoryBagIds;
         }
-
     }
 }

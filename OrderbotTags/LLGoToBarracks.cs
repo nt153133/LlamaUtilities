@@ -52,27 +52,24 @@ namespace LlamaBotBases.OrderbotTags
             Navigator.NavigationProvider = new ServiceNavigationProvider();
 
             // Not in Barracks
-                Log($"Moving to Barracks");
-                await GrandCompanyHelper.InteractWithNpc(GCNpc.Entrance_to_the_Barracks);
-                await Coroutine.Wait(5000, () => SelectYesno.IsOpen);
-                await Buddy.Coroutines.Coroutine.Sleep(500);
-                if (ff14bot.RemoteWindows.SelectYesno.IsOpen)
-                {
-                    Log($"Selecting Yes.");
-                    ff14bot.RemoteWindows.SelectYesno.ClickYes(); 
-                }
-                await Coroutine.Wait(5000, () => CommonBehaviors.IsLoading);
-                while (CommonBehaviors.IsLoading)
-                {
-                    Log($"Waiting for zoning to finish...");
-                    await Coroutine.Wait(-1, () => (!CommonBehaviors.IsLoading));
+            Log($"Moving to Barracks");
+            await GrandCompanyHelper.InteractWithNpc(GCNpc.Entrance_to_the_Barracks);
+            await Coroutine.Wait(5000, () => SelectYesno.IsOpen);
+            await Buddy.Coroutines.Coroutine.Sleep(500);
+            if (ff14bot.RemoteWindows.SelectYesno.IsOpen)
+            {
+                Log($"Selecting Yes.");
+                ff14bot.RemoteWindows.SelectYesno.ClickYes();
+            }
 
-                }               
+            await Coroutine.Wait(5000, () => CommonBehaviors.IsLoading);
+            while (CommonBehaviors.IsLoading)
+            {
+                Log($"Waiting for zoning to finish...");
+                await Coroutine.Wait(-1, () => (!CommonBehaviors.IsLoading));
+            }
 
-
-
-
-				_isDone = true;
+            _isDone = true;
         }
     }
 }

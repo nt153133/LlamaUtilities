@@ -31,7 +31,6 @@ namespace LlamaBotBases.OrderbotTags
         [DefaultValue(0)]
         public int Ward { get; set; }
 
-
         public override bool HighPriority => true;
 
         public override bool IsDone => _isDone;
@@ -58,7 +57,6 @@ namespace LlamaBotBases.OrderbotTags
 
         private async Task GoToWard(int ward, string district)
         {
-
             Navigator.PlayerMover = new SlideMover();
             Navigator.NavigationProvider = new ServiceNavigationProvider();
 
@@ -88,8 +86,6 @@ namespace LlamaBotBases.OrderbotTags
                 {
                     Log.Error("Please complete the quest 'Where the Heart Is (The Lavender Beds)'");
                 }
-
-
             }
 
             if (district.Equals("Mists", StringComparison.InvariantCultureIgnoreCase))

@@ -19,7 +19,6 @@ namespace LlamaBotBases.LlamaUtilities.Settings
 
         public HuntsSettings() : base(Path.Combine(JsonHelper.UniqueCharacterSettingsDirectory, "RetainerSettings.json"))
         {
-
         }
 
         [Description("Complete ARR Daily Hunts")]

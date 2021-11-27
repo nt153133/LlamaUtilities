@@ -57,7 +57,6 @@ namespace LlamaBotBases.LlamaUtilities
 
             UtilitiesBase.BotTask = task;
             StartBotBase();
-
         }
 
         private static void StartBotBase()
@@ -123,7 +122,6 @@ namespace LlamaBotBases.LlamaUtilities
 
         private void bindingSourceInventory_CurrentChanged(object sender, EventArgs e)
         {
-
         }
 
         private void btnHuntStart_Click(object sender, EventArgs e)
