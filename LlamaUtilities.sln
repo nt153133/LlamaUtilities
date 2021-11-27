@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlamaUtilities", "LlamaUtilities.csproj", "{086C0E04-B7B9-460F-8599-0DC6A35CB385}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlamaLibrary", "..\..\Quest Behaviors\__LlamaLibrary\LlamaLibrary.csproj", "{196EE308-0205-4CC4-B449-51064F7E9960}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{086C0E04-B7B9-460F-8599-0DC6A35CB385}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{086C0E04-B7B9-460F-8599-0DC6A35CB385}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{086C0E04-B7B9-460F-8599-0DC6A35CB385}.Release|Any CPU.Build.0 = Release|Any CPU
+		{196EE308-0205-4CC4-B449-51064F7E9960}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{196EE308-0205-4CC4-B449-51064F7E9960}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{196EE308-0205-4CC4-B449-51064F7E9960}.Release|Any CPU.ActiveCfg = Release|x64
+		{196EE308-0205-4CC4-B449-51064F7E9960}.Release|Any CPU.Build.0 = Release|x64
 	EndGlobalSection
 EndGlobal
