@@ -1,137 +1,131 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-    <PropertyGroup>
-        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-        <ProjectGuid>{086C0E04-B7B9-460F-8599-0DC6A35CB385}</ProjectGuid>
-        <OutputType>Library</OutputType>
-        <AppDesignerFolder>Properties</AppDesignerFolder>
-        <RootNamespace>LlamaUtilities</RootNamespace>
-        <AssemblyName>LlamaUtilities</AssemblyName>
-        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-        <FileAlignment>512</FileAlignment>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <DebugSymbols>true</DebugSymbols>
-        <DebugType>full</DebugType>
-        <Optimize>false</Optimize>
-        <OutputPath>bin\Debug\</OutputPath>
-        <DefineConstants>DEBUG;TRACE</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <DebugType>pdbonly</DebugType>
-        <Optimize>true</Optimize>
-        <OutputPath>bin\Release\</OutputPath>
-        <DefineConstants>TRACE</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-    </PropertyGroup>
-    <ItemGroup>
-        <Reference Include="GreyMagic">
-          <HintPath>..\..\GreyMagic.dll</HintPath>
-        </Reference>
-        <Reference Include="PresentationCore" />
-        <Reference Include="RebornBuddy">
-          <HintPath>..\..\RebornBuddy.exe</HintPath>
-        </Reference>
-        <Reference Include="System" />
-        <Reference Include="System.Core" />
-        <Reference Include="System.Data" />
-        <Reference Include="System.Windows.Forms" />
-        <Reference Include="System.Xml" />
-    </ItemGroup>
-    <ItemGroup>
-        <Compile Include="LlamaUtilities\FCWorkshop.cs" />
-        <Compile Include="LlamaUtilities\Retainers.cs" />
-        <Compile Include="LlamaUtilities\Settings\HuntsSettings.cs" />
-        <Compile Include="LlamaUtilities\Settings\ReduceSettings.cs" />
-        <Compile Include="LlamaUtilities\Settings\RetainerSettings.cs" />
-        <Compile Include="LlamaUtilities\Tasks\BotTask.cs" />
-        <Compile Include="LlamaUtilities\Tasks\TaskType.cs" />
-        <Compile Include="LlamaUtilities\Utilities.cs" />
-        <Compile Include="LlamaUtilities\Utilities.Designer.cs" />
-        <Compile Include="LlamaUtilities\UtilitiesBase.cs" />
-        <Compile Include="OrderbotTags\AutoEquip.cs" />
-        <Compile Include="OrderbotTags\AutoInventoryEquip.cs" />
-        <Compile Include="OrderbotTags\AutoLisbethEquip.cs" />
-        <Compile Include="OrderbotTags\BasicTreasureFight.cs" />
-        <Compile Include="OrderbotTags\BuyBluTotem.cs" />
-        <Compile Include="OrderbotTags\BuyGCItem.cs" />
-        <Compile Include="OrderbotTags\BuyScripItem.cs" />
-        <Compile Include="OrderbotTags\BuyShopExchangeCurrency.cs" />
-        <Compile Include="OrderbotTags\BuyShopExchangeItem.cs" />
-        <Compile Include="OrderbotTags\BuyWhiteScriptItem.cs" />
-        <Compile Include="OrderbotTags\ChangeClass.cs" />
-        <Compile Include="OrderbotTags\EquipWeapon.cs" />
-        <Compile Include="OrderbotTags\ExtendedDuty.cs" />
-        <Compile Include="OrderbotTags\Fate.cs" />
-        <Compile Include="OrderbotTags\GearSetEquipAll.cs" />
-        <Compile Include="OrderbotTags\GetTo.cs" />
-        <Compile Include="OrderbotTags\JoinDuty.cs" />
-        <Compile Include="OrderbotTags\LeaveDuty.cs" />
-        <Compile Include="OrderbotTags\LisbethOrderBot.cs" />
-        <Compile Include="OrderbotTags\LLChangeZone.cs" />
-        <Compile Include="OrderbotTags\LLCommandMission.cs" />
-        <Compile Include="OrderbotTags\LLDesynth.cs" />
-        <Compile Include="OrderbotTags\LLDiscardItem.cs" />
-        <Compile Include="OrderbotTags\LLEmoteNpc.cs" />
-        <Compile Include="OrderbotTags\LLGcExpeditionResult.cs" />
-        <Compile Include="OrderbotTags\LLGoHome.cs" />
-        <Compile Include="OrderbotTags\LLGoToBarracks.cs" />
-        <Compile Include="OrderbotTags\LLGoToHousing.cs" />
-        <Compile Include="OrderbotTags\LLHandOver.cs" />
-        <Compile Include="OrderbotTags\LLoadProfile.cs" />
-        <Compile Include="OrderbotTags\LLOpenChest.cs" />
-        <Compile Include="OrderbotTags\LLPickUpQuest.cs" />
-        <Compile Include="OrderbotTags\LLProfileBehavior.cs" />
-        <Compile Include="OrderbotTags\LLQualityLower.cs" />
-        <Compile Include="OrderbotTags\LLSellItem.cs" />
-        <Compile Include="OrderbotTags\LLSendChat.cs" />
-        <Compile Include="OrderbotTags\LLSmallTalk.cs" />
-        <Compile Include="OrderbotTags\LLStopBot.cs" />
-        <Compile Include="OrderbotTags\LLTalkTo.cs" />
-        <Compile Include="OrderbotTags\LLToast.cs" />
-        <Compile Include="OrderbotTags\LLTransport.cs" />
-        <Compile Include="OrderbotTags\LLTurnIn.cs" />
-        <Compile Include="OrderbotTags\LLUseItem.cs" />
-        <Compile Include="OrderbotTags\LLUseObject.cs" />
-        <Compile Include="OrderbotTags\LLUseSpell.cs" />
-        <Compile Include="OrderbotTags\LowerCollectable.cs" />
-        <Compile Include="OrderbotTags\PassOnLoot.cs" />
-        <Compile Include="OrderbotTags\SetBluSpells.cs" />
-        <Compile Include="Properties\AssemblyInfo.cs" />
-    </ItemGroup>
-    <ItemGroup>
-      <Content Include=".gitignore" />
-    </ItemGroup>
-    <ItemGroup>
-      <EmbeddedResource Include="LlamaUtilities\Utilities.resx" />
-    </ItemGroup>
-    <ItemGroup>
-      <ProjectReference Include="..\..\Quest Behaviors\__LlamaLibrary\LlamaLibrary.csproj">
-        <Project>{196ee308-0205-4cc4-b449-51064f7e9960}</Project>
-        <Name>LlamaLibrary</Name>
-      </ProjectReference>
-    </ItemGroup>
-    <ItemGroup>
-      <None Include="packages.config" />
-    </ItemGroup>
-    <ItemGroup>
-      <Analyzer Include="packages\StyleCop.Analyzers.Unstable.1.2.0.354\analyzers\dotnet\cs\StyleCop.Analyzers.CodeFixes.dll" />
-      <Analyzer Include="packages\StyleCop.Analyzers.Unstable.1.2.0.354\analyzers\dotnet\cs\StyleCop.Analyzers.dll" />
-    </ItemGroup>
-    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{086C0E04-B7B9-460F-8599-0DC6A35CB385}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>LlamaUtilities</RootNamespace>
+    <AssemblyName>LlamaUtilities</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="GreyMagic">
+      <HintPath>..\..\GreyMagic.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="RebornBuddy">
+      <HintPath>..\..\RebornBuddy.exe</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="LlamaUtilities\FCWorkshop.cs" />
+    <Compile Include="LlamaUtilities\Retainers.cs" />
+    <Compile Include="LlamaUtilities\Settings\HuntsSettings.cs" />
+    <Compile Include="LlamaUtilities\Settings\ReduceSettings.cs" />
+    <Compile Include="LlamaUtilities\Settings\RetainerSettings.cs" />
+    <Compile Include="LlamaUtilities\Tasks\BotTask.cs" />
+    <Compile Include="LlamaUtilities\Tasks\TaskType.cs" />
+    <Compile Include="LlamaUtilities\Utilities.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LlamaUtilities\Utilities.Designer.cs" />
+    <Compile Include="LlamaUtilities\UtilitiesBase.cs" />
+    <Compile Include="OrderbotTags\AutoEquip.cs" />
+    <Compile Include="OrderbotTags\AutoInventoryEquip.cs" />
+    <Compile Include="OrderbotTags\AutoLisbethEquip.cs" />
+    <Compile Include="OrderbotTags\BasicTreasureFight.cs" />
+    <Compile Include="OrderbotTags\BuyBluTotem.cs" />
+    <Compile Include="OrderbotTags\BuyGCItem.cs" />
+    <Compile Include="OrderbotTags\BuyScripItem.cs" />
+    <Compile Include="OrderbotTags\BuyShopExchangeCurrency.cs" />
+    <Compile Include="OrderbotTags\BuyShopExchangeItem.cs" />
+    <Compile Include="OrderbotTags\BuyWhiteScriptItem.cs" />
+    <Compile Include="OrderbotTags\ChangeClass.cs" />
+    <Compile Include="OrderbotTags\EquipWeapon.cs" />
+    <Compile Include="OrderbotTags\Fate.cs" />
+    <Compile Include="OrderbotTags\GearSetEquipAll.cs" />
+    <Compile Include="OrderbotTags\GetTo.cs" />
+    <Compile Include="OrderbotTags\JoinDuty.cs" />
+    <Compile Include="OrderbotTags\LeaveDuty.cs" />
+    <Compile Include="OrderbotTags\LisbethOrderBot.cs" />
+    <Compile Include="OrderbotTags\LLChangeZone.cs" />
+    <Compile Include="OrderbotTags\LLCommandMission.cs" />
+    <Compile Include="OrderbotTags\LLDesynth.cs" />
+    <Compile Include="OrderbotTags\LLDiscardItem.cs" />
+    <Compile Include="OrderbotTags\LLGcExpeditionResult.cs" />
+    <Compile Include="OrderbotTags\LLGoHome.cs" />
+    <Compile Include="OrderbotTags\LLGoToBarracks.cs" />
+    <Compile Include="OrderbotTags\LLGoToHousing.cs" />
+    <Compile Include="OrderbotTags\LLHandOver.cs" />
+    <Compile Include="OrderbotTags\LLoadProfile.cs" />
+    <Compile Include="OrderbotTags\LLOpenChest.cs" />
+    <Compile Include="OrderbotTags\LLProfileBehavior.cs" />
+    <Compile Include="OrderbotTags\LLQualityLower.cs" />
+    <Compile Include="OrderbotTags\LLSellItem.cs" />
+    <Compile Include="OrderbotTags\LLSendChat.cs" />
+    <Compile Include="OrderbotTags\LLSmallTalk.cs" />
+    <Compile Include="OrderbotTags\LLStopBot.cs" />
+    <Compile Include="OrderbotTags\LLToast.cs" />
+    <Compile Include="OrderbotTags\LLTransport.cs" />
+    <Compile Include="OrderbotTags\LLTurnIn.cs" />
+    <Compile Include="OrderbotTags\LLUseObject.cs" />
+    <Compile Include="OrderbotTags\LLUseSpell.cs" />
+    <Compile Include="OrderbotTags\LowerCollectable.cs" />
+    <Compile Include="OrderbotTags\PassOnLoot.cs" />
+    <Compile Include="OrderbotTags\SetBluSpells.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".editorconfig" />
+    <Content Include=".gitignore" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="LlamaUtilities\Utilities.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Quest Behaviors\__LlamaLibrary\LlamaLibrary.csproj">
+      <Project>{196ee308-0205-4cc4-b449-51064f7e9960}</Project>
+      <Name>LlamaLibrary</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
     <Target Name="BeforeBuild">
     </Target>
     <Target Name="AfterBuild">
     </Target>
     -->
-
 </Project>
