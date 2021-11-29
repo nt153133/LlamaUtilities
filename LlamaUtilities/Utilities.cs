@@ -95,6 +95,7 @@ namespace LlamaBotBases.LlamaUtilities
             itemCb.SelectionChangeCommitted += new System.EventHandler(itemCb_SelectionChangeCommitted);
             pgHunts.SelectedObject = HuntsSettings.Instance;
             pgRetainers.SelectedObject = RetainerSettings.Instance;
+            pgInventory.SelectedObject = ReduceSettings.Instance;
 
             bindingSourceInventory.Clear();
 
