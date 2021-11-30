@@ -13,6 +13,8 @@ namespace LlamaBotBases.LlamaUtilities.Settings
 
         private bool _ARRHunts;
 
+        private bool _ClanHunts;
+
         private bool _VerteranClanHunts;
 
         private bool _NutClanHunts;
@@ -31,6 +33,21 @@ namespace LlamaBotBases.LlamaUtilities.Settings
                 if (_ARRHunts != value)
                 {
                     _ARRHunts = value;
+                    Save();
+                }
+            }
+        }
+
+        [Description("Complete Clan Mark Daily Hunts")]
+        [DefaultValue(true)]
+        public bool ClanHunts
+        {
+            get => _ClanHunts;
+            set
+            {
+                if (_ClanHunts != value)
+                {
+                    _ClanHunts = value;
                     Save();
                 }
             }

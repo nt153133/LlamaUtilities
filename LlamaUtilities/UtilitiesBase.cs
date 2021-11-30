@@ -138,6 +138,11 @@ namespace LlamaBotBases.LlamaUtilities
                         huntTypes.AddRange(HuntHelper.ARRHunts);
                     }
 
+                    if (HuntsSettings.Instance.ClanHunts)
+                    {
+                        huntTypes.AddRange(HuntHelper.ClanHunts);
+                    }
+
                     if (HuntsSettings.Instance.VerteranClanHunts)
                     {
                         huntTypes.AddRange(HuntHelper.VerteranClanHunts);
