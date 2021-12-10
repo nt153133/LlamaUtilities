@@ -4,7 +4,7 @@ using ff14bot.Enums;
 using ff14bot.Helpers;
 using LlamaLibrary.Enums;
 
-namespace LlamaBotBases.LlamaUtilities.Settings
+namespace LlamaUtilities.LlamaUtilities.Settings
 {
     public class RetainerSettings : JsonSettings
     {

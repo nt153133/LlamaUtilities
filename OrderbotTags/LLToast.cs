@@ -6,7 +6,7 @@ using ff14bot;
 using LlamaLibrary.Logging;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLToast")]
     public class LLToast : LLProfileBehavior

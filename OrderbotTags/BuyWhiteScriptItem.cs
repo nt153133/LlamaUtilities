@@ -7,7 +7,7 @@ using ff14bot.Pathing.Service_Navigation;
 using LlamaLibrary.Helpers;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("BuyWhiteScriptItem")]
     public class BuyWhiteScriptItem : LLProfileBehavior

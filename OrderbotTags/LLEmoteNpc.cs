@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 using TreeSharp;
 using Action = TreeSharp.Action;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLEmoteNpc")]
     [XmlElement("SoEmoteNpc")]

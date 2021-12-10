@@ -17,7 +17,7 @@ using LlamaLibrary.Helpers;
 using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLCommandMission")]
     public class LLCommandMission : ProfileBehavior

@@ -8,7 +8,7 @@ using LlamaBotBases.LlamaUtilities.Tasks;
 using LlamaLibrary.Extensions;
 using Newtonsoft.Json;
 
-namespace LlamaBotBases.LlamaUtilities
+namespace LlamaUtilities.LlamaUtilities
 {
     public partial class Utilities : Form
     {

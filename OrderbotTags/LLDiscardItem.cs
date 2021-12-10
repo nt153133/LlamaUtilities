@@ -10,7 +10,7 @@ using LlamaLibrary.Logging;
 using TreeSharp;
 using static LlamaLibrary.Helpers.GeneralFunctions;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLDiscardItem")]
     public class LLDiscardItem : LLProfileBehavior

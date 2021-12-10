@@ -9,26 +9,46 @@ using ff14bot.Behavior;
 using ff14bot.Managers;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
+    /// <summary>
+    /// Blindly walks off-mesh from Start point to End point,
+    /// jumping when blockers detected.
+    /// </summary>
     [XmlElement("LLClimbHill")]
     public class LLClimbHill : LLProfileBehavior
     {
         #region XML Attributes
+        /// <summary>
+        /// Starting position.
+        /// </summary>
         [XmlAttribute("Start")]
         public Vector3 StartingPoint { set; get; }
 
+        /// <summary>
+        /// Destination position.
+        /// </summary>
         [XmlAttribute("End")]
         public Vector3 EndingPoint { set; get; }
 
+        /// <summary>
+        /// Movement accuracy; how close to Start and End counts as arriving there.
+        /// </summary>
         [XmlAttribute("Distance")]
-        [DefaultValue(0.5f)]
+        [DefaultValue(1.0f)]
         public float Distance { get; set; } = 1f;
 
+        /// <summary>
+        /// <see langword="true"/> to continuously jump instead of only when blocked.
+        /// Useful when stuck without expected jumps.
+        /// </summary>
         [XmlAttribute("SpamJump")]
         [DefaultValue(false)]
         public bool SpamJump { get; set; } = false;
 
+        /// <summary>
+        /// <see langword="true"/> to dismount before moving between Start and End.
+        /// </summary>
         [XmlAttribute("ForceDismount")]
         [DefaultValue(false)]
         public bool ForceDismount { get; set; } = false;

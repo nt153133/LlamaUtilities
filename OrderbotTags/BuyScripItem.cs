@@ -11,7 +11,7 @@ using LlamaLibrary.Helpers;
 using LlamaLibrary.Logging;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("BuyScripItem")]
     public class BuyScripItem : LLProfileBehavior

@@ -6,7 +6,7 @@ using ff14bot.Behavior;
 using LlamaLibrary.Logging;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLLeaveDuty")]
     public class LeaveDuty : LLProfileBehavior

@@ -14,7 +14,7 @@ using LlamaLibrary.Helpers;
 using LlamaLibrary.Logging;
 using LlamaLibrary.RemoteWindows;
 
-namespace LlamaBotBases.LlamaUtilities
+namespace LlamaUtilities.LlamaUtilities
 {
     public static class FCWorkshop
     {

@@ -14,7 +14,7 @@ using LlamaLibrary.RemoteWindows;
 using LlamaLibrary.Utilities;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLGoToHousing")]
     public class LLGoToHousing : LLProfileBehavior

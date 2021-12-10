@@ -6,7 +6,7 @@ using ff14bot.RemoteWindows;
 using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("PassOnLoot")]
     public class PassOnLoot : LLProfileBehavior

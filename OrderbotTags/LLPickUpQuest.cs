@@ -6,7 +6,7 @@ using TreeSharp;
 using Action = TreeSharp.Action;
 using ff14bot.NeoProfiles.Tags;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLPickUpQuest")]
     [XmlElement("LLPickupQuest")]

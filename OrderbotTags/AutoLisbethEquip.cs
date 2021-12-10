@@ -4,7 +4,7 @@ using Clio.XmlEngine;
 using LlamaLibrary.Helpers;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("AutoLisbethEquip")]
     public class AutoLisbethEquip : LLProfileBehavior

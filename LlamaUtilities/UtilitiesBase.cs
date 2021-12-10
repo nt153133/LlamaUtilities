@@ -22,7 +22,7 @@ using LlamaLibrary.Utilities;
 using Newtonsoft.Json;
 using TreeSharp;
 
-namespace LlamaBotBases.LlamaUtilities
+namespace LlamaUtilities.LlamaUtilities
 {
     public class UtilitiesBase : BotBase
     {

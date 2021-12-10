@@ -1,5 +1,5 @@
 ﻿
-namespace LlamaBotBases.LlamaUtilities
+namespace LlamaUtilities.LlamaUtilities
 {
     partial class Utilities
     {

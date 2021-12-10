@@ -10,7 +10,7 @@ using ff14bot.Managers;
 using ff14bot.RemoteWindows;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLJoinDuty")]
     public class LLJoinDuty : LLProfileBehavior

@@ -10,7 +10,7 @@ using ff14bot.Behavior;
 using ff14bot.Managers;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("ClimbSpiral")]
     public class ClimbSpiral : LLProfileBehavior

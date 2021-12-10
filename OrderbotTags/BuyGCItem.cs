@@ -5,7 +5,7 @@ using Clio.XmlEngine;
 using LlamaLibrary.Logging;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("BuyGCItem")]
     public class BuyGCItem : LLProfileBehavior

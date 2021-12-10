@@ -28,7 +28,7 @@ using Action = TreeSharp.Action;
  *
  */
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLFate")]
     public class LLFate : LLProfileBehavior

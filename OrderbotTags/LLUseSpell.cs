@@ -11,7 +11,7 @@ using ff14bot.Objects;
 using ff14bot.RemoteWindows;
 using TreeSharp;
 using Action = TreeSharp.Action;
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLUseSpell")]
     [XmlElement("SoUseSpell")]

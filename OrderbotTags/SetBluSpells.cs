@@ -5,7 +5,7 @@ using Clio.XmlEngine;
 using LlamaLibrary.Helpers;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("SetBluActive")]
     public class SetBluSpells : LLProfileBehavior

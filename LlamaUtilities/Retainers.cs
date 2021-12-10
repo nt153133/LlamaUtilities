@@ -13,7 +13,7 @@ using LlamaLibrary.Structs;
 using static ff14bot.RemoteWindows.Talk;
 using static LlamaLibrary.Retainers.HelperFunctions;
 
-namespace LlamaBotBases.LlamaUtilities
+namespace LlamaUtilities.LlamaUtilities
 {
     public static class Retainers
     {

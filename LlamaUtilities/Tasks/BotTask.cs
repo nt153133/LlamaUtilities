@@ -1,4 +1,4 @@
-﻿namespace LlamaBotBases.LlamaUtilities.Tasks
+﻿namespace LlamaUtilities.LlamaUtilities.Tasks
 {
     public class BotTask
     {

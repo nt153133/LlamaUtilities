@@ -5,7 +5,7 @@ using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 using Action = TreeSharp.Action;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("AutoEquip")]
     public class AutoEquip : LLProfileBehavior

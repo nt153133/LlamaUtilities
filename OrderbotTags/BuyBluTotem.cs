@@ -13,7 +13,7 @@ using TreeSharp;
 using static ff14bot.RemoteWindows.Talk;
 using Character = ff14bot.Objects.Character;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("BuyBluTotem")]
     public class BuyBluTotem : LLProfileBehavior

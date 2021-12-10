@@ -5,7 +5,7 @@ using Clio.XmlEngine;
 using TreeSharp;
 using static LlamaLibrary.Helpers.GeneralFunctions;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("AutoInventoryEquip")]
     public class AutoInventoryEquip : LLProfileBehavior

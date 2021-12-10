@@ -13,7 +13,7 @@ using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 using Character = ff14bot.Objects.Character;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("BuyShopExchangeCurrency")]
     public class BuyShopExchangeCurrency : LLProfileBehavior

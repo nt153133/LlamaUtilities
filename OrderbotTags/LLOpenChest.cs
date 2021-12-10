@@ -11,7 +11,7 @@ using ff14bot.Objects;
 using LlamaLibrary.Logging;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLOpenChest")]
     public class LLOpenChest : LLProfileBehavior

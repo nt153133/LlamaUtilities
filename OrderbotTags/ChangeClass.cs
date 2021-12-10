@@ -12,7 +12,7 @@ using ff14bot.RemoteWindows;
 using LlamaLibrary.Logging;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("ChangeClass")]
     public class ChangeClass : LLProfileBehavior

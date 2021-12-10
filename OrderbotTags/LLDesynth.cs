@@ -12,7 +12,7 @@ using LlamaLibrary.Logging;
 using LlamaLibrary.Memory;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLDesynth")]
     public class LLDesynth : LLProfileBehavior

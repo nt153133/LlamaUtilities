@@ -7,7 +7,7 @@ using ff14bot.Managers;
 using LlamaLibrary.Logging;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("EquipWeapon")]
     public class EquipWeapon : LLProfileBehavior

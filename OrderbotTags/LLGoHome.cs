@@ -3,7 +3,7 @@ using System.Windows.Media;
 using Clio.XmlEngine;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLGoHome")]
     public class LLGoHome : LLProfileBehavior

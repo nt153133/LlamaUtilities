@@ -8,7 +8,7 @@ using ff14bot.Managers;
 using LlamaLibrary.Extensions;
 using TreeSharp;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LowerCollectables")]
     public class LowerCollectable : LLProfileBehavior

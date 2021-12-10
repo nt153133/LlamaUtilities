@@ -4,7 +4,7 @@ using System.IO;
 using ff14bot.Helpers;
 using Newtonsoft.Json;
 
-namespace LlamaBotBases.LlamaUtilities.Settings
+namespace LlamaUtilities.LlamaUtilities.Settings
 {
     public class ReduceSettings : JsonSettings
     {

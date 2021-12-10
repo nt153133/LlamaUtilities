@@ -16,7 +16,7 @@ using LlamaLibrary.Helpers;
 using TreeSharp;
 using ActionType = ff14bot.Enums.ActionType;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("BasicTreasureFight")]
     public class BasicTreasureFight : LLProfileBehavior

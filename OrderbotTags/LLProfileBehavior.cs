@@ -5,7 +5,7 @@ using Clio.XmlEngine;
 using ff14bot.NeoProfiles;
 using LlamaLibrary.Logging;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     /// <summary>
     /// Adds extra functionality common to all OrderBot tags.

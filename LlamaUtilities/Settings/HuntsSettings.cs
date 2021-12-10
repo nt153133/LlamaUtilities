@@ -3,7 +3,7 @@ using System.IO;
 using ff14bot.Helpers;
 using LlamaLibrary.Helpers;
 
-namespace LlamaBotBases.LlamaUtilities.Settings
+namespace LlamaUtilities.LlamaUtilities.Settings
 {
     public class HuntsSettings : JsonSettings
     {

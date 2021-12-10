@@ -6,7 +6,7 @@ using ff14bot.NeoProfiles;
 using TreeSharp;
 using Action = TreeSharp.Action;
 
-namespace LlamaBotBases.OrderbotTags
+namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("ALoadProfile")]
     [XmlElement("LLoadProfile")]
