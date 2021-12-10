@@ -12,13 +12,13 @@ using ff14bot.Managers;
 using ff14bot.Navigation;
 using ff14bot.Pathing.Service_Navigation;
 using ff14bot.RemoteWindows;
-using LlamaBotBases.LlamaUtilities.Settings;
-using LlamaBotBases.LlamaUtilities.Tasks;
 using LlamaLibrary.Extensions;
 using LlamaLibrary.Helpers;
 using LlamaLibrary.Logging;
 using LlamaLibrary.Memory;
 using LlamaLibrary.Utilities;
+using LlamaUtilities.LlamaUtilities.Settings;
+using LlamaUtilities.LlamaUtilities.Tasks;
 using Newtonsoft.Json;
 using TreeSharp;
 

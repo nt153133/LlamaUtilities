@@ -6,11 +6,10 @@ using Buddy.Coroutines;
 using ff14bot;
 using ff14bot.Enums;
 using ff14bot.Managers;
-using LlamaBotBases.LlamaUtilities.Settings;
 using LlamaLibrary.Logging;
 using LlamaLibrary.Retainers;
 using LlamaLibrary.Structs;
-using static ff14bot.RemoteWindows.Talk;
+using LlamaUtilities.LlamaUtilities.Settings;
 using static LlamaLibrary.Retainers.HelperFunctions;
 
 namespace LlamaUtilities.LlamaUtilities

@@ -3,9 +3,9 @@ using System.Linq;
 using System.Windows.Forms;
 using ff14bot;
 using ff14bot.Managers;
-using LlamaBotBases.LlamaUtilities.Settings;
-using LlamaBotBases.LlamaUtilities.Tasks;
 using LlamaLibrary.Extensions;
+using LlamaUtilities.LlamaUtilities.Settings;
+using LlamaUtilities.LlamaUtilities.Tasks;
 using Newtonsoft.Json;
 
 namespace LlamaUtilities.LlamaUtilities
