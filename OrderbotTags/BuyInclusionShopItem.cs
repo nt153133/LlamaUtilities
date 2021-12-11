@@ -14,7 +14,7 @@ namespace LlamaUtilities.OrderbotTags
         public int ItemId { get; set; }
 
         [XmlAttribute("Count")]
-        [DefaultValue(-1)]
+        [DefaultValue(0)]
         public int Count { get; set; }
 
         public override bool HighPriority => true;
