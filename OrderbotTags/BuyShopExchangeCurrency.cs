@@ -92,11 +92,11 @@ namespace LlamaUtilities.OrderbotTags
                 }
             }
 
-            await Coroutine.Wait(5000, () => Conversation.IsOpen);
+            await Coroutine.Wait(5000, () => Conversation.IsOpen || ShopExchangeCurrency.Open);
 
             if (Conversation.IsOpen)
             {
-                Conversation.SelectLine((uint)selectString);
+                Conversation.SelectLine((uint) selectString);
 
                 if (Dialog)
                 {
@@ -108,28 +108,27 @@ namespace LlamaUtilities.OrderbotTags
                         await Coroutine.Sleep(1000);
                     }
                 }
+            }
 
-                await Coroutine.Wait(5000, () => ShopExchangeCurrency.Open);
+            if (ShopExchangeCurrency.Open)
+            {
+                //Log.Information("ShopExchangeCurrency opened");
+                ShopExchangeCurrency.Purchase((uint)itemId, (uint)count);
+                await Coroutine.Wait(2000, () => SelectYesno.IsOpen || Request.IsOpen);
 
-                if (ShopExchangeCurrency.Open)
+                if (SelectYesno.IsOpen)
                 {
-                    //Log.Information("ShopExchangeCurrency opened");
-                    ShopExchangeCurrency.Purchase((uint)itemId, (uint)count);
-                    await Coroutine.Wait(2000, () => SelectYesno.IsOpen || Request.IsOpen);
-
-                    if (SelectYesno.IsOpen)
-                    {
-                        SelectYesno.Yes();
-                        await Coroutine.Sleep(1000);
-                    }
-                }
-
-                await Coroutine.Wait(2000, () => ShopExchangeCurrency.Open);
-                if (ShopExchangeCurrency.Open)
-                {
-                    ShopExchangeCurrency.Close();
+                    SelectYesno.Yes();
+                    await Coroutine.Sleep(1000);
                 }
             }
+
+            await Coroutine.Wait(2000, () => ShopExchangeCurrency.Open);
+            if (ShopExchangeCurrency.Open)
+            {
+                ShopExchangeCurrency.Close();
+            }
+
 
             _isDone = true;
         }
