@@ -74,8 +74,10 @@ namespace LlamaUtilities.LlamaUtilities
 
             if (BotTask.Type == TaskType.None)
             {
-                Log.Error("Use the settings window to run a task");
-                return;
+                Log.Error("Use the BotBase Settings window to run a task.");
+                //OnButtonPress();
+
+                _root = new TreeSharp.Action(a => RunStatus.Failure);
             }
 
             if (BotTask.Type == TaskType.AutoFollow)
