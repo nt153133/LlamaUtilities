@@ -99,7 +99,7 @@ namespace LlamaUtilities.OrderbotTags
                     }
                 }
 
-                collectables = InventoryManager.FilledSlots.Where(i => i.IsCollectable).Select(x => x.RawItemId)
+                collectables = InventoryManager.FilledSlots.Where(i => i.IsCollectable && CollectableConstants.CollectableItems.Keys.Contains(i.RawItemId)).Select(x => x.RawItemId)
                     .Distinct();
 
                 if (!CollectablesShop.Instance.IsOpen)
