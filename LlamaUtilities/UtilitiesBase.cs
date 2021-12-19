@@ -251,12 +251,17 @@ namespace LlamaUtilities.LlamaUtilities
 
             for (int i = 0; i < materiaList.Count; i++)
             {
-                if (materiaList[i] == null)
+                if (materiaList[i] == null || !materiaList[i].IsValid)
+                {
                     break;
+                }
 
                 Log.Information($"Want to affix materia {i} {materiaList[i]}");
 
-                if (!materiaList[i].IsFilled) continue;
+                if (!materiaList[i].IsFilled)
+                {
+                    break;
+                }
 
                 if (!MateriaAttach.Instance.IsOpen)
                 {
