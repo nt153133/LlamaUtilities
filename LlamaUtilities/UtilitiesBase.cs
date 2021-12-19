@@ -211,7 +211,8 @@ namespace LlamaUtilities.LlamaUtilities
                 {
                     Log.Information($"Removing materia {count - i}");
                     bagSlot.RemoveMateria();
-                    await Coroutine.Sleep(6000);
+                    await Coroutine.Wait(20000, () => Core.Memory.Read<uint>(LlamaLibrary.Memory.Offsets.Conditions + 0x27) != 0);
+                    await Coroutine.Wait(20000, () => Core.Memory.Read<uint>(LlamaLibrary.Memory.Offsets.Conditions + 0x27) == 0);
                 }
             }
 

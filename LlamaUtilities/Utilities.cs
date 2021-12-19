@@ -22,7 +22,7 @@ namespace LlamaUtilities.LlamaUtilities
         private void btnRefresh_Click(object sender, EventArgs e)
         {
             bindingSourceInventory.Clear();
-            foreach (var bagSlot in InventoryManager.EquippedItems.Where(i => i.HasMateria()))
+            foreach (var bagSlot in InventoryManager.FilledInventoryAndArmory.Where(i => i.Item.MateriaSlots > 0 && i.HasMateria()))
             {
                 bindingSourceInventory.Add(bagSlot);
             }
@@ -73,7 +73,7 @@ namespace LlamaUtilities.LlamaUtilities
             if (tabControl1.SelectedIndex == 1)
             {
                 bindingSourceInventory.Clear();
-                foreach (var bagSlot in InventoryManager.EquippedItems.Where(i => i.HasMateria()))
+                foreach (var bagSlot in InventoryManager.FilledInventoryAndArmory.Where(i => i.Item.MateriaSlots > 0 && i.HasMateria()))
                 {
                     bindingSourceInventory.Add(bagSlot);
                 }
@@ -99,7 +99,7 @@ namespace LlamaUtilities.LlamaUtilities
 
             bindingSourceInventory.Clear();
 
-            foreach (var bagSlot in InventoryManager.EquippedItems.Where(i => i.HasMateria()))
+            foreach (var bagSlot in InventoryManager.FilledInventoryAndArmory.Where(i => i.Item.MateriaSlots > 0 && i.HasMateria()))
             {
                 bindingSourceInventory.Add(bagSlot);
             }
@@ -117,6 +117,10 @@ namespace LlamaUtilities.LlamaUtilities
         private void itemCb_SelectionChangeCommitted(object sender, EventArgs e)
         {
             _selectedBagSlot = (BagSlot)itemCb.SelectedItem;
+            if (_selectedBagSlot == null || !_selectedBagSlot.IsValid)
+            {
+                return;
+            }
             materiaListBox.DataSource = _selectedBagSlot.Materia();
             materiaListBox.DisplayMember = "ItemName";
         }
