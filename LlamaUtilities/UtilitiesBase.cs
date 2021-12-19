@@ -16,6 +16,8 @@ using LlamaLibrary.Extensions;
 using LlamaLibrary.Helpers;
 using LlamaLibrary.Logging;
 using LlamaLibrary.Memory;
+using LlamaLibrary.RemoteAgents;
+using LlamaLibrary.RemoteWindows;
 using LlamaLibrary.Utilities;
 using LlamaUtilities.LlamaUtilities.Settings;
 using LlamaUtilities.LlamaUtilities.Tasks;
@@ -42,6 +44,7 @@ namespace LlamaUtilities.LlamaUtilities
 
         public static bool IsBusy => DutyManager.InInstance || DutyManager.InQueue || DutyManager.DutyReady || Core.Me.IsCasting || Core.Me.IsMounted || Core.Me.InCombat || Talk.DialogOpen || MovementManager.IsMoving ||
                                      MovementManager.IsOccupied;
+
         private static readonly List<string> DesynthList = new List<string>
         {
             "Warg",
@@ -54,7 +57,11 @@ namespace LlamaUtilities.LlamaUtilities
             "Anamnesis",
             "Shadowless",
             "Heirloom",
-            "Paglth'an"
+            "Paglth'an",
+            "Imperial",
+            "Manusya",
+            "Ktiseos",
+            "Palaka"
         };
 
         public UtilitiesBase()
@@ -120,9 +127,10 @@ namespace LlamaUtilities.LlamaUtilities
             {
                 case TaskType.MateriaRemove:
                     var bagInfo = JsonConvert.DeserializeObject<(uint, ushort)>(BotTask.TaskInfo);
-                    var slot = InventoryManager.GetBagByInventoryBagId((InventoryBagId)bagInfo.Item1).First(i => i.Slot == bagInfo.Item2);
+                    var slot = InventoryManager.GetBagByInventoryBagId((InventoryBagId) bagInfo.Item1).First(i => i.Slot == bagInfo.Item2);
                     await RemoveMateria(slot);
                     break;
+                //List<(uint, ushort)>
                 case TaskType.AutoFollow:
                     break;
                 case TaskType.Reduce:
@@ -186,6 +194,36 @@ namespace LlamaUtilities.LlamaUtilities
                 case TaskType.FCWorkshop:
                     await FCWorkshop.HandInItems();
                     break;
+                case TaskType.MateriaAffix:
+                    //Log.Information(BotTask.TaskInfo);
+                    var materiaInfo = JsonConvert.DeserializeObject<List<(uint Bag, ushort Slot)>>(BotTask.TaskInfo);
+                    if (materiaInfo.Count <= 1)
+                    {
+                        Log.Information("List is under 1");
+                        break;
+                    }
+
+                    List<BagSlot> materiaBagSlots = new List<BagSlot>();
+                    var equipmentSlot = InventoryManager.GetBagByInventoryBagId((InventoryBagId) materiaInfo.First().Bag).FirstOrDefault(i => i.Slot == materiaInfo.First().Slot);
+                    if (equipmentSlot == null)
+                    {
+                        Log.Information("Slot is null");
+                        break;
+                    }
+
+                    foreach (var mTuple in materiaInfo.Skip(1))
+                    {
+                        materiaBagSlots.Add(InventoryManager.GetBagByInventoryBagId((InventoryBagId) mTuple.Bag).First(i => i.Slot == mTuple.Slot));
+                    }
+
+                    Log.Information(equipmentSlot.ToString());
+                    foreach (var slot2 in materiaBagSlots)
+                    {
+                        Log.Information(slot2.ToString());
+                    }
+
+                    await AffixMateria(equipmentSlot, materiaBagSlots);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -198,6 +236,92 @@ namespace LlamaUtilities.LlamaUtilities
             BotTask.Type = TaskType.None;
 
             TreeRoot.Stop("Stop Requested");
+            return true;
+        }
+
+        public static async Task<bool> AffixMateria(BagSlot bagSlot, List<BagSlot> materiaList)
+        {
+            Log.Information($"MateriaList count {materiaList.Count}");
+            if (bagSlot == null || !bagSlot.IsValid)
+            {
+                return true;
+            }
+
+            Log.Information($"Want to affix Materia to {bagSlot}");
+
+            for (int i = 0; i < materiaList.Count; i++)
+            {
+                if (materiaList[i] == null)
+                    break;
+
+                Log.Information($"Want to affix materia {i} {materiaList[i]}");
+
+                if (!materiaList[i].IsFilled) continue;
+
+                if (!MateriaAttach.Instance.IsOpen)
+                {
+                    Log.Information($"Opening meld window");
+                    bagSlot.OpenMeldInterface();
+                    await Coroutine.Wait(5000, () => MateriaAttach.Instance.IsOpen);
+
+                    if (!MateriaAttach.Instance.IsOpen)
+                    {
+                        Log.Information($"Can't open meld window");
+                        return false;
+                    }
+
+                    MateriaAttach.Instance.ClickItem(0);
+                    await Coroutine.Sleep(1000);
+                    MateriaAttach.Instance.ClickMateria(0);
+                    await Coroutine.Wait(7000, () => AgentMeld.Instance.Ready);
+                    await Coroutine.Wait(5000, () => MateriaAttachDialog.Instance.IsOpen);
+                }
+
+                if (!MateriaAttachDialog.Instance.IsOpen)
+                {
+                    Log.Information($"Opening dialog attach");
+                    MateriaAttach.Instance.ClickItem(0);
+                    await Coroutine.Sleep(1000);
+                    MateriaAttach.Instance.ClickMateria(0);
+                    await Coroutine.Wait(7000, () => AgentMeld.Instance.Ready);
+                    await Coroutine.Wait(5000, () => MateriaAttachDialog.Instance.IsOpen);
+                    await Coroutine.Wait(7000, () => AgentMeld.Instance.Ready);
+                    if (!MateriaAttachDialog.Instance.IsOpen)
+                    {
+                        Log.Information($"Can't open meld dialog");
+                        return false;
+                    }
+                }
+
+                Log.Information("Wait Ready");
+                await Coroutine.Wait(7000, () => MateriaAttachDialog.Instance.IsOpen);
+                // await Coroutine.Wait(7000, () => AgentMeld.Instance.Ready);
+                Log.Information("Send Baglsot Affix");
+               // await Coroutine.Wait(7000, () => AgentMeld.Instance.CanMeld);
+                bagSlot.AffixMateria(materiaList[i], true);
+                Log.Information("Wait not ready");
+                await Coroutine.Wait(20000, () => !AgentMeld.Instance.Ready);
+                Log.Information("Wait ready");
+                await Coroutine.Wait(20000, () => AgentMeld.Instance.Ready);
+                await Coroutine.Wait(7000, () => !MateriaAttachDialog.Instance.IsOpen);
+                Log.Information("Should be done melding");
+
+                if (!materiaList[i].IsFilled)
+                {
+                    Log.Information("Materia not full?");
+                    return false;
+                }
+            }
+
+            if (MateriaAttach.Instance.IsOpen)
+            {
+                Log.Information("Closing window");
+                MateriaAttach.Instance.Close();
+                await Coroutine.Wait(7000, () => !MateriaAttach.Instance.IsOpen);
+                //await Coroutine.Wait(7000, () => !AgentMeld.Instance.Ready);
+                //await Coroutine.Sleep(1000);
+            }
+
             return true;
         }
 

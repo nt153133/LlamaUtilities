@@ -4,6 +4,7 @@
     {
         None,
         MateriaRemove,
+        MateriaAffix,
         AutoFollow,
         Reduce,
         Desynth,
