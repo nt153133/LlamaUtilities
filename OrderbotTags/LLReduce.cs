@@ -1,9 +1,6 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 using Clio.XmlEngine;
-
-using ff14bot.Managers;
 
 using LlamaLibrary.Utilities;
 
@@ -11,19 +8,16 @@ using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
 {
-    [XmlElement("LLDesynth")]
-    public class LLDesynth : LLProfileBehavior
+    [XmlElement("LLReduce")]
+    public class LLReduce : LLProfileBehavior
     {
         private bool _isDone;
-
-        [XmlAttribute("ItemIds")]
-        public int[] ItemIds { get; set; }
 
         public override bool HighPriority => true;
 
         public override bool IsDone => _isDone;
 
-        public LLDesynth() : base() { }
+        public LLReduce() : base() { }
 
         protected override void OnStart()
         {
@@ -40,15 +34,12 @@ namespace LlamaUtilities.OrderbotTags
 
         protected override Composite CreateBehavior()
         {
-            return new ActionRunCoroutine(r => DesynthItems(ItemIds));
+            return new ActionRunCoroutine(r => ReduceItems());
         }
 
-        private async Task DesynthItems(int[] itemId)
+        private async Task ReduceItems()
         {
-            var itemsToDesynth = InventoryManager.FilledSlots
-                .Where(bs => bs.IsDesynthesizable && itemId.Contains((int)bs.RawItemId));
-
-            await Inventory.Desynth(itemsToDesynth);
+            await Inventory.ReduceAll();
 
             _isDone = true;
         }
