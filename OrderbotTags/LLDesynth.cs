@@ -1,15 +1,13 @@
 ﻿using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Media;
-using Buddy.Coroutines;
+
 using Clio.XmlEngine;
-using ff14bot;
+
 using ff14bot.Managers;
-using ff14bot.RemoteAgents;
-using ff14bot.RemoteWindows;
-using LlamaLibrary.Logging;
-using LlamaLibrary.Memory;
+
+using LlamaLibrary.Utilities;
+
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -52,51 +50,10 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task DesynthItems(int[] itemId)
         {
-            var itemsToDesynth = InventoryManager.FilledSlots.Where(bs => bs.IsDesynthesizable && itemId.Contains((int)bs.RawItemId));
-            var agentSalvageInterface = AgentInterface<AgentSalvage>.Instance;
-            var agentSalvage = Offsets.SalvageAgent;
+            var itemsToDesynth = InventoryManager.FilledSlots
+                .Where(bs => bs.IsDesynthesizable && itemId.Contains((int)bs.RawItemId));
 
-            //Log.Information($"{itemsToDesynth.Count()}");
-
-            foreach (var item in itemsToDesynth)
-            {
-                Log.Information($"Desynthesize Item - Name: {item.Item.CurrentLocaleName}");
-
-                lock (Core.Memory.Executor.AssemblyLock)
-                {
-                    Core.Memory.CallInjected64<int>(agentSalvage, agentSalvageInterface.Pointer, item.Pointer, 14, 0);
-                }
-
-                // await Coroutine.Sleep(500);
-
-                await Coroutine.Wait(5000, () => SalvageDialog.IsOpen);
-
-                if (SalvageDialog.IsOpen)
-                {
-                    RaptureAtkUnitManager.GetWindowByName("SalvageDialog").SendAction(1, 3, 0);
-
-                    //await Coroutine.Sleep(500);
-                    await Coroutine.Wait(10000, () => SalvageResult.IsOpen);
-
-                    if (SalvageResult.IsOpen)
-                    {
-                        SalvageResult.Close();
-
-                        //await Coroutine.Sleep(500);
-                        await Coroutine.Wait(5000, () => !SalvageResult.IsOpen);
-                    }
-                    else
-                    {
-                        Log.Error("Result didn't open");
-                        break;
-                    }
-                }
-                else
-                {
-                    Log.Error("SalvageDialog didn't open");
-                    break;
-                }
-            }
+            await Inventory.Desynth(itemsToDesynth);
 
             _isDone = true;
         }
