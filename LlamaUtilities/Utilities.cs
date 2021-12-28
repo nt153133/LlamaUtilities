@@ -19,7 +19,15 @@ namespace LlamaUtilities.LlamaUtilities
     {
         private BagSlot _selectedBagSlot;
         private BagSlot _selectedBagSlotAffix;
+        private IEnumerable<BagSlot> _selectedFilter = Filters.First().Key;
         private static readonly LLogger Log = new LLogger("Utilties Form", Colors.Pink);
+
+        private static readonly Dictionary<IEnumerable<BagSlot>, string> Filters = new Dictionary<IEnumerable<BagSlot>, string>()
+        {
+            { InventoryManager.FilledInventoryAndArmory, "All Items" },
+            { InventoryManager.FilledArmorySlots, "Armory" },
+            { InventoryManager.FilledSlots, "Inventory" }
+        };
 
         public Utilities()
         {
@@ -29,7 +37,7 @@ namespace LlamaUtilities.LlamaUtilities
         private void btnRefresh_Click(object sender, EventArgs e)
         {
             bindingSourceInventory.Clear();
-            foreach (var bagSlot in InventoryManager.FilledInventoryAndArmory.Where(i => i.Item.MateriaSlots > 0 && i.HasMateria()))
+            foreach (var bagSlot in _selectedFilter.Where(i => i.Item.MateriaSlots > 0 && i.HasMateria()))
             {
                 bindingSourceInventory.Add(bagSlot);
             }
@@ -100,11 +108,17 @@ namespace LlamaUtilities.LlamaUtilities
         {
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
             itemCb.SelectionChangeCommitted += new System.EventHandler(itemCb_SelectionChangeCommitted);
+            filterCb.SelectionChangeCommitted += new System.EventHandler(filterCb_SelectionChangeCommitted);
             this.affixCb.SelectionChangeCommitted += new System.EventHandler(affixCb_SelectionChangeCommitted);
             tabControlMateria.SelectedIndexChanged += TabMateria_SelectedIndexChanged;
             pgHunts.SelectedObject = HuntsSettings.Instance;
             pgRetainers.SelectedObject = RetainerSettings.Instance;
             pgInventory.SelectedObject = ReduceSettings.Instance;
+
+            filterCb.DataSource = new BindingSource(Filters, null);
+            filterCb.DisplayMember = "Value";
+            filterCb.ValueMember = "Key";
+            filterCb.SelectedIndex = 0;
 
             bindingSourceInventory.Clear();
 
@@ -133,6 +147,11 @@ namespace LlamaUtilities.LlamaUtilities
 
             materiaListBox.DataSource = _selectedBagSlot.Materia();
             materiaListBox.DisplayMember = "ItemName";
+        }
+
+        private void filterCb_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            _selectedFilter = ((KeyValuePair<IEnumerable<BagSlot>, string>) filterCb.SelectedItem).Key;
         }
 
         private void bindingSourceInventory_CurrentChanged(object sender, EventArgs e)
@@ -537,6 +556,11 @@ namespace LlamaUtilities.LlamaUtilities
                 }
             }
             //MessageBox.Show("You are in the TabControl.SelectedIndexChanged event.");
+        }
+
+        private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        {
+            throw new System.NotImplementedException();
         }
     }
 
