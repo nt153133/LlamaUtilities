@@ -40,6 +40,8 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabMateria = new System.Windows.Forms.TabPage();
             this.tabControlMateria = new System.Windows.Forms.TabControl();
             this.tabPageRemove = new System.Windows.Forms.TabPage();
+            this.groupBoxRemoveFilter = new System.Windows.Forms.GroupBox();
+            this.filterCb = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.btnRemoveMateria = new System.Windows.Forms.Button();
             this.materiaListBox = new System.Windows.Forms.ListBox();
@@ -81,6 +83,7 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabMateria.SuspendLayout();
             this.tabControlMateria.SuspendLayout();
             this.tabPageRemove.SuspendLayout();
+            this.groupBoxRemoveFilter.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.tabAffix.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -191,6 +194,7 @@ namespace LlamaUtilities.LlamaUtilities
             //
             // tabPageRemove
             //
+            this.tabPageRemove.Controls.Add(this.groupBoxRemoveFilter);
             this.tabPageRemove.Controls.Add(this.groupBox1);
             this.tabPageRemove.Location = new System.Drawing.Point(4, 22);
             this.tabPageRemove.Name = "tabPageRemove";
@@ -200,6 +204,24 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabPageRemove.Text = "Remove";
             this.tabPageRemove.UseVisualStyleBackColor = true;
             this.tabPageRemove.Click += new System.EventHandler(this.tabPageRemove_Click);
+            //
+            // groupBoxRemoveFilter
+            //
+            this.groupBoxRemoveFilter.Controls.Add(this.filterCb);
+            this.groupBoxRemoveFilter.Location = new System.Drawing.Point(346, 6);
+            this.groupBoxRemoveFilter.Name = "groupBoxRemoveFilter";
+            this.groupBoxRemoveFilter.Size = new System.Drawing.Size(137, 263);
+            this.groupBoxRemoveFilter.TabIndex = 1;
+            this.groupBoxRemoveFilter.TabStop = false;
+            this.groupBoxRemoveFilter.Text = "Inventory Filter";
+            //
+            // filterCb
+            //
+            this.filterCb.FormattingEnabled = true;
+            this.filterCb.Location = new System.Drawing.Point(6, 19);
+            this.filterCb.Name = "filterCb";
+            this.filterCb.Size = new System.Drawing.Size(125, 21);
+            this.filterCb.TabIndex = 0;
             //
             // groupBox1
             //
@@ -535,6 +557,7 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabMateria.ResumeLayout(false);
             this.tabControlMateria.ResumeLayout(false);
             this.tabPageRemove.ResumeLayout(false);
+            this.groupBoxRemoveFilter.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.tabAffix.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
@@ -549,6 +572,10 @@ namespace LlamaUtilities.LlamaUtilities
             ((System.ComponentModel.ISupportInitialize) (this.bindingSourceInventoryMateria)).EndInit();
             this.ResumeLayout(false);
         }
+
+        private System.Windows.Forms.ComboBox filterCb;
+
+        private System.Windows.Forms.GroupBox groupBoxRemoveFilter;
 
         private System.Windows.Forms.Button buttonAffix;
 
