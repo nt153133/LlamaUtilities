@@ -557,11 +557,6 @@ namespace LlamaUtilities.LlamaUtilities
             }
             //MessageBox.Show("You are in the TabControl.SelectedIndexChanged event.");
         }
-
-        private void radioButton1_CheckedChanged(object sender, EventArgs e)
-        {
-            throw new System.NotImplementedException();
-        }
     }
 
     public class MateriaToAffix
