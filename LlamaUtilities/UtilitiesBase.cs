@@ -342,6 +342,7 @@ namespace LlamaUtilities.LlamaUtilities
                     bagSlot.RemoveMateria();
                     await Coroutine.Wait(20000, () => Core.Memory.Read<uint>(LlamaLibrary.Memory.Offsets.Conditions + 0x27) != 0);
                     await Coroutine.Wait(20000, () => Core.Memory.Read<uint>(LlamaLibrary.Memory.Offsets.Conditions + 0x27) == 0);
+                    await Coroutine.Sleep(1000);
                 }
             }
 
