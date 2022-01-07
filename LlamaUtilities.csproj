@@ -50,6 +50,7 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="LlamaUtilities\FCWorkshop.cs" />
     <Compile Include="LlamaUtilities\Retainers.cs" />
+    <Compile Include="LlamaUtilities\Settings\DeliveriesSettings.cs" />
     <Compile Include="LlamaUtilities\Settings\HuntsSettings.cs" />
     <Compile Include="LlamaUtilities\Settings\ReduceSettings.cs" />
     <Compile Include="LlamaUtilities\Settings\RetainerSettings.cs" />

@@ -183,7 +183,7 @@ namespace LlamaUtilities.LlamaUtilities
                     await Housing.CheckHousing();
                     break;
                 case TaskType.CustomDeliveries:
-                    await LlamaLibrary.Utilities.CustomDeliveries.RunCustomDeliveries();
+                    await LlamaLibrary.Utilities.CustomDeliveries.RunCustomDeliveries(DeliveriesSettings.Instance.CraftingClass);
                     break;
                 case TaskType.GcTurnin:
                     await GCDailyTurnins.DoGCDailyTurnins();

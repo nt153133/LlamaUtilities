@@ -114,6 +114,7 @@ namespace LlamaUtilities.LlamaUtilities
             pgHunts.SelectedObject = HuntsSettings.Instance;
             pgRetainers.SelectedObject = RetainerSettings.Instance;
             pgInventory.SelectedObject = ReduceSettings.Instance;
+            pgCustomDeliveries.SelectedObject = DeliveriesSettings.Instance;
 
             filterCb.DataSource = new BindingSource(Filters, null);
             filterCb.DisplayMember = "Value";

@@ -19,7 +19,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
 
         private bool _NutClanHunts;
 
-        public HuntsSettings() : base(Path.Combine(JsonHelper.UniqueCharacterSettingsDirectory, "RetainerSettings.json"))
+        public HuntsSettings() : base(Path.Combine(JsonHelper.UniqueCharacterSettingsDirectory, "HuntsSettings.json"))
         {
         }
 
