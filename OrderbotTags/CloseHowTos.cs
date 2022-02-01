@@ -77,6 +77,30 @@ namespace LlamaUtilities.OrderbotTags
 					{
 							RaptureAtkUnitManager.GetWindowByName("PlayGuide").SendAction(1, 3uL, 0xFFFFFFFFuL);
 					}
+					
+					if (RaptureAtkUnitManager.GetWindowByName("JobHudNotice") != null)
+					{
+							do
+							{
+									var windowbyname = RaptureAtkUnitManager.GetWindowByName("JobHudNotice");
+
+									if (windowbyname != null)
+									{
+											windowbyname.SendAction(1, 3, 0);
+									}
+
+									await Coroutine.Wait(5000, () => RaptureAtkUnitManager.GetWindowByName("Guide") != null);
+
+									windowbyname = RaptureAtkUnitManager.GetWindowByName("Guide");
+
+									if (windowbyname != null)
+									{
+											windowbyname.SendAction(1, 3uL, 0xFFFFFFFFuL);
+									}
+
+									await Coroutine.Sleep(500);
+							} while (RaptureAtkUnitManager.GetWindowByName("HowToNotice") != null);
+					}					
 
           _isDone = true;
         }
