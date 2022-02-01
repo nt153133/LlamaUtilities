@@ -107,6 +107,7 @@
     <Compile Include="OrderbotTags\LLUseSpell.cs" />
     <Compile Include="OrderbotTags\LowerCollectable.cs" />
     <Compile Include="OrderbotTags\PassOnLoot.cs" />
+    <Compile Include="OrderbotTags\RetainerHire.cs" />
     <Compile Include="OrderbotTags\SetBluSpells.cs" />
     <Compile Include="OrderbotTags\ClimbSpiral.cs" />
   </ItemGroup>
