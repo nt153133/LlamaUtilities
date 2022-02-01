@@ -6,7 +6,7 @@ using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
 {
-    [XmlElement("LLReduce")]
+    [XmlElement("RetainerHire")]
     public class RetainerHire : LLProfileBehavior
     {
         private bool _isDone;
