@@ -54,9 +54,9 @@ namespace LlamaUtilities.OrderbotTags
                 }
 
                 Navigator.PlayerMover.MoveStop();
-                await Coroutine.Sleep(1000);
+                await Coroutine.Sleep(500);
                 _chest.Interact();
-                await Coroutine.Sleep(3000);
+                await Coroutine.Sleep(500);
             }
 
             _isDone = true;
