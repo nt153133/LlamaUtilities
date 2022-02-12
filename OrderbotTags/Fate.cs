@@ -213,7 +213,7 @@ namespace LlamaUtilities.OrderbotTags
                 new Decorator(
                     r => currentfate != null && FateManager.WithinFate && currentfate.Icon == FateIconType.KillHandIn && currentfate.TimeLeft.Minutes <= 8,
                     new Sequence(
-                        new Action(async r =>
+                        new ActionRunCoroutine(async r =>
                         {
                             Poi.Clear("Handing in items.");
                             Log.Information("Hand-in Fate");
