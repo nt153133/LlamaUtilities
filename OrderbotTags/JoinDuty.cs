@@ -106,8 +106,11 @@ namespace LlamaUtilities.OrderbotTags
 
                 if (DutyManager.QueueState == QueueState.JoiningInstance)
                 {
-                    Log.Information("Dungeon popped, commencing in 3 seconds.");
-                    await Coroutine.Sleep(3000);
+							      Random rnd = new Random();
+                    int waitTime = rnd.Next (1000, 10000);
+							
+                    Log.Information($"Dungeon popped, commencing in {waitTime/1000} seconds.");
+                    await Coroutine.Sleep(waitTime);
                     DutyManager.Commence();
                     await Coroutine.Wait(
                         -1,
