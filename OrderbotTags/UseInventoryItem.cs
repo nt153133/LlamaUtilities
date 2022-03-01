@@ -48,12 +48,16 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task RunUseItem(int[] useItem)
         {
-
-            foreach(BagSlot slot in InventoryManager.FilledSlots)
+            foreach (BagSlot slot in InventoryManager.FilledSlots)
             {
-                if(useItem.Contains((int)slot.RawItemId))
+                if (!useItem.Contains((int) slot.RawItemId))
                 {
-                    Log.Information($"Using {slot.Item.EnglishName}.");
+                    continue;
+                }
+
+                for (int i = 0; i < slot.Count; i++)
+                {
+                    Log.Information($"Using {slot.Item.CurrentLocaleName} {i}.");
                     slot.UseItem();
                     await Coroutine.Sleep(4000);
                 }
