@@ -59,40 +59,61 @@ namespace LlamaUtilities.OrderbotTags
             await Navigation.OffMeshMoveInteract(GameObjectManager.GetObjectByNPCId(GrandCompanyHelper.GetNpcByType(GCNpc.Squadron_Sergeant)));
 
             GameObjectManager.GetObjectByNPCId(GrandCompanyHelper.GetNpcByType(GCNpc.Squadron_Sergeant)).Interact();
+            Log($"Waiting for window to open.");
+            await Coroutine.Wait(10000, () => Talk.DialogOpen || GcArmyExpeditionResult.Instance.IsOpen);
+            await Coroutine.Sleep(500);
 
-            await Coroutine.Wait(10000, () => Talk.DialogOpen);
-
-            if (!Talk.DialogOpen)
+            if (!Talk.DialogOpen || !GcArmyExpeditionResult.Instance.IsOpen)
             {
-                await Navigation.OffMeshMoveInteract(GameObjectManager.GetObjectByNPCId(GrandCompanyHelper.GetNpcByType(GCNpc.Squadron_Sergeant)));
 
+                await Navigation.OffMeshMoveInteract(GameObjectManager.GetObjectByNPCId(GrandCompanyHelper.GetNpcByType(GCNpc.Squadron_Sergeant)));
+                Log($"Window didn't open, trying again.");
                 GameObjectManager.GetObjectByNPCId(GrandCompanyHelper.GetNpcByType(GCNpc.Squadron_Sergeant)).Interact();
+
             }
 
-            while (Talk.DialogOpen)
+            if (GcArmyExpeditionResult.Instance.IsOpen)
             {
-                Talk.Next();
-                await Coroutine.Wait(1000, () => !Talk.DialogOpen);
-                await Coroutine.Wait(1000, () => Talk.DialogOpen);
-                await Coroutine.Yield();
+                GcArmyExpeditionResult.Instance.Close();
+                await Coroutine.Sleep(500);
+                await Navigation.OffMeshMoveInteract(GameObjectManager.GetObjectByNPCId(GrandCompanyHelper.GetNpcByType(GCNpc.Squadron_Sergeant)));
+                GameObjectManager.GetObjectByNPCId(GrandCompanyHelper.GetNpcByType(GCNpc.Squadron_Sergeant)).Interact();
+                await Coroutine.Wait(10000, () => Talk.DialogOpen);
+            }
+
+            if (Talk.DialogOpen)
+            {
+                while (!SelectString.IsOpen)
+                {
+                    Talk.Next();
+                    await Coroutine.Wait(1000, () => !Talk.DialogOpen);
+                    await Coroutine.Wait(1000, () => Talk.DialogOpen);
+                    await Coroutine.Yield();
+                }
             }
 
             await Coroutine.Wait(10000, () => SelectString.IsOpen);
-            await Buddy.Coroutines.Coroutine.Sleep(500);
+            if (SelectString.IsOpen)
             {
                 Log($"Choosing Command Missions");
                 ff14bot.RemoteWindows.SelectString.ClickSlot(0);
             }
+            else
+            {
+                Log($"Window failed to open, ending.");
+                _isDone = true;
+                return;
+            }
 
             await Coroutine.Wait(10000, () => GcArmyCapture.Instance.IsOpen);
+            if (GcArmyCapture.Instance.IsOpen)
             {
                 GcArmyCapture.Instance.SelectDuty(Index);
                 GcArmyCapture.Instance.Commence();
             }
 
-            await Coroutine.Wait(5000, () => ContentsFinderConfirm.IsOpen);
-            await Buddy.Coroutines.Coroutine.Sleep(500);
 
+            await Coroutine.Wait(5000, () => ContentsFinderConfirm.IsOpen);
             if (ff14bot.RemoteWindows.ContentsFinderConfirm.IsOpen)
             {
                 Log($"Commencing Duty.");
