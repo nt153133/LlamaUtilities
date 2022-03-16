@@ -44,20 +44,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task OpenChestTask()
         {
-            while (GameObjectManager.GetObjectsOfType<Treasure>().Any(r => r.Distance() < 10 && (r.Name == "宝箱" || r.Name == "Treasure Coffer" || r.Name == "treasure coffer" || r.Name == "coffre" || r.Name == "Coffre")))
-            {
-                var _chest = GameObjectManager.GetObjectsOfType<Treasure>().FirstOrDefault(r => r.Distance() < 10 && (r.Name == "宝箱" || r.Name == "Treasure Coffer" || r.Name == "treasure coffer"));
-                while (Core.Me.Distance(_chest.Location) > 1)
-                {
-                    await CommonTasks.MoveTo(_chest.Location);
-                    await Coroutine.Yield();
-                }
-
-                Navigator.PlayerMover.MoveStop();
-                await Coroutine.Sleep(500);
-                _chest.Interact();
-                await Coroutine.Sleep(500);
-            }
+            await LlamaLibrary.Helpers.GeneralFunctions.OpenChests();
 
             _isDone = true;
         }
