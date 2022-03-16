@@ -76,7 +76,6 @@ namespace LlamaUtilities.OrderbotTags
             {
                 GcArmyExpeditionResult.Instance.Close();
                 await Coroutine.Sleep(500);
-                await Navigation.OffMeshMoveInteract(GameObjectManager.GetObjectByNPCId(GrandCompanyHelper.GetNpcByType(GCNpc.Squadron_Sergeant)));
                 GameObjectManager.GetObjectByNPCId(GrandCompanyHelper.GetNpcByType(GCNpc.Squadron_Sergeant)).Interact();
                 await Coroutine.Wait(10000, () => Talk.DialogOpen);
             }
