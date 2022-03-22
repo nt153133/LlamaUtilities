@@ -110,6 +110,8 @@ namespace LlamaUtilities.OrderbotTags
                 }
             }
 
+            await Coroutine.Wait(5000, () => ShopExchangeCurrency.Open);
+
             if (ShopExchangeCurrency.Open)
             {
                 //Log.Information("ShopExchangeCurrency opened");
