@@ -106,6 +106,7 @@
     <Compile Include="OrderbotTags\LLTurnInCollectables.cs" />
     <Compile Include="OrderbotTags\LLUseObject.cs" />
     <Compile Include="OrderbotTags\LLUseSpell.cs" />
+    <Compile Include="OrderbotTags\LoadAchievements.cs" />
     <Compile Include="OrderbotTags\LowerCollectable.cs" />
     <Compile Include="OrderbotTags\PassOnLoot.cs" />
     <Compile Include="OrderbotTags\RetainerHire.cs" />
