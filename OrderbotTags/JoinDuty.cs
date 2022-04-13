@@ -36,7 +36,9 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool IsDone => _isDone;
 
-        public LLJoinDuty() : base() { }
+        public LLJoinDuty() : base()
+        {
+        }
 
         protected override void OnStart()
         {
@@ -98,24 +100,22 @@ namespace LlamaUtilities.OrderbotTags
                 if (DutyManager.QueueState == QueueState.CommenceAvailable)
                 {
                     Log.Information("Waiting for queue pop.");
-                    await Coroutine.Wait(
-                        -1,
-                        () => (DutyManager.QueueState == QueueState.JoiningInstance ||
-                               DutyManager.QueueState == QueueState.None));
+                    await Coroutine.Wait(-1,
+                                         () => (DutyManager.QueueState == QueueState.JoiningInstance ||
+                                                DutyManager.QueueState == QueueState.None));
                 }
 
                 if (DutyManager.QueueState == QueueState.JoiningInstance)
                 {
-							      Random rnd = new Random();
-                    int waitTime = rnd.Next (1000, 10000);
-							
-                    Log.Information($"Dungeon popped, commencing in {waitTime/1000} seconds.");
+                    Random rnd = new Random();
+                    int waitTime = rnd.Next(1000, 10000);
+
+                    Log.Information($"Dungeon popped, commencing in {waitTime / 1000} seconds.");
                     await Coroutine.Sleep(waitTime);
                     DutyManager.Commence();
-                    await Coroutine.Wait(
-                        -1,
-                        () => (DutyManager.QueueState == QueueState.LoadingContent ||
-                               DutyManager.QueueState == QueueState.CommenceAvailable));
+                    await Coroutine.Wait(-1,
+                                         () => (DutyManager.QueueState == QueueState.LoadingContent ||
+                                                DutyManager.QueueState == QueueState.CommenceAvailable));
                 }
 
                 if (DutyManager.QueueState == QueueState.LoadingContent)
@@ -150,10 +150,15 @@ namespace LlamaUtilities.OrderbotTags
                 if (ff14bot.RemoteAgents.AgentCutScene.Instance != null)
                 {
                     ff14bot.RemoteAgents.AgentCutScene.Instance.PromptSkip();
-                    await Coroutine.Wait(250, () => SelectString.IsOpen);
+                    await Coroutine.Wait(2000, () => SelectString.IsOpen || SelectYesno.IsOpen);
                     if (SelectString.IsOpen)
                     {
                         SelectString.ClickSlot(0);
+                    }
+
+                    if (SelectYesno.IsOpen)
+                    {
+                        SelectYesno.Yes();
                     }
                 }
             }

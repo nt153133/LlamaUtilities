@@ -129,6 +129,7 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             await Coroutine.Sleep(500);
+
             if (CommonBehaviors.IsLoading)
             {
                 await Coroutine.Wait(-1, () => !CommonBehaviors.IsLoading);
@@ -140,10 +141,15 @@ namespace LlamaUtilities.OrderbotTags
                 if (ff14bot.RemoteAgents.AgentCutScene.Instance != null)
                 {
                     ff14bot.RemoteAgents.AgentCutScene.Instance.PromptSkip();
-                    await Coroutine.Wait(250, () => SelectString.IsOpen);
+                    await Coroutine.Wait(2000, () => SelectString.IsOpen || SelectYesno.IsOpen);
                     if (SelectString.IsOpen)
                     {
                         SelectString.ClickSlot(0);
+                    }
+
+                    if (SelectYesno.IsOpen)
+                    {
+                        SelectYesno.Yes();
                     }
                 }
             }
