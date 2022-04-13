@@ -41,7 +41,7 @@ namespace LlamaUtilities.OrderbotTags
             if (!Achievement.Instance.IsOpen)
             {
                 AgentAchievement.Instance.Toggle();
-                await Coroutine.Wait(2000, () => AgentAchievement.Instance.Status == 3);
+                await Coroutine.Wait(2000, () => AgentAchievement.Instance.Status != 0);
                 await Coroutine.Wait(10000, () => AgentAchievement.Instance.Status == 0);
                 if (Achievement.Instance.IsOpen)
                 {
