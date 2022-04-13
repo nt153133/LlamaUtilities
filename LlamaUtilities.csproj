@@ -79,6 +79,7 @@
     <Compile Include="OrderbotTags\GetTo.cs" />
     <Compile Include="OrderbotTags\InviteToParty.cs" />
     <Compile Include="OrderbotTags\JoinDuty.cs" />
+    <Compile Include="OrderbotTags\JoinSupportDuty.cs" />
     <Compile Include="OrderbotTags\LeaveDuty.cs" />
     <Compile Include="OrderbotTags\LisbethOrderBot.cs" />
     <Compile Include="OrderbotTags\LLChangeZone.cs" />
