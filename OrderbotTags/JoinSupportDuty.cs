@@ -141,10 +141,10 @@ namespace LlamaUtilities.OrderbotTags
                 if (ff14bot.RemoteAgents.AgentCutScene.Instance != null)
                 {
                     ff14bot.RemoteAgents.AgentCutScene.Instance.PromptSkip();
-                    await Coroutine.Wait(2000, () => SelectString.IsOpen || SelectYesno.IsOpen);
-                    if (SelectString.IsOpen)
+                    await Coroutine.Wait(2000, () => Conversation.IsOpen || SelectYesno.IsOpen);
+                    if (Conversation.IsOpen)
                     {
-                        SelectString.ClickSlot(0);
+                        Conversation.SelectLine(0);
                     }
 
                     if (SelectYesno.IsOpen)
