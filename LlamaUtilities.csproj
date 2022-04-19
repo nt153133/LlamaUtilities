@@ -81,6 +81,7 @@
     <Compile Include="OrderbotTags\JoinDuty.cs" />
     <Compile Include="OrderbotTags\JoinSupportDuty.cs" />
     <Compile Include="OrderbotTags\LeaveDuty.cs" />
+    <Compile Include="OrderbotTags\LisbethCheck.cs" />
     <Compile Include="OrderbotTags\LisbethOrderBot.cs" />
     <Compile Include="OrderbotTags\LLChangeZone.cs" />
     <Compile Include="OrderbotTags\LLClimbHill.cs" />
