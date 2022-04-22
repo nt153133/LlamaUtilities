@@ -22,10 +22,10 @@ using TreeSharp;
 using Action = TreeSharp.Action;
 
 namespace LlamaUtilities.OrderbotTags
-{	
-    [XmlElement("ExtendedDuty")]
+{
+    [XmlElement("LLExtendedDuty")]
 
-    class ExtendedDutyTag : SimpleDutyTag
+    class LLExtendedDutyTag : SimpleDutyTag
     {
 		public bool didthething = false;
 
