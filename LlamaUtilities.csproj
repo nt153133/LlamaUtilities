@@ -59,7 +59,9 @@
     <Compile Include="LlamaUtilities\Utilities.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="LlamaUtilities\Utilities.Designer.cs" />
+    <Compile Include="LlamaUtilities\Utilities.Designer.cs">
+		<DependentUpon>Utilities.cs</DependentUpon>
+	</Compile>
     <Compile Include="LlamaUtilities\UtilitiesBase.cs" />
     <Compile Include="OrderbotTags\AutoEquip.cs" />
     <Compile Include="OrderbotTags\AutoInventoryEquip.cs" />
