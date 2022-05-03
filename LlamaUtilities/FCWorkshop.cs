@@ -19,7 +19,7 @@ namespace LlamaUtilities.LlamaUtilities
     public static class FCWorkshop
     {
         public static List<Item> itemList = new List<Item>();
-        private static uint[] npcids = new uint[] { 2005236, 2005238, 2005240, 2007821 };
+        private static uint[] npcids = new uint[] { 2005236, 2005238, 2005240, 2007821, 2011588};
 
         public const string Name = "FCWorkshop";
         private static readonly LLogger Log = new LLogger(Name, Colors.White);
