@@ -46,10 +46,9 @@ namespace LlamaUtilities.OrderbotTags
             MovementManager.SetFacing(Heading);
             MovementManager.MoveForwardStart();
 
-            while (!CommonBehaviors.IsLoading)
-            {
-                await Coroutine.Yield();
-            }
+            await Coroutine.Wait(-1, () => (CommonBehaviors.IsLoading));
+            Log($"Waiting for loading to finish...");
+            await Coroutine.Wait(-1, () => (!CommonBehaviors.IsLoading));
 
             MovementManager.MoveStop();
 
