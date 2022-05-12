@@ -31,6 +31,11 @@ namespace LlamaUtilities.OrderbotTags
         [DefaultValue(0)]
         public int SubZoneId { get; set; }
 
+        [XmlAttribute("UseFlight")]
+        [XmlAttribute("useflight")]
+        [DefaultValue(true)]
+        public bool UseFlight { get; set; }
+
         private static IEnumerable<uint> Items => InventoryManager.GetBagByInventoryBagId(InventoryBagId.KeyItems)
             .FilledSlots.Select(i => i.RawItemId);
 
@@ -40,59 +45,57 @@ namespace LlamaUtilities.OrderbotTags
             !GameObjectManager.GameObjects.Any(i => i.Type == GameObjectType.Treasure) &&
             !GameObjectManager.Attackers.Any();
 
-        public BasicTreasureFight() : base() { }
+        public BasicTreasureFight() : base()
+        {
+        }
 
         protected override Composite CreateBehavior()
         {
-            return new PrioritySelector(
-                CommonBehaviors.HandleLoading,
+            return new PrioritySelector(CommonBehaviors.HandleLoading,
 
-                //GetTo
-                new Decorator(c => WorldManager.ZoneId != ZoneId || !Navigator.InPosition(Core.Me.Location, XYZ, 10), new ActionRunCoroutine(t => Lisbeth.TravelToZones((uint)ZoneId, (uint)SubZoneId, XYZ))),
+                                        //GetTo
+                                        new Decorator(c => WorldManager.ZoneId != ZoneId || !Navigator.InPosition(Core.Me.Location, XYZ, 10),
+                                                      UseFlight ? new ActionRunCoroutine(t => Lisbeth.TravelToZones((uint) ZoneId, (uint) SubZoneId, XYZ)) : new ActionRunCoroutine(obj => LlamaLibrary.Helpers.Navigation.GetTo((uint) ZoneId, XYZ))),
 
-                //We have not dug yet.
-                new Decorator(
-                    r => Navigator.InPosition(Core.Me.Location, XYZ, 10) && !GameObjectManager.GameObjects.Any(i => i.Type == GameObjectType.Treasure),
-                    new ActionRunCoroutine(async s =>
-                    {
-                        ActionManager.DoAction(ActionType.General, 20, Core.Me);
-                        return await Coroutine.Wait(
-                            10000,
-                            () => GameObjectManager.GameObjects.Any(i => i.Type == GameObjectType.Treasure));
-                    })
-                ),
-                new Decorator(r => GameObjectManager.Attackers.Any() && Poi.Current.Type != PoiType.Kill, new ActionRunCoroutine(
-                    s =>
-                    {
-                        Poi.Current = new Poi(GameObjectManager.Attackers.OrderBy(i => i.NpcId).First(), PoiType.Kill);
-                        return System.Threading.Tasks.Task.FromResult(true);
-                    })),
-                new Decorator(s => !GameObjectManager.Attackers.Any() && GameObjectManager.GameObjects.Any(i => i.Type == GameObjectType.Treasure), new ActionRunCoroutine(
-                    async s =>
-                    {
-                        var coffer = GameObjectManager.GameObjects.First(i => i.Type == GameObjectType.Treasure);
-                        if (coffer.Distance2D() > 3)
-                        {
-                            await CommonTasks.MoveTo(coffer.Location, "treasure");
-                            return true;
-                        }
+                                        //We have not dug yet.
+                                        new Decorator(r => Navigator.InPosition(Core.Me.Location, XYZ, 10) && !GameObjectManager.GameObjects.Any(i => i.Type == GameObjectType.Treasure),
+                                                      new ActionRunCoroutine(async s =>
+                                                      {
+                                                          ActionManager.DoAction(ActionType.General, 20, Core.Me);
+                                                          return await Coroutine.Wait(10000,
+                                                                                      () => GameObjectManager.GameObjects.Any(i => i.Type == GameObjectType.Treasure));
+                                                      })),
+                                        new Decorator(r => GameObjectManager.Attackers.Any() && Poi.Current.Type != PoiType.Kill,
+                                                      new ActionRunCoroutine(s =>
+                                                      {
+                                                          Poi.Current = new Poi(GameObjectManager.Attackers.OrderBy(i => i.NpcId).First(), PoiType.Kill);
+                                                          return System.Threading.Tasks.Task.FromResult(true);
+                                                      })),
+                                        new Decorator(s => !GameObjectManager.Attackers.Any() && GameObjectManager.GameObjects.Any(i => i.Type == GameObjectType.Treasure),
+                                                      new ActionRunCoroutine(async s =>
+                                                      {
+                                                          var coffer = GameObjectManager.GameObjects.First(i => i.Type == GameObjectType.Treasure);
+                                                          if (coffer.Distance2D() > 3)
+                                                          {
+                                                              await CommonTasks.MoveTo(coffer.Location, "treasure");
+                                                              return true;
+                                                          }
 
-                        await CommonTasks.StopAndDismount();
-                        coffer.Interact();
-                        await Coroutine.Wait(10000, () => GameObjectManager.Attackers.Any() || Core.Me.IsCasting || SelectYesno.IsOpen);
-                        if (SelectYesno.IsOpen)
-                        {
-                            SelectYesno.ClickYes();
-                        }
+                                                          await CommonTasks.StopAndDismount();
+                                                          coffer.Interact();
+                                                          await Coroutine.Wait(10000, () => GameObjectManager.Attackers.Any() || Core.Me.IsCasting || SelectYesno.IsOpen);
+                                                          if (SelectYesno.IsOpen)
+                                                          {
+                                                              SelectYesno.ClickYes();
+                                                          }
 
-                        if (Core.Me.IsCasting && !GameObjectManager.Attackers.Any())
-                        {
-                            await Coroutine.Wait(10000, () => GameObjectManager.Attackers.Any() || !Core.Me.IsCasting);
-                        }
+                                                          if (Core.Me.IsCasting && !GameObjectManager.Attackers.Any())
+                                                          {
+                                                              await Coroutine.Wait(10000, () => GameObjectManager.Attackers.Any() || !Core.Me.IsCasting);
+                                                          }
 
-                        return true;
-                    }))
-                );
+                                                          return true;
+                                                      })));
         }
     }
 }
