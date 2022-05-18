@@ -23,6 +23,11 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool IsDone => _isDone;
 
+        [XmlAttribute("Disable")]
+        [XmlAttribute("disable")]
+        [DefaultValue(false)]
+        public bool Disable { get; set; }
+
         public LoadDungeonAssist() : base()
         {
         }
@@ -45,6 +50,13 @@ namespace LlamaUtilities.OrderbotTags
             return new ActionRunCoroutine(r => LoadDungeonAssistTask());
         }
 
+        public static PluginContainer GetDungeonAssistPlugin()
+        {
+            return PluginManager.Plugins.FirstOrDefault(r => r.Plugin.Name == "DungeonAssist");
+        }
+
+        static PluginContainer dungeonAssistPlugin = GetDungeonAssistPlugin();
+
         private async Task LoadDungeonAssistTask()
         {
             var Plugin = PluginManager.Plugins.Where(p => p.Plugin.Name == "DungeonAssist");
@@ -65,16 +77,27 @@ namespace LlamaUtilities.OrderbotTags
             text5 = "Plug-In SideStep  is installed and enabled";
             text6 = "You Need the SideStep Plug-In to Operate this Profile";
 
-            if (Plugin.Any())
+            if (Disable)
             {
-                if (Plugin != null)
+                if (dungeonAssistPlugin.Enabled)
                 {
-                    PluginManager.SetEnabledPlugins("DungeonAssist");
-                    Core.OverlayManager.AddToast(() => text1,
-                                                 TimeSpan.FromMilliseconds(5000),
-                                                 System.Windows.Media.Color.FromRgb(29, 213, 226),
-                                                 System.Windows.Media.Color.FromRgb(13, 106, 175),
-                                                 new System.Windows.Media.FontFamily("Gautami"));
+                    dungeonAssistPlugin.Enabled = false;
+                    _isDone = true;
+                }
+            }
+            else
+            {
+                if (Plugin.Any())
+                {
+                    if (Plugin != null)
+                    {
+                        PluginManager.SetEnabledPlugins("DungeonAssist");
+                        Core.OverlayManager.AddToast(() => text1,
+                                                     TimeSpan.FromMilliseconds(5000),
+                                                     System.Windows.Media.Color.FromRgb(29, 213, 226),
+                                                     System.Windows.Media.Color.FromRgb(13, 106, 175),
+                                                     new System.Windows.Media.FontFamily("Gautami"));
+                    }
                 }
                 else
                 {
@@ -84,22 +107,18 @@ namespace LlamaUtilities.OrderbotTags
                                                  System.Windows.Media.Color.FromRgb(13, 106, 175),
                                                  new System.Windows.Media.FontFamily("Gautami"));
                 }
-            }
-            else
-            {
-                Core.OverlayManager.AddToast(() => text2, TimeSpan.FromMilliseconds(5000), System.Windows.Media.Color.FromRgb(29, 213, 226), System.Windows.Media.Color.FromRgb(13, 106, 175), new System.Windows.Media.FontFamily("Gautami"));
-            }
 
-            if (Plugin2.Any())
-            {
-                if (Plugin2 != null)
+                if (Plugin2.Any())
                 {
-                    PluginManager.SetEnabledPlugins("Osiris");
-                    Core.OverlayManager.AddToast(() => text3,
-                                                 TimeSpan.FromMilliseconds(5000),
-                                                 System.Windows.Media.Color.FromRgb(29, 213, 226),
-                                                 System.Windows.Media.Color.FromRgb(13, 106, 175),
-                                                 new System.Windows.Media.FontFamily("Gautami"));
+                    if (Plugin2 != null)
+                    {
+                        PluginManager.SetEnabledPlugins("Osiris");
+                        Core.OverlayManager.AddToast(() => text3,
+                                                     TimeSpan.FromMilliseconds(5000),
+                                                     System.Windows.Media.Color.FromRgb(29, 213, 226),
+                                                     System.Windows.Media.Color.FromRgb(13, 106, 175),
+                                                     new System.Windows.Media.FontFamily("Gautami"));
+                    }
                 }
                 else
                 {
@@ -109,22 +128,18 @@ namespace LlamaUtilities.OrderbotTags
                                                  System.Windows.Media.Color.FromRgb(13, 106, 175),
                                                  new System.Windows.Media.FontFamily("Gautami"));
                 }
-            }
-            else
-            {
-                Core.OverlayManager.AddToast(() => text4, TimeSpan.FromMilliseconds(5000), System.Windows.Media.Color.FromRgb(29, 213, 226), System.Windows.Media.Color.FromRgb(13, 106, 175), new System.Windows.Media.FontFamily("Gautami"));
-            }
 
-            if (Plugin3.Any())
-            {
-                if (Plugin3 != null)
+                if (Plugin3.Any())
                 {
-                    PluginManager.SetEnabledPlugins("SideStep");
-                    Core.OverlayManager.AddToast(() => text5,
-                                                 TimeSpan.FromMilliseconds(5000),
-                                                 System.Windows.Media.Color.FromRgb(29, 213, 226),
-                                                 System.Windows.Media.Color.FromRgb(13, 106, 175),
-                                                 new System.Windows.Media.FontFamily("Gautami"));
+                    if (Plugin3 != null)
+                    {
+                        PluginManager.SetEnabledPlugins("SideStep");
+                        Core.OverlayManager.AddToast(() => text5,
+                                                     TimeSpan.FromMilliseconds(5000),
+                                                     System.Windows.Media.Color.FromRgb(29, 213, 226),
+                                                     System.Windows.Media.Color.FromRgb(13, 106, 175),
+                                                     new System.Windows.Media.FontFamily("Gautami"));
+                    }
                 }
                 else
                 {
@@ -134,13 +149,9 @@ namespace LlamaUtilities.OrderbotTags
                                                  System.Windows.Media.Color.FromRgb(13, 106, 175),
                                                  new System.Windows.Media.FontFamily("Gautami"));
                 }
-            }
-            else
-            {
-                Core.OverlayManager.AddToast(() => text6, TimeSpan.FromMilliseconds(5000), System.Windows.Media.Color.FromRgb(29, 213, 226), System.Windows.Media.Color.FromRgb(13, 106, 175), new System.Windows.Media.FontFamily("Gautami"));
-            }
 
-            await Coroutine.Sleep(1000);
+                await Coroutine.Sleep(1000);
+            }
 
             _isDone = true;
         }
