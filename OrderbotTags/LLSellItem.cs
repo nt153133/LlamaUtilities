@@ -31,7 +31,9 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool IsDone => _isDone;
 
-        public LLSellItem() : base() { }
+        public LLSellItem() : base()
+        {
+        }
 
         protected override void OnStart()
         {
@@ -58,14 +60,16 @@ namespace LlamaUtilities.OrderbotTags
                 await Coroutine.Yield();
                 return;
             }
-			
-			if (Armory)
+
+            if (Armory)
             {
-                await RetainerSellItems(InventoryManager.FilledInventoryAndArmory.Where(x => ItemIds.Contains((int)x.RawItemId)));
+                await RetainerSellItems(InventoryManager.FilledInventoryAndArmory.Where(x => ItemIds.Contains((int) x.RawItemId)));
             }
-            
-            await RetainerSellItems(InventoryManager.FilledSlots.Where(x => ItemIds.Contains((int)x.RawItemId)));
-            
+
+            await RetainerSellItems(InventoryManager.FilledSlots.Where(x => ItemIds.Contains((int) x.RawItemId)));
+
 
             _isDone = true;
         }
+    }
+}
