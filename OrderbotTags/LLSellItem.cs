@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Media;
@@ -20,6 +20,10 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("ItemId")]
         [DefaultValue(new int[0])]
         private int[] ItemIds { get; set; }
+
+        [XmlAttribute("Armory")]
+        [DefaultValue(false)]
+        public bool Armory { get; set; }
 
         private bool _isDone;
 
@@ -44,20 +48,24 @@ namespace LlamaUtilities.OrderbotTags
 
         protected override Composite CreateBehavior()
         {
-            return new ActionRunCoroutine(r => SellItemsToRetainers());
+            return new ActionRunCoroutine(r => SellItemsToRetainers(Armory));
         }
 
-        private async Task SellItemsToRetainers()
+        private async Task SellItemsToRetainers(bool Armory)
         {
             if (_isDone)
             {
                 await Coroutine.Yield();
                 return;
             }
-
+			
+			if (Armory)
+            {
+                await RetainerSellItems(InventoryManager.FilledInventoryAndArmory.Where(x => ItemIds.Contains((int)x.RawItemId)));
+            }
+            
             await RetainerSellItems(InventoryManager.FilledSlots.Where(x => ItemIds.Contains((int)x.RawItemId)));
+            
 
             _isDone = true;
         }
-    }
-}
