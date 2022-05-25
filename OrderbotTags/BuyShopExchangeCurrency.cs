@@ -123,6 +123,12 @@ namespace LlamaUtilities.OrderbotTags
                     SelectYesno.Yes();
                     await Coroutine.Sleep(1000);
                 }
+
+                if (SelectYesno.IsOpen)
+                {
+                    SelectYesno.Yes();
+                    await Coroutine.Sleep(1000);
+                }
             }
 
             await Coroutine.Wait(2000, () => ShopExchangeCurrency.Open);
