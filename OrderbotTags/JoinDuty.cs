@@ -8,11 +8,14 @@ using ff14bot.Behavior;
 using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.RemoteWindows;
+using LlamaLibrary.Helpers;
+using LlamaLibrary.ScriptConditions;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLJoinDuty")]
+    [XmlElement("JoinDuty")]
     public class LLJoinDuty : LLProfileBehavior
     {
         private bool _isDone;
@@ -32,9 +35,81 @@ namespace LlamaUtilities.OrderbotTags
         [DefaultValue(true)]
         public bool Undersized { get; set; }
 
+        [XmlAttribute("SayHello")]
+        [DefaultValue(false)]
+        public bool SayHello { get; set; }
+
+        public static ChatBroadcaster PartyBroadcaster = new ChatBroadcaster(MessageType.Party);
+        public static ChatBroadcaster EmoteBroadcaster = new ChatBroadcaster(MessageType.StandardEmotes);
+
+        private static readonly Random _random = new Random();
+
         public override bool HighPriority => true;
 
         public override bool IsDone => _isDone;
+
+        private static string[] Greetings = new string[]
+        {
+            "Hola",
+            "Bonjour",
+            "Hallo",
+            "Ciao",
+            "Konnichiwa",
+            "What’s kicking, little chicken?",
+            "Hello, governor!",
+            "Whaddup bro?",
+            "Bonjour monsieur!",
+            "Ciao babydoll!",
+            "Bing bing! How’s it going?",
+            "Good day guys",
+            "Oooo la la. This guy again",
+            "Welcome to the club guys",
+            "What’s sizzling?",
+            "Whazzup?",
+            "Ni hao ma?",
+            "What’s up, buttercup?",
+            "Hello!",
+            "Hey",
+            "Heyo",
+            "Hihi",
+            "Hello new friends!",
+            "Hi new friends",
+            "Heya",
+            "Ello! o/",
+            "hello!",
+            "Hi, I just met you, and yes, this is crazy. Here’s my number – can we kill this guy, maybe?",
+            "Hi guys",
+            "What’s smokin’?",
+            "How is life sailing?",
+            "Hiya",
+            "Hi",
+            "Hey friends!",
+            "Yo",
+            "I come in peace. Okay, yeah maybe not.",
+            "Hello, my name is Inigo Montoya.",
+            "I'm Batman",
+            "‘Ello, mates",
+            "How you doin'?",
+            "What's cookin', good lookin'?",
+            "Aloha",
+            "Hey you, yeah you. I like your face.",
+            "Why, hello there!",
+            "This fight may be recorded for training purposes.",
+            "GOOOOOD MORNING, VIETNAM!",
+            "‘Sup, homeslice?",
+            "What’s crackin’?",
+            "Here's Johnny!",
+            "Whaddup",
+            "o/",
+            "o7",
+            "Greetings and salutations!",
+            "Top of the mornin’ to ya!",
+            "Howdy partners.",
+            "Ahoy there, matey.",
+            "Anyone else have chicken too?",
+            "Hey guys, glad to be here. Let's go have some fun.",
+            "Oh yeah, love fighting this guy"
+        };
 
         public LLJoinDuty() : base()
         {
@@ -75,8 +150,8 @@ namespace LlamaUtilities.OrderbotTags
             {
                 while (DutyManager.QueueState == QueueState.None)
                 {
-                    Log.Information("Queuing for " + DataManager.InstanceContentResults[(uint)DutyId].CurrentLocaleName);
-                    DutyManager.Queue(DataManager.InstanceContentResults[(uint)DutyId]);
+                    Log.Information("Queuing for " + DataManager.InstanceContentResults[(uint) DutyId].CurrentLocaleName);
+                    DutyManager.Queue(DataManager.InstanceContentResults[(uint) DutyId]);
                     await Coroutine.Wait(10000, () => (DutyManager.QueueState == QueueState.CommenceAvailable || DutyManager.QueueState == QueueState.JoiningInstance));
                     if (DutyManager.QueueState != QueueState.None)
                     {
@@ -165,7 +240,7 @@ namespace LlamaUtilities.OrderbotTags
 
             Log.Information("Should be in duty");
 
-            var director = (ff14bot.Directors.InstanceContentDirector)DirectorManager.ActiveDirector;
+            var director = (ff14bot.Directors.InstanceContentDirector) DirectorManager.ActiveDirector;
             if (director != null)
             {
                 if (Trial)
@@ -173,6 +248,15 @@ namespace LlamaUtilities.OrderbotTags
                     if (director.TimeLeftInDungeon >= new TimeSpan(0, 60, 0))
                     {
                         Log.Information("Barrier up");
+                        if (SayHello)
+                        {
+                            string sentgreeting = Greetings[_random.Next(0, Greetings.Length)];
+
+                            Log.Information($"Saying '{sentgreeting}' the group");
+                            await PartyBroadcaster.Send(sentgreeting);
+
+                        }
+
                         await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(0, 59, 58));
                     }
                 }
