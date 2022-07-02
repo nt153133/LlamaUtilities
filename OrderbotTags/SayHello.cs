@@ -20,6 +20,7 @@ namespace LlamaUtilities.OrderbotTags
         private bool _isDone;
 
         [XmlAttribute("Goodbye")]
+        [XmlAttribute("goodbye")]
         [DefaultValue(false)]
         public bool Goodbye { get; set; }
 
@@ -32,6 +33,7 @@ namespace LlamaUtilities.OrderbotTags
         private static string[] Greetings = new string[]
         {
             "/p Hola",
+            "/p Greetings",
             "/p Bonjour",
             "/p Hallo",
             "/p Ciao",
