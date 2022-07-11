@@ -33,8 +33,8 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("ZoneId")]
         public int ZoneId { get; set; }
 
-        [DefaultValue(true)]
         [XmlAttribute("Land")]
+        [DefaultValue(true)]
         public bool Land { get; set; }
 
         public override bool HighPriority => true;

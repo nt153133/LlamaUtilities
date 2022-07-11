@@ -106,6 +106,7 @@
     <Compile Include="OrderbotTags\LLStopBot.cs" />
     <Compile Include="OrderbotTags\LLToast.cs" />
     <Compile Include="OrderbotTags\LLTransport.cs" />
+    <Compile Include="OrderbotTags\LLTravel.cs" />
     <Compile Include="OrderbotTags\LLTurnIn.cs" />
     <Compile Include="OrderbotTags\LLTurnInCollectables.cs" />
     <Compile Include="OrderbotTags\LLUseObject.cs" />
