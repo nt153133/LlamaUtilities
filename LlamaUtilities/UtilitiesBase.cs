@@ -61,7 +61,8 @@ namespace LlamaUtilities.LlamaUtilities
             "Imperial",
             "Manusya",
             "Ktiseos",
-            "Palaka"
+            "Palaka",
+            "Troian",
         };
 
         public UtilitiesBase()
