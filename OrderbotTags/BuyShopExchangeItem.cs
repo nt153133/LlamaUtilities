@@ -119,6 +119,7 @@ namespace LlamaUtilities.OrderbotTags
                 await Coroutine.Wait(2000, () => ShopExchangeItem.Instance.IsOpen);
                 if (ShopExchangeItem.Instance.IsOpen)
                 {
+                    await Coroutine.Sleep(1000);
                     ShopExchangeItem.Instance.Close();
                 }
             }
