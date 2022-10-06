@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Media;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot;
@@ -8,7 +7,6 @@ using ff14bot.Managers;
 using ff14bot.Objects;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Helpers;
-using LlamaLibrary.Logging;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -20,7 +18,7 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool IsDone => _isDone;
 
-        private static uint[] npcIds = { 1001617, 1003077, 1003633, 1012301, 1013397, 1019458, 1027541, 1031501 };
+        private static readonly uint[] npcIds = { 1001617, 1003077, 1003633, 1012301, 1013397, 1019458, 1027541, 1031501 };
 
         [XmlAttribute("ItemId")]
         public int ItemId { get; set; }

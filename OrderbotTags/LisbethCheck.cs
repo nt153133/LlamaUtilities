@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot;
-using ff14bot.Behavior;
 using LlamaLibrary.ScriptConditions;
 using TreeSharp;
 

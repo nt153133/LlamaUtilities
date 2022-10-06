@@ -1,7 +1,5 @@
-﻿using System.Windows.Media;
-using Clio.XmlEngine;
+﻿using Clio.XmlEngine;
 using ff14bot;
-using LlamaLibrary.Logging;
 using TreeSharp;
 using Action = TreeSharp.Action;
 

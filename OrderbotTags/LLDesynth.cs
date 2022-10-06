@@ -1,12 +1,8 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-
 using Clio.XmlEngine;
-
 using ff14bot.Managers;
-
 using LlamaLibrary.Utilities;
-
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags

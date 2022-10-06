@@ -11,6 +11,7 @@ using ff14bot.Objects;
 using ff14bot.RemoteWindows;
 using TreeSharp;
 using Action = TreeSharp.Action;
+
 namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("LLUseSpell")]
@@ -114,17 +115,7 @@ namespace LlamaUtilities.OrderbotTags
 
         protected bool ShortCircuit(GameObject obj)
         {
-            if (!obj.IsValid || !obj.IsTargetable || !obj.IsVisible)
-            {
-                return true;
-            }
-
-            if (Talk.DialogOpen)
-            {
-                return true;
-            }
-
-            return false;
+            return !obj.IsValid || !obj.IsTargetable || !obj.IsVisible || Talk.DialogOpen;
         }
 
         private Composite CustomLogic => new Decorator(

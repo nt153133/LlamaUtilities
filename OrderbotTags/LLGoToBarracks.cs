@@ -1,20 +1,13 @@
-﻿using System;
-using System.ComponentModel;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
-using ff14bot;
 using ff14bot.Behavior;
-using ff14bot.Enums;
-using ff14bot.Helpers;
-using ff14bot.Managers;
 using ff14bot.Navigation;
 using ff14bot.NeoProfiles;
 using ff14bot.Pathing.Service_Navigation;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Enums;
 using LlamaLibrary.Helpers;
-using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -66,7 +59,7 @@ namespace LlamaUtilities.OrderbotTags
             while (CommonBehaviors.IsLoading)
             {
                 Log($"Waiting for zoning to finish...");
-                await Coroutine.Wait(-1, () => (!CommonBehaviors.IsLoading));
+                await Coroutine.Wait(-1, () => !CommonBehaviors.IsLoading);
             }
 
             _isDone = true;

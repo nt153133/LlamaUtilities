@@ -117,7 +117,7 @@ namespace LlamaUtilities.OrderbotTags
             var pointArray = new Vector3[StepNum];
             double currentHeading = StartHeading;
             var currentPoint = XYZ;
-            for (int i = 0; i < pointArray.Length; i++)
+            for (var i = 0; i < pointArray.Length; i++)
             {
                 var curPointVec2 = new Vector3(currentPoint.X, 0, currentPoint.Z);
                 var newX = (float)(curPointVec2.X + (Math.Sin(currentHeading) * StepDistance));
@@ -127,10 +127,10 @@ namespace LlamaUtilities.OrderbotTags
                 pointArray[i] = new Vector3(nextPoint.X, currentPoint.Y - StepHeight, nextPoint.Z);
                 currentPoint = pointArray[i];
             }
-            for (int i = 0; i < pointArray.Length; i++)
+            for (var i = 0; i < pointArray.Length; i++)
             {
                 var curPoint = pointArray[i];
-                Log.Information($"ClimbSpiral moving to point #{i}, {pointArray[i].ToString()}");
+                Log.Information($"ClimbSpiral moving to point #{i}, {pointArray[i]}");
                 MovementManager.SetFacing2D(curPoint);
                 MovementManager.MoveForwardStart();
                 while (Core.Player.Distance2D(curPoint) > StepDistance / (i == pointArray.Length - 1 ? 3 : 2))

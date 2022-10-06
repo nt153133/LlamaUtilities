@@ -74,7 +74,7 @@ namespace LlamaUtilities.OrderbotTags
                     }
                 }
 
-                await Coroutine.Wait(10000, () => (DutyManager.QueueState == QueueState.CommenceAvailable || DutyManager.QueueState == QueueState.JoiningInstance));
+                await Coroutine.Wait(10000, () => DutyManager.QueueState == QueueState.CommenceAvailable || DutyManager.QueueState == QueueState.JoiningInstance);
                 if (DutyManager.QueueState != QueueState.None)
                 {
                     Log.Information("Queued for Dungeon");
@@ -90,28 +90,24 @@ namespace LlamaUtilities.OrderbotTags
                 if (DutyManager.QueueState == QueueState.CommenceAvailable)
                 {
                     Log.Information("Waiting for queue pop.");
-                    await Coroutine.Wait(-1,
-                                         () => (DutyManager.QueueState == QueueState.JoiningInstance ||
-                                                DutyManager.QueueState == QueueState.None));
+                    await Coroutine.Wait(-1, () => DutyManager.QueueState == QueueState.JoiningInstance || DutyManager.QueueState == QueueState.None);
                 }
 
                 if (DutyManager.QueueState == QueueState.JoiningInstance)
                 {
-                    Random rnd = new Random();
-                    int waitTime = rnd.Next(1000, 10000);
+                    var rnd = new Random();
+                    var waitTime = rnd.Next(1000, 10000);
 
                     Log.Information($"Dungeon popped, commencing in {waitTime / 1000} seconds.");
                     await Coroutine.Sleep(waitTime);
                     DutyManager.Commence();
-                    await Coroutine.Wait(-1,
-                                         () => (DutyManager.QueueState == QueueState.LoadingContent ||
-                                                DutyManager.QueueState == QueueState.CommenceAvailable));
+                    await Coroutine.Wait(-1, () => DutyManager.QueueState == QueueState.LoadingContent || DutyManager.QueueState == QueueState.CommenceAvailable);
                 }
 
                 if (DutyManager.QueueState == QueueState.LoadingContent)
                 {
                     Log.Information("Waiting for everyone to accept queue.");
-                    await Coroutine.Wait(-1, () => (CommonBehaviors.IsLoading || DutyManager.QueueState == QueueState.CommenceAvailable));
+                    await Coroutine.Wait(-1, () => CommonBehaviors.IsLoading || DutyManager.QueueState == QueueState.CommenceAvailable);
                     await Coroutine.Sleep(1000);
                 }
 

@@ -1,14 +1,12 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using System.Windows.Media;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot.Behavior;
 using ff14bot.Enums;
 using ff14bot.Managers;
 using LlamaLibrary.Helpers;
-using LlamaLibrary.Logging;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -31,7 +29,7 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool HighPriority => true;
 
-        private static string[] Farewells = new string[]
+        private static readonly string[] Farewells = new string[]
         {
             "See you later, alligator!",
             "After a while, crocodile.",
@@ -140,12 +138,12 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task LeaveDutyTask()
         {
-            Random rnd = new Random();
-            int waitTime = rnd.Next(45000, 90000);
+            var rnd = new Random();
+            var waitTime = rnd.Next(45000, 90000);
 
             if (SayGoodbye)
             {
-                string sentfarewell = Farewells[_random.Next(0, Farewells.Length)];
+                var sentfarewell = Farewells[_random.Next(0, Farewells.Length)];
 
                 Log.Information($"Saying '{sentfarewell}' the group");
                 await PartyBroadcaster.Send(sentfarewell);

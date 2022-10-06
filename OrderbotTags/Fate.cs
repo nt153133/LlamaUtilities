@@ -79,20 +79,20 @@ namespace LlamaUtilities.OrderbotTags
         [DefaultValue(false)]
         public bool SharedFate { get; set; }
 
-        private BattleCharacter npc;
-        private FatebotSettings fatebotInstance = FatebotSettings.Instance;
+        private readonly BattleCharacter npc;
+        private readonly FatebotSettings fatebotInstance = FatebotSettings.Instance;
 
         //private int timeout = 100;
         private uint lastFateId = 0;
 
         private DateTime saveNow = DateTime.Now;
-        private bool hunting = false;
+        private readonly bool hunting = false;
         public override bool IsDone => _done;
 
         //some Statistics
         private FateData currentfate;
 
-        private int fatesDone;
+        private readonly int fatesDone;
         private int mobsHunted;
         private int died;
 
@@ -117,12 +117,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private bool ShouldStop()
         {
-            if (GetCondition() != null)
-            {
-                return !GetCondition()();
-            }
-
-            return false;
+            return GetCondition() != null && !GetCondition()();
         }
 
         private Func<bool> GetCondition()
@@ -700,14 +695,8 @@ namespace LlamaUtilities.OrderbotTags
                                                                          && (unit as BattleCharacter).FateId != 0 && !(unit as BattleCharacter).IsDead).OrderBy(unit => unit.Distance(Core.Player.Location)).Take(1);
             Log.Information("Analyzing Fate Targets.");
             var targetArray = _target as GameObject[] ?? _target.ToArray();
-            if (targetArray.Length > 0)
-            {
-                return targetArray[0];
-            }
-            else
-            {
-                return null;
-            }
+
+            return targetArray.Length > 0 ? targetArray[0] : null;
         }
 
         public GameObject GetNormalTargets()
@@ -782,12 +771,8 @@ namespace LlamaUtilities.OrderbotTags
             var FateList = MyFilter(FateCandidates);
 
             currentfate = FateList.OrderBy(fate => Core.Me.Distance(fate.Location)).FirstOrDefault(fate => fate.Level < _max && fate.Level > _min);
-            if (currentfate == null)
-            {
-                return false;
-            }
 
-            return true;
+            return currentfate != null;
         }
 
         // check all fates and return the FateData with the given Ids or null
@@ -795,12 +780,8 @@ namespace LlamaUtilities.OrderbotTags
         {
             var _fate = FateManager.ActiveFates.Where(fate => ids.Contains((int)fate.Id) && fate.Progress >= MinProgress).Take(1);
             var fateArray = _fate as FateData[] ?? _fate.ToArray();
-            if (fateArray.Length > 0)
-            {
-                return fateArray[0];
-            }
 
-            return null;
+            return fateArray.Length > 0 ? fateArray[0] : null;
         }
 
         [Obsolete]
@@ -929,27 +910,7 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             //Make sure we always return true for units inside our aggro list
-            if (_aggroedBattleCharacters.Contains(unit))
-            {
-                return true;
-            }
-
-            if (!unit.IsFate)
-            {
-                return false;
-            }
-
-            if (!unit.CanAttack)
-            {
-                return false;
-            }
-
-            if (Vector3.Distance(unit.Location, LLFate.Position) > 50)
-            {
-                return false;
-            }
-
-            return !incombat;
+            return _aggroedBattleCharacters.Contains(unit) || unit.IsFate && unit.CanAttack && Vector3.Distance(unit.Location, LLFate.Position) <= 50 && !incombat;
         }
 
         /// <summary> Gets score for a unit. </summary>
@@ -997,6 +958,4 @@ namespace LlamaUtilities.OrderbotTags
             public double Weight;
         }
     }
-
-    //----------------------------------------------------------------------------------
 }

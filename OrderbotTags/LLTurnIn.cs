@@ -11,14 +11,17 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+
 using Clio.Utilities;
 using Clio.XmlEngine;
+
 using ff14bot;
 using ff14bot.Behavior;
 using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.Objects;
 using ff14bot.RemoteWindows;
+
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -60,18 +63,7 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("Emote")]
         public string Emote { get; set; }
 
-        public override bool IsDone
-        {
-            get
-            {
-                if (IsQuestComplete)
-                {
-                    return true;
-                }
-
-                return IsStepComplete;
-            }
-        }
+        public override bool IsDone => IsQuestComplete || IsStepComplete;
 
         [XmlAttribute("NpcId")]
         public int NpcId { get; set; }

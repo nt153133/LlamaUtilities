@@ -1,15 +1,9 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Media;
-using Buddy.Coroutines;
 using Clio.XmlEngine;
-using ff14bot;
-using ff14bot.Behavior;
 using ff14bot.Helpers;
 using ff14bot.Managers;
-using ff14bot.Navigation;
 using ff14bot.Objects;
-using LlamaLibrary.Logging;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -60,7 +54,7 @@ namespace LlamaUtilities.OrderbotTags
             }
         }
 
-        private async Task InvitePerson(string name)
+        private Task InvitePerson(string name)
         {
             var player = GameObjectManager.GetObjectsOfType<BattleCharacter>().Where(p => !p.IsMe && p.Name.ToLowerInvariant().Contains(name.ToLowerInvariant())).ToList();
 
@@ -74,9 +68,11 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             _isDone = true;
+
+            return Task.CompletedTask;
         }
 
-        private async Task InvitePerson(string[] names)
+        private Task InvitePerson(string[] names)
         {
             var player = GameObjectManager.GetObjectsOfType<BattleCharacter>().Where(p => !p.IsMe && names.Any(i => p.Name.ToLowerInvariant().Contains(i.ToLowerInvariant()))).ToList();
 
@@ -90,6 +86,8 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             _isDone = true;
+
+            return Task.CompletedTask;
         }
 
         public void InvitePlayer(BattleCharacter character)

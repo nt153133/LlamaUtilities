@@ -1,8 +1,5 @@
-﻿using System.ComponentModel;
-using System.Threading.Tasks;
-using System.Windows.Media;
+﻿using System.Threading.Tasks;
 using Clio.XmlEngine;
-using LlamaLibrary.Logging;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -41,8 +38,8 @@ namespace LlamaUtilities.OrderbotTags
         private async Task DoGCRankUp()
         {
             await LlamaLibrary.Helpers.GrandCompanyHelper.GoGCRankUp();
-						
-						 _isDone = true;
+
+            _isDone = true;
 
         }
     }

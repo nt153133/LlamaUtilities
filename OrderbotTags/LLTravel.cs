@@ -8,18 +8,11 @@
 //      Creative Commons // 171 Second Street, Suite 300 // San Francisco, California, 94105, USA.
 //
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using System.Windows.Media;
 using Clio.Utilities;
 using Clio.XmlEngine;
 using ff14bot.Behavior;
-using ff14bot.Managers;
-using ff14bot.Navigation;
-using LlamaLibrary.Helpers;
-using LlamaLibrary.Logging;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -40,8 +33,6 @@ namespace LlamaUtilities.OrderbotTags
         public override bool HighPriority => true;
 
         private bool _isDone;
-
-        private bool LisbethCheck;
 
         public override bool IsDone => _isDone;
 
@@ -69,7 +60,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task LLTravelTask()
         {
-            await LlamaLibrary.Helpers.Navigation.FlyToWithZone((uint) ZoneId, XYZ);
+            await LlamaLibrary.Helpers.Navigation.FlyToWithZone((uint)ZoneId, XYZ);
 
             if (Land)
             {

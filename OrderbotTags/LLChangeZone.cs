@@ -1,10 +1,8 @@
 ﻿using System.Threading.Tasks;
-using System.Windows.Media;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot.Behavior;
 using ff14bot.Managers;
-using LlamaLibrary.Logging;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -46,9 +44,9 @@ namespace LlamaUtilities.OrderbotTags
             MovementManager.SetFacing(Heading);
             MovementManager.MoveForwardStart();
 
-            await Coroutine.Wait(-1, () => (CommonBehaviors.IsLoading));
+            await Coroutine.Wait(-1, () => CommonBehaviors.IsLoading);
             Log($"Waiting for loading to finish...");
-            await Coroutine.Wait(-1, () => (!CommonBehaviors.IsLoading));
+            await Coroutine.Wait(-1, () => !CommonBehaviors.IsLoading);
 
             MovementManager.MoveStop();
 

@@ -57,11 +57,7 @@ namespace LlamaUtilities.OrderbotTags
                 var BotType = AppDomain.CurrentDomain.GetAssemblies().First(i => i.FullName.Contains("Lisbeth.Reborn")).DefinedTypes.First(i => i.Name == "LisbethBot");
 
                 var method = BotType.GetMethod("Load", BindingFlags.Static | BindingFlags.NonPublic);
-
-                if (method != null)
-                {
-                    method.Invoke(null, null);
-                }
+                method?.Invoke(null, null);
 
                 Thread.Sleep(4000);
 

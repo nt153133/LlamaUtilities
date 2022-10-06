@@ -128,7 +128,7 @@ namespace LlamaUtilities.LlamaUtilities
             {
                 case TaskType.MateriaRemove:
                     var bagInfo = JsonConvert.DeserializeObject<(uint, ushort)>(BotTask.TaskInfo);
-                    var slot = InventoryManager.GetBagByInventoryBagId((InventoryBagId) bagInfo.Item1).First(i => i.Slot == bagInfo.Item2);
+                    var slot = InventoryManager.GetBagByInventoryBagId((InventoryBagId)bagInfo.Item1).First(i => i.Slot == bagInfo.Item2);
                     await RemoveMateria(slot);
                     break;
                 //List<(uint, ushort)>
@@ -204,8 +204,8 @@ namespace LlamaUtilities.LlamaUtilities
                         break;
                     }
 
-                    List<BagSlot> materiaBagSlots = new List<BagSlot>();
-                    var equipmentSlot = InventoryManager.GetBagByInventoryBagId((InventoryBagId) materiaInfo.First().Bag).FirstOrDefault(i => i.Slot == materiaInfo.First().Slot);
+                    var materiaBagSlots = new List<BagSlot>();
+                    var equipmentSlot = InventoryManager.GetBagByInventoryBagId((InventoryBagId)materiaInfo.First().Bag).FirstOrDefault(i => i.Slot == materiaInfo.First().Slot);
                     if (equipmentSlot == null)
                     {
                         Log.Information("Slot is null");
@@ -214,7 +214,7 @@ namespace LlamaUtilities.LlamaUtilities
 
                     foreach (var mTuple in materiaInfo.Skip(1))
                     {
-                        materiaBagSlots.Add(InventoryManager.GetBagByInventoryBagId((InventoryBagId) mTuple.Bag).First(i => i.Slot == mTuple.Slot));
+                        materiaBagSlots.Add(InventoryManager.GetBagByInventoryBagId((InventoryBagId)mTuple.Bag).First(i => i.Slot == mTuple.Slot));
                     }
 
                     Log.Information(equipmentSlot.ToString());
@@ -250,7 +250,7 @@ namespace LlamaUtilities.LlamaUtilities
 
             Log.Information($"Want to affix Materia to {bagSlot}");
 
-            for (int i = 0; i < materiaList.Count; i++)
+            for (var i = 0; i < materiaList.Count; i++)
             {
                 if (materiaList[i] == null || !materiaList[i].IsValid)
                 {
@@ -303,7 +303,7 @@ namespace LlamaUtilities.LlamaUtilities
                 await Coroutine.Wait(7000, () => MateriaAttachDialog.Instance.IsOpen);
                 // await Coroutine.Wait(7000, () => AgentMeld.Instance.Ready);
                 Log.Information("Send Baglsot Affix");
-               // await Coroutine.Wait(7000, () => AgentMeld.Instance.CanMeld);
+                // await Coroutine.Wait(7000, () => AgentMeld.Instance.CanMeld);
                 bagSlot.AffixMateria(materiaList[i], true);
                 Log.Information("Wait not ready");
                 await Coroutine.Wait(20000, () => !AgentMeld.Instance.Ready);
@@ -382,12 +382,7 @@ namespace LlamaUtilities.LlamaUtilities
 
         private static bool ExtraCheck(BagSlot bs)
         {
-            if (ReduceSettings.Instance.IncludeFish)
-            {
-                return bs.Item.EquipmentCatagory == ItemUiCategory.Seafood && bs.CanDesynthesize;
-            }
-
-            return false;
+            return ReduceSettings.Instance.IncludeFish && bs.Item.EquipmentCatagory == ItemUiCategory.Seafood && bs.CanDesynthesize;
         }
 
         private static bool ShouldDesynth(string name)

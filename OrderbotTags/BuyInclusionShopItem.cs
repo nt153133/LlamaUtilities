@@ -6,7 +6,7 @@ using TreeSharp;
 namespace LlamaUtilities.OrderbotTags
 {
     [XmlElement("BuyInclusionShopItem")]
-    public class BuyInclusionShopItem: LLProfileBehavior
+    public class BuyInclusionShopItem : LLProfileBehavior
     {
         private bool _isDone;
 

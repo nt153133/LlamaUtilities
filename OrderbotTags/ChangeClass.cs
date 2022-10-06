@@ -2,14 +2,12 @@
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Media;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot;
 using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.RemoteWindows;
-using LlamaLibrary.Logging;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags

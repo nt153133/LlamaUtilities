@@ -5,11 +5,7 @@ using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot;
-using ff14bot.Behavior;
-using ff14bot.Enums;
 using ff14bot.Managers;
-using ff14bot.Navigation;
-using ff14bot.RemoteWindows;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -55,7 +51,7 @@ namespace LlamaUtilities.OrderbotTags
             return PluginManager.Plugins.FirstOrDefault(r => r.Plugin.Name == "DungeonAssist");
         }
 
-        static PluginContainer dungeonAssistPlugin = GetDungeonAssistPlugin();
+        private static readonly PluginContainer dungeonAssistPlugin = GetDungeonAssistPlugin();
 
         private async Task LoadDungeonAssistTask()
         {

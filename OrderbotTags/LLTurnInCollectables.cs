@@ -1,33 +1,15 @@
-﻿using System.Threading.Tasks;
-using System.Windows.Media;
-using Clio.XmlEngine;
-using TreeSharp;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using Buddy.Coroutines;
 using Clio.Utilities;
-using ff14bot;
-using ff14bot.AClasses;
-using ff14bot.Behavior;
-using ff14bot.Enums;
+using Clio.XmlEngine;
 using ff14bot.Managers;
-using ff14bot.Navigation;
-using ff14bot.Objects;
-using ff14bot.Pathing;
-using ff14bot.Pathing.Service_Navigation;
-using GreyMagic;
 using LlamaLibrary.Extensions;
 using LlamaLibrary.Helpers;
-using LlamaLibrary.Logging;
-using LlamaLibrary.Memory;
-using LlamaLibrary.Memory.Attributes;
 using LlamaLibrary.RemoteWindows;
-using System.ComponentModel;
-using ff14bot.RemoteWindows;
+using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
 {
@@ -35,10 +17,10 @@ namespace LlamaUtilities.OrderbotTags
     public class LLTurnInCollectables : LLProfileBehavior
     {
 
-       // [XmlAttribute("Vendor")]
+        // [XmlAttribute("Vendor")]
         //[XmlAttribute("vendor")]
         //[DefaultValue(1)]
-       // public int vendor { get; set; }
+        // public int vendor { get; set; }
 
         private bool _isDone;
 
@@ -108,11 +90,11 @@ namespace LlamaUtilities.OrderbotTags
                     await Navigation.GetToInteractNpc(1037306, 963, new Vector3(25.20608f, 0.9200001f, -70.4108f),
                                                       LlamaLibrary.RemoteWindows.CollectablesShop.Instance);
                     // Elmore
-					//					if (vendor == 2)
-					//					{
+                    //					if (vendor == 2)
+                    //					{
                     //await Navigation.GetToInteractNpc(1027542, 820, new Vector3(17.66549f, 82.05f, -18.34973f),
-					//					LlamaLibrary.RemoteWindows.CollectablesShop.Instance);
-					//					}
+                    //					LlamaLibrary.RemoteWindows.CollectablesShop.Instance);
+                    //					}
                 }
 
                 if (!CollectablesShop.Instance.IsOpen)
@@ -132,16 +114,16 @@ namespace LlamaUtilities.OrderbotTags
                         .First(i => i.ItemId == item.ItemId).Line);
                     await Coroutine.Sleep(1000);
                     var count = CollectablesShop.Instance.TurninCount;
-                    var currency = CurrencyHelper.GetCurrencyItemId((uint) item.Currency);
+                    var currency = CurrencyHelper.GetCurrencyItemId((uint)item.Currency);
 
-                    for (int i = 0; i < count; i++)
+                    for (var i = 0; i < count; i++)
                     {
                         if (CurrencyHelper.GetAmountOfCurrency(currency) + item.Reward > 2000)
                         {
                             break;
                         }
 
-                        int oldCount = CollectablesShop.Instance.TurninCount;
+                        var oldCount = CollectablesShop.Instance.TurninCount;
                         CollectablesShop.Instance.Trade();
                         await Coroutine.Wait(5000, () => CollectablesShop.Instance.TurninCount != oldCount);
                         await Coroutine.Sleep(200);

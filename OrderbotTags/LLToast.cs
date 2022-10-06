@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using System.Windows.Media;
 using Clio.XmlEngine;
 using ff14bot;
-using LlamaLibrary.Logging;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags

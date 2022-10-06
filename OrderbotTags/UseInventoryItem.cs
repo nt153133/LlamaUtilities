@@ -1,13 +1,9 @@
-﻿using System.Collections;
-using System.ComponentModel;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
-using ff14bot.Enums;
 using ff14bot.Managers;
 using TreeSharp;
-using System.Linq;
-using static LlamaLibrary.Helpers.GeneralFunctions;
 
 namespace LlamaUtilities.OrderbotTags
 {
@@ -48,14 +44,14 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task RunUseItem(int[] useItem)
         {
-            foreach (BagSlot slot in InventoryManager.FilledSlots)
+            foreach (var slot in InventoryManager.FilledSlots)
             {
-                if (!useItem.Contains((int) slot.RawItemId))
+                if (!useItem.Contains((int)slot.RawItemId))
                 {
                     continue;
                 }
 
-                for (int i = 0; i < slot.Count; i++)
+                for (var i = 0; i < slot.Count; i++)
                 {
                     Log.Information($"Using {slot.Item.CurrentLocaleName} {i}.");
                     slot.UseItem();

@@ -1,12 +1,10 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot;
 using ff14bot.Behavior;
-using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.Navigation;
 using ff14bot.RemoteWindows;
@@ -56,7 +54,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task UseShortcutTask()
         {
-            uint[] npcIds = { (uint) ShortcutId };
+            uint[] npcIds = { (uint)ShortcutId };
             var shortcutNpc = GameObjectManager.GameObjects.Where(r => r.IsTargetable && Core.Me.Location.Distance2D(r.Location) <= Distance && npcIds.Contains(r.NpcId)).OrderBy(r => r.Distance()).FirstOrDefault();
             while (Core.Me.Location.Distance2D(shortcutNpc.Location) > 1.5f)
             {

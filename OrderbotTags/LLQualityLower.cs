@@ -2,12 +2,10 @@
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Media;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot.Managers;
 using LlamaLibrary.Helpers;
-using LlamaLibrary.Logging;
 using TreeSharp;
 using static LlamaLibrary.Helpers.GeneralFunctions;
 

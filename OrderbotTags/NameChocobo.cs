@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot;
@@ -7,7 +6,6 @@ using ff14bot.Managers;
 using ff14bot.Navigation;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.RemoteWindows;
-using LlamaLibrary.Utilities;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags

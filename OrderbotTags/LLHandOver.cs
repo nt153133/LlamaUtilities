@@ -68,28 +68,7 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("NpcId")]
         public int NpcId { get; set; }
 
-        public override bool IsDone
-        {
-            get
-            {
-                if (IsQuestComplete)
-                {
-                    return true;
-                }
-
-                if (IsStepComplete)
-                {
-                    return true;
-                }
-
-                if (_doneTalking)
-                {
-                    return true;
-                }
-
-                return false;
-            }
-        }
+        public override bool IsDone => IsQuestComplete || IsStepComplete || _doneTalking;
 
         public override string StatusText => "Talking to " + _questGiver;
 

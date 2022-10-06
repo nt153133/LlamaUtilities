@@ -9,7 +9,6 @@ using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Helpers;
-using LlamaLibrary.ScriptConditions;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -48,7 +47,7 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool IsDone => _isDone;
 
-        private static string[] Greetings = new string[]
+        private static readonly string[] Greetings = new string[]
         {
             "Hola",
             "Bonjour",
@@ -150,23 +149,24 @@ namespace LlamaUtilities.OrderbotTags
             {
                 while (DutyManager.QueueState == QueueState.None)
                 {
-                    Log.Information("Queuing for " + DataManager.InstanceContentResults[(uint) DutyId].CurrentLocaleName);
-                    DutyManager.Queue(DataManager.InstanceContentResults[(uint) DutyId]);
-                    await Coroutine.Wait(10000, () => (DutyManager.QueueState == QueueState.CommenceAvailable || DutyManager.QueueState == QueueState.JoiningInstance));
+                    Log.Information("Queuing for " + DataManager.InstanceContentResults[(uint)DutyId].CurrentLocaleName);
+                    DutyManager.Queue(DataManager.InstanceContentResults[(uint)DutyId]);
+                    await Coroutine.Wait(10000, () => DutyManager.QueueState == QueueState.CommenceAvailable || DutyManager.QueueState == QueueState.JoiningInstance);
+
                     if (DutyManager.QueueState != QueueState.None)
                     {
                         Log.Information("Queued for Dungeon");
                     }
                     else if (DutyManager.QueueState == QueueState.None)
                     {
-                        Log.Error("Something went wrong, queueing again...");
+                        Log.Error("Something went wrong, queuing again...");
                     }
                 }
             }
             else
             {
                 Log.Information("Waiting for dungeon queue.");
-                await Coroutine.Wait(-1, () => (DutyManager.QueueState == QueueState.CommenceAvailable || DutyManager.QueueState == QueueState.JoiningInstance));
+                await Coroutine.Wait(-1, () => DutyManager.QueueState == QueueState.CommenceAvailable || DutyManager.QueueState == QueueState.JoiningInstance);
                 Log.Information("Queued for Dungeon");
             }
 
@@ -176,27 +176,27 @@ namespace LlamaUtilities.OrderbotTags
                 {
                     Log.Information("Waiting for queue pop.");
                     await Coroutine.Wait(-1,
-                                         () => (DutyManager.QueueState == QueueState.JoiningInstance ||
-                                                DutyManager.QueueState == QueueState.None));
+                                         () => DutyManager.QueueState == QueueState.JoiningInstance ||
+                                                DutyManager.QueueState == QueueState.None);
                 }
 
                 if (DutyManager.QueueState == QueueState.JoiningInstance)
                 {
-                    Random rnd = new Random();
-                    int waitTime = rnd.Next(1000, 10000);
+                    var rnd = new Random();
+                    var waitTime = rnd.Next(1000, 10000);
 
                     Log.Information($"Dungeon popped, commencing in {waitTime / 1000} seconds.");
                     await Coroutine.Sleep(waitTime);
                     DutyManager.Commence();
                     await Coroutine.Wait(-1,
-                                         () => (DutyManager.QueueState == QueueState.LoadingContent ||
-                                                DutyManager.QueueState == QueueState.CommenceAvailable));
+                                         () => DutyManager.QueueState == QueueState.LoadingContent ||
+                                                DutyManager.QueueState == QueueState.CommenceAvailable);
                 }
 
                 if (DutyManager.QueueState == QueueState.LoadingContent)
                 {
                     Log.Information("Waiting for everyone to accept queue.");
-                    await Coroutine.Wait(-1, () => (CommonBehaviors.IsLoading || DutyManager.QueueState == QueueState.CommenceAvailable));
+                    await Coroutine.Wait(-1, () => CommonBehaviors.IsLoading || DutyManager.QueueState == QueueState.CommenceAvailable);
                     await Coroutine.Sleep(1000);
                 }
 
@@ -226,6 +226,7 @@ namespace LlamaUtilities.OrderbotTags
                 {
                     ff14bot.RemoteAgents.AgentCutScene.Instance.PromptSkip();
                     await Coroutine.Wait(2000, () => SelectString.IsOpen || SelectYesno.IsOpen);
+
                     if (SelectString.IsOpen)
                     {
                         SelectString.ClickSlot(0);
@@ -240,8 +241,7 @@ namespace LlamaUtilities.OrderbotTags
 
             Log.Information("Should be in duty");
 
-            var director = (ff14bot.Directors.InstanceContentDirector) DirectorManager.ActiveDirector;
-            if (director != null)
+            if (DirectorManager.ActiveDirector is ff14bot.Directors.InstanceContentDirector director)
             {
                 if (Trial)
                 {
@@ -250,7 +250,7 @@ namespace LlamaUtilities.OrderbotTags
                         Log.Information("Barrier up");
                         if (SayHello)
                         {
-                            string sentgreeting = Greetings[_random.Next(0, Greetings.Length)];
+                            var sentgreeting = Greetings[_random.Next(0, Greetings.Length)];
 
                             Log.Information($"Saying '{sentgreeting}' the group");
                             await PartyBroadcaster.Send(sentgreeting);

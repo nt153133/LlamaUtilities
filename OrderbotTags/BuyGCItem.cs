@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Threading.Tasks;
-using System.Windows.Media;
 using Clio.XmlEngine;
-using LlamaLibrary.Logging;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags

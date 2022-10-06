@@ -20,7 +20,7 @@ namespace LlamaUtilities.LlamaUtilities
         private BagSlot _selectedBagSlot;
         private BagSlot _selectedBagSlotAffix;
         private IEnumerable<BagSlot> _selectedFilter = Filters.First().Key;
-        private static readonly LLogger Log = new LLogger("Utilties Form", Colors.Pink);
+        private static readonly LLogger Log = new LLogger("Utilities Form", Colors.Pink);
 
         private static readonly Dictionary<IEnumerable<BagSlot>, string> Filters = new Dictionary<IEnumerable<BagSlot>, string>()
         {
@@ -61,7 +61,7 @@ namespace LlamaUtilities.LlamaUtilities
                 return;
             }
 
-            (uint, ushort) stuff = ((uint) _selectedBagSlot.BagId, _selectedBagSlot.Slot);
+            (uint, ushort) stuff = ((uint)_selectedBagSlot.BagId, _selectedBagSlot.Slot);
             var taskInfo = JsonConvert.SerializeObject(stuff);
 
             var task = new BotTask()
@@ -109,7 +109,7 @@ namespace LlamaUtilities.LlamaUtilities
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
             itemCb.SelectionChangeCommitted += new System.EventHandler(itemCb_SelectionChangeCommitted);
             filterCb.SelectionChangeCommitted += new System.EventHandler(filterCb_SelectionChangeCommitted);
-            this.affixCb.SelectionChangeCommitted += new System.EventHandler(affixCb_SelectionChangeCommitted);
+            affixCb.SelectionChangeCommitted += new System.EventHandler(affixCb_SelectionChangeCommitted);
             tabControlMateria.SelectedIndexChanged += TabMateria_SelectedIndexChanged;
             pgHunts.SelectedObject = HuntsSettings.Instance;
             pgRetainers.SelectedObject = RetainerSettings.Instance;
@@ -140,7 +140,7 @@ namespace LlamaUtilities.LlamaUtilities
 
         private void itemCb_SelectionChangeCommitted(object sender, EventArgs e)
         {
-            _selectedBagSlot = (BagSlot) itemCb.SelectedItem;
+            _selectedBagSlot = (BagSlot)itemCb.SelectedItem;
             if (_selectedBagSlot == null || !_selectedBagSlot.IsValid)
             {
                 return;
@@ -152,7 +152,7 @@ namespace LlamaUtilities.LlamaUtilities
 
         private void filterCb_SelectionChangeCommitted(object sender, EventArgs e)
         {
-            _selectedFilter = ((KeyValuePair<IEnumerable<BagSlot>, string>) filterCb.SelectedItem).Key;
+            _selectedFilter = ((KeyValuePair<IEnumerable<BagSlot>, string>)filterCb.SelectedItem).Key;
         }
 
         private void bindingSourceInventory_CurrentChanged(object sender, EventArgs e)
@@ -319,10 +319,10 @@ namespace LlamaUtilities.LlamaUtilities
 
         private void affixCb_SelectionChangeCommitted(object sender, EventArgs e)
         {
-            _selectedBagSlotAffix = (BagSlot) affixCb.SelectedItem;
+            _selectedBagSlotAffix = (BagSlot)affixCb.SelectedItem;
             if (_selectedBagSlotAffix == null || !_selectedBagSlotAffix.IsValid)
             {
-                Log.Information($"It's null {affixCb.SelectedIndex} {bindingSourceAffix.List[affixCb.SelectedIndex].ToString()}");
+                Log.Information($"It's null {affixCb.SelectedIndex} {bindingSourceAffix.List[affixCb.SelectedIndex]}");
                 return;
             }
 
@@ -336,7 +336,7 @@ namespace LlamaUtilities.LlamaUtilities
             var list = slot.Materia();
             //var inventoryMateria =
             bindingSourceInventoryMateria.DataSource = InventoryManager.FilledSlots.Where(i => i.Item.EquipmentCatagory == ItemUiCategory.Materia);
-            var materia = InventoryManager.FilledSlots.Where(i => i.Item.EquipmentCatagory == ItemUiCategory.Materia).Select(r => new MateriaToAffix(r)).OrderBy(i=> i.index).ThenBy(l=> l.MateriaItem.Tier).ToList();
+            var materia = InventoryManager.FilledSlots.Where(i => i.Item.EquipmentCatagory == ItemUiCategory.Materia).Select(r => new MateriaToAffix(r)).OrderBy(i => i.index).ThenBy(l => l.MateriaItem.Tier).ToList();
             materia.Add(new MateriaToAffix(null));
             switch (list.Count)
             {
@@ -460,48 +460,51 @@ namespace LlamaUtilities.LlamaUtilities
         private void buttonAffix_Click(object sender, EventArgs e)
         {
             var list = _selectedBagSlotAffix.Materia();
-            List<BagSlot> materiaToAdd = new List<BagSlot>();
+            var materiaToAdd = new List<BagSlot>();
             //var inventoryMateria =
             //bindingSourceInventoryMateria.DataSource =InventoryManager.FilledSlots.Where(i=> i.Item.EquipmentCatagory == ItemUiCategory.Materia);
 
             switch (list.Count)
             {
                 case 0:
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb1.SelectedItem).BagSlot);
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb2.SelectedItem).BagSlot);
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb3.SelectedItem).BagSlot);
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb4.SelectedItem).BagSlot);
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb5.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb1.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb2.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb3.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb4.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb5.SelectedItem).BagSlot);
                     break;
 
                 case 1:
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb2.SelectedItem).BagSlot);
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb3.SelectedItem).BagSlot);
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb4.SelectedItem).BagSlot);
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb5.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb2.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb3.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb4.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb5.SelectedItem).BagSlot);
                     break;
 
                 case 2:
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb3.SelectedItem).BagSlot);
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb4.SelectedItem).BagSlot);
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb5.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb3.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb4.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb5.SelectedItem).BagSlot);
                     break;
 
                 case 3:
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb4.SelectedItem).BagSlot);
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb5.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb4.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb5.SelectedItem).BagSlot);
                     break;
 
                 case 4:
-                    materiaToAdd.Add(((MateriaToAffix) MateriaCb5.SelectedItem).BagSlot);
+                    materiaToAdd.Add(((MateriaToAffix)MateriaCb5.SelectedItem).BagSlot);
                     break;
 
                 default:
                     break;
             }
 
-            List<(uint, ushort)> slotMateriaList = new List<(uint, ushort)>();
-            slotMateriaList.Add(((uint) _selectedBagSlotAffix.BagId, _selectedBagSlotAffix.Slot));
+            var slotMateriaList = new List<(uint, ushort)>
+            {
+                ((uint)_selectedBagSlotAffix.BagId, _selectedBagSlotAffix.Slot),
+            };
+
             foreach (var slot in materiaToAdd)
             {
                 if (slot == null)
@@ -509,7 +512,7 @@ namespace LlamaUtilities.LlamaUtilities
                     break;
                 }
 
-                slotMateriaList.Add(((uint) slot.BagId, slot.Slot));
+                slotMateriaList.Add(((uint)slot.BagId, slot.Slot));
             }
 
             // MateriaBase.MateriaToAdd = materiaToAdd;
@@ -533,7 +536,7 @@ namespace LlamaUtilities.LlamaUtilities
 
         }
 
-        private void TabMateria_SelectedIndexChanged(Object sender, EventArgs e)
+        private void TabMateria_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (tabControlMateria.SelectedIndex == 1)
             {
@@ -578,7 +581,7 @@ namespace LlamaUtilities.LlamaUtilities
 
             BagSlot = slot;
             MateriaItem = LlamaLibrary.ResourceManager.MateriaList.Value.SelectMany(i => i.Value).FirstOrDefault(r => r.Key == slot.RawItemId);
-            index = LlamaLibrary.ResourceManager.MateriaList.Value.FirstOrDefault(r => r.Value.Any(k=> k.Key ==slot.RawItemId)).Key;
+            index = LlamaLibrary.ResourceManager.MateriaList.Value.FirstOrDefault(r => r.Value.Any(k => k.Key == slot.RawItemId)).Key;
         }
     }
 }

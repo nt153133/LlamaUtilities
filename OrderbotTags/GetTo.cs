@@ -10,13 +10,11 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Windows.Media;
 using Clio.Utilities;
 using Clio.XmlEngine;
 using ff14bot.Behavior;
 using ff14bot.Navigation;
 using LlamaLibrary.Helpers;
-using LlamaLibrary.Logging;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -64,6 +62,7 @@ namespace LlamaUtilities.OrderbotTags
 
             _generatedNodes = true;
             FinalizedPath = path;
+
             return true;
         }
 
@@ -74,8 +73,7 @@ namespace LlamaUtilities.OrderbotTags
 
                 //new Decorator(r => !_generatedNodes, new ActionRunCoroutine(r => GenerateNodes())),
                 //NavGraph.NavGraphConsumer(r => FinalizedPath)
-                new Decorator(r => !_generatedNodes, new ActionRunCoroutine(t => Lisbeth.TravelTo(ZoneId.ToString(), XYZ)))
-                );
+                new Decorator(r => !_generatedNodes, new ActionRunCoroutine(t => Lisbeth.TravelTo(ZoneId.ToString(), XYZ))));
         }
     }
 }

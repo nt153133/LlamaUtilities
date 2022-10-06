@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using System.Windows.Media;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot.Behavior;
@@ -9,7 +8,6 @@ using ff14bot.Navigation;
 using ff14bot.NeoProfiles;
 using ff14bot.Pathing.Service_Navigation;
 using ff14bot.RemoteWindows;
-using LlamaLibrary.Logging;
 using LlamaLibrary.RemoteWindows;
 using LlamaLibrary.Utilities;
 using TreeSharp;

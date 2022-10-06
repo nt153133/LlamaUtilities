@@ -1,12 +1,8 @@
-﻿using System;
-using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot;
 using ff14bot.Behavior;
-using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.Navigation;
 using ff14bot.RemoteWindows;
@@ -51,7 +47,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task EnterSoloDutyTask()
         {
-            var npcId = GameObjectManager.GetObjectByNPCId( (uint) InteracttId);
+            var npcId = GameObjectManager.GetObjectByNPCId((uint)InteracttId);
 
             if (!npcId.IsWithinInteractRange)
 

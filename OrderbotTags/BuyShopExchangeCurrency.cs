@@ -1,14 +1,12 @@
 ﻿using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Media;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot;
 using ff14bot.Managers;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Helpers;
-using LlamaLibrary.Logging;
 using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 using Character = ff14bot.Objects.Character;
@@ -96,7 +94,7 @@ namespace LlamaUtilities.OrderbotTags
 
             if (Conversation.IsOpen)
             {
-                Conversation.SelectLine((uint) selectString);
+                Conversation.SelectLine((uint)selectString);
 
                 if (Dialog)
                 {
@@ -136,7 +134,6 @@ namespace LlamaUtilities.OrderbotTags
             {
                 ShopExchangeCurrency.Close();
             }
-
 
             _isDone = true;
         }

@@ -1,11 +1,9 @@
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Media;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot.Managers;
-using LlamaLibrary.Logging;
 using TreeSharp;
 using static LlamaLibrary.Helpers.GeneralFunctions;
 
@@ -63,10 +61,10 @@ namespace LlamaUtilities.OrderbotTags
 
             if (Armory)
             {
-                await RetainerSellItems(InventoryManager.FilledInventoryAndArmory.Where(x => ItemIds.Contains((int) x.RawItemId)));
+                await RetainerSellItems(InventoryManager.FilledInventoryAndArmory.Where(x => ItemIds.Contains((int)x.RawItemId)));
             }
 
-            await RetainerSellItems(InventoryManager.FilledSlots.Where(x => ItemIds.Contains((int) x.RawItemId)));
+            await RetainerSellItems(InventoryManager.FilledSlots.Where(x => ItemIds.Contains((int)x.RawItemId)));
 
 
             _isDone = true;

@@ -1,8 +1,5 @@
-﻿using System.ComponentModel;
-using System.Threading.Tasks;
-using System.Windows.Media;
+﻿using System.Threading.Tasks;
 using Clio.XmlEngine;
-using LlamaLibrary.Logging;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -11,8 +8,6 @@ namespace LlamaUtilities.OrderbotTags
     public class GCExpertTurnin : LLProfileBehavior
     {
         private bool _isDone;
-
-
 
         public override bool HighPriority => true;
 
@@ -41,9 +36,8 @@ namespace LlamaUtilities.OrderbotTags
         private async Task DoGCExpertTurnin()
         {
             await LlamaLibrary.Helpers.GrandCompanyHelper.GCHandInExpert();
-						
-						 _isDone = true;
 
+            _isDone = true;
         }
     }
 }

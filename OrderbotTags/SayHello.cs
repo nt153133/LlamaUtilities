@@ -1,15 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Linq;
 using System.Threading.Tasks;
-using Buddy.Coroutines;
 using Clio.XmlEngine;
-using ff14bot;
-using ff14bot.Behavior;
-using ff14bot.Enums;
 using ff14bot.Managers;
-using ff14bot.Navigation;
-using ff14bot.RemoteWindows;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -30,7 +23,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private static readonly Random _random = new Random();
 
-        private static string[] Greetings = new string[]
+        private static readonly string[] Greetings = new string[]
         {
             "/p Hola",
             "/p Greetings",
@@ -85,7 +78,7 @@ namespace LlamaUtilities.OrderbotTags
             "/p Oh yeah, love fighting this guy"
         };
 
-        private static string[] Farewells = new string[]
+        private static readonly string[] Farewells = new string[]
         {
             "/p See you later, alligator!",
             "/p After a while, crocodile.",
@@ -184,9 +177,8 @@ namespace LlamaUtilities.OrderbotTags
             return new ActionRunCoroutine(r => SayHelloTask());
         }
 
-        private async Task SayHelloTask()
+        private Task SayHelloTask()
         {
-
             if (Goodbye)
             {
                 Log("Saying goodbye the group");
@@ -199,7 +191,8 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             _isDone = true;
-
+            
+            return Task.CompletedTask;
         }
     }
 }

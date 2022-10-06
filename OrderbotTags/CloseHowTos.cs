@@ -1,14 +1,7 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Media;
+﻿using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
-using ff14bot;
-using ff14bot.Behavior;
 using ff14bot.Managers;
-using ff14bot.Navigation;
-using ff14bot.Objects;
-using LlamaLibrary.Logging;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -44,65 +37,65 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task CloseWindows()
         {
-					if (RaptureAtkUnitManager.GetWindowByName("HowToNotice") != null)
-					{
-							do
-							{
-									var windowbyname = RaptureAtkUnitManager.GetWindowByName("HowToNotice");
+            if (RaptureAtkUnitManager.GetWindowByName("HowToNotice") != null)
+            {
+                do
+                {
+                    var windowbyname = RaptureAtkUnitManager.GetWindowByName("HowToNotice");
 
-									if (windowbyname != null)
-									{
-											windowbyname.SendAction(1, 3, 0);
-									}
+                    if (windowbyname != null)
+                    {
+                        windowbyname.SendAction(1, 3, 0);
+                    }
 
-									await Coroutine.Wait(5000, () => RaptureAtkUnitManager.GetWindowByName("HowTo") != null);
+                    await Coroutine.Wait(5000, () => RaptureAtkUnitManager.GetWindowByName("HowTo") != null);
 
-									windowbyname = RaptureAtkUnitManager.GetWindowByName("HowTo");
+                    windowbyname = RaptureAtkUnitManager.GetWindowByName("HowTo");
 
-									if (windowbyname != null)
-									{
-											windowbyname.SendAction(1, 3uL, 0xFFFFFFFFuL);
-									}
+                    if (windowbyname != null)
+                    {
+                        windowbyname.SendAction(1, 3uL, 0xFFFFFFFFuL);
+                    }
 
-									await Coroutine.Sleep(500);
-							} while (RaptureAtkUnitManager.GetWindowByName("HowToNotice") != null);
-					}
+                    await Coroutine.Sleep(500);
+                } while (RaptureAtkUnitManager.GetWindowByName("HowToNotice") != null);
+            }
 
-					if (RaptureAtkUnitManager.GetWindowByName("HowTo") != null)
-					{
-							RaptureAtkUnitManager.GetWindowByName("HowTo").SendAction(1, 3uL, 0xFFFFFFFFuL);
-					}
-					
-					if (RaptureAtkUnitManager.GetWindowByName("PlayGuide") != null)
-					{
-							RaptureAtkUnitManager.GetWindowByName("PlayGuide").SendAction(1, 3uL, 0xFFFFFFFFuL);
-					}
-					
-					if (RaptureAtkUnitManager.GetWindowByName("JobHudNotice") != null)
-					{
-							do
-							{
-									var windowbyname = RaptureAtkUnitManager.GetWindowByName("JobHudNotice");
+            if (RaptureAtkUnitManager.GetWindowByName("HowTo") != null)
+            {
+                RaptureAtkUnitManager.GetWindowByName("HowTo").SendAction(1, 3uL, 0xFFFFFFFFuL);
+            }
 
-									if (windowbyname != null)
-									{
-											windowbyname.SendAction(1, 3, 0);
-									}
+            if (RaptureAtkUnitManager.GetWindowByName("PlayGuide") != null)
+            {
+                RaptureAtkUnitManager.GetWindowByName("PlayGuide").SendAction(1, 3uL, 0xFFFFFFFFuL);
+            }
 
-									await Coroutine.Wait(5000, () => RaptureAtkUnitManager.GetWindowByName("Guide") != null);
+            if (RaptureAtkUnitManager.GetWindowByName("JobHudNotice") != null)
+            {
+                do
+                {
+                    var windowbyname = RaptureAtkUnitManager.GetWindowByName("JobHudNotice");
 
-									windowbyname = RaptureAtkUnitManager.GetWindowByName("Guide");
+                    if (windowbyname != null)
+                    {
+                        windowbyname.SendAction(1, 3, 0);
+                    }
 
-									if (windowbyname != null)
-									{
-											windowbyname.SendAction(1, 3uL, 0xFFFFFFFFuL);
-									}
+                    await Coroutine.Wait(5000, () => RaptureAtkUnitManager.GetWindowByName("Guide") != null);
 
-									await Coroutine.Sleep(500);
-							} while (RaptureAtkUnitManager.GetWindowByName("HowToNotice") != null);
-					}					
+                    windowbyname = RaptureAtkUnitManager.GetWindowByName("Guide");
 
-          _isDone = true;
+                    if (windowbyname != null)
+                    {
+                        windowbyname.SendAction(1, 3uL, 0xFFFFFFFFuL);
+                    }
+
+                    await Coroutine.Sleep(500);
+                } while (RaptureAtkUnitManager.GetWindowByName("HowToNotice") != null);
+            }
+
+            _isDone = true;
         }
     }
 }
