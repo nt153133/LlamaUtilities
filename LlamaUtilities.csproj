@@ -60,8 +60,8 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="LlamaUtilities\Utilities.Designer.cs">
-		<DependentUpon>Utilities.cs</DependentUpon>
-	</Compile>
+      <DependentUpon>Utilities.cs</DependentUpon>
+    </Compile>
     <Compile Include="LlamaUtilities\UtilitiesBase.cs" />
     <Compile Include="OrderbotTags\AutoEquip.cs" />
     <Compile Include="OrderbotTags\AutoInventoryEquip.cs" />
@@ -75,8 +75,12 @@
     <Compile Include="OrderbotTags\BuyShopExchangeItem.cs" />
     <Compile Include="OrderbotTags\BuyWhiteScriptItem.cs" />
     <Compile Include="OrderbotTags\ChangeClass.cs" />
+    <Compile Include="OrderbotTags\CloseHowTos.cs" />
+    <Compile Include="OrderbotTags\EnterSoloDuty.cs" />
     <Compile Include="OrderbotTags\EquipWeapon.cs" />
     <Compile Include="OrderbotTags\Fate.cs" />
+    <Compile Include="OrderbotTags\GCExpertTurnin.cs" />
+    <Compile Include="OrderbotTags\GCRankUp.cs" />
     <Compile Include="OrderbotTags\GearSetEquipAll.cs" />
     <Compile Include="OrderbotTags\GetTo.cs" />
     <Compile Include="OrderbotTags\InviteToParty.cs" />
@@ -113,15 +117,20 @@
     <Compile Include="OrderbotTags\LLUseObject.cs" />
     <Compile Include="OrderbotTags\LLUseSpell.cs" />
     <Compile Include="OrderbotTags\LoadAchievements.cs" />
+    <Compile Include="OrderbotTags\LoadDungeonAssist.cs" />
     <Compile Include="OrderbotTags\LowerCollectable.cs" />
+    <Compile Include="OrderbotTags\NameChocobo.cs" />
+    <Compile Include="OrderbotTags\OpenCoffers.cs" />
     <Compile Include="OrderbotTags\PassOnLoot.cs" />
+    <Compile Include="OrderbotTags\RandomMoveTo.cs" />
     <Compile Include="OrderbotTags\RetainerHire.cs" />
+    <Compile Include="OrderbotTags\SayHello.cs" />
     <Compile Include="OrderbotTags\SetBluSpells.cs" />
     <Compile Include="OrderbotTags\ClimbSpiral.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include=".editorconfig" />
-    <Content Include=".gitignore" />
+    <Compile Include="OrderbotTags\UseInventoryItem.cs" />
+    <Compile Include="OrderbotTags\UseShortcut.cs" />
+    <Compile Include="OrderbotTags\UseTransportConvo.cs" />
+    <Compile Include="OrderbotTags\UseUnlockables.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="LlamaUtilities\Utilities.resx" />
@@ -136,11 +145,38 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-         Other similar extension points exist, see Microsoft.Common.targets.
-    <Target Name="BeforeBuild">
-    </Target>
-    <Target Name="AfterBuild">
-    </Target>
-    -->
+  <PropertyGroup>
+    <!-- One of: BotBases, Plugins, Profiles, Quest Behaviors, Routines -->
+    <AddonType>BotBases</AddonType>
+    <!-- $(TargetName) auto-populated by Project Properties > Application > Assembly Name -->
+    <AddonName>$(TargetName)</AddonName>
+    <RebornDir>$(RebornbuddyDir)</RebornDir>
+    <RootDir>$(SolutionDir)</RootDir>
+    <IsInRebornDir>$(RootDir.StartsWith($(RebornDir), System.StringComparison.OrdinalIgnoreCase))</IsInRebornDir>
+  </PropertyGroup>
+  <Target Name="CopySolutionItems" AfterTargets="AfterBuild;AfterRebuild">
+    <!-- Copy selected solution items to project build output directory (e.g., README.md, LICENSE.md) -->
+    <!-- Special project items should instead use Properties > Copy to Output Directory: Copy Always -->
+    <!-- RebornBuddy requires at least one uncompiled C# file set to Copy Always (e.g., Loader.cs) -->
+    <CreateItem Include="$(SolutionDir)\*.md">
+      <Output TaskParameter="Include" ItemName="SolutionItems" />
+    </CreateItem>
+    <Message Importance="High" Text="Copying solution items to build output..." />
+    <Copy SourceFiles="@(SolutionItems)" DestinationFiles="@(SolutionItems->'$(OutDir)\%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+  <Target Name="DeployToRebornBuddy" AfterTargets="CopySolutionItems" Condition="'$(RebornDir)' != '' And !$(IsInRebornDir)">
+    <!-- For development convenience of pre-compiled add-ons, auto-copy build output to RebornBuddy if RebornbuddyDir env var set -->
+    <Error Condition="!Exists('$(RebornDir)')" Text="RebornbuddyDir set but directory doesn't exist! RebornbuddyDir='$(RebornDir)'" />
+    <CreateItem Include="$(TargetDir)\**\*" Exclude="$(TargetDir)\**\*.tmp">
+      <Output TaskParameter="Include" ItemName="BuildOutput" />
+    </CreateItem>
+    <Message Importance="High" Text="Copying build output to '$(RebornDir)\$(AddonType)\$(AddonName)'" />
+    <Copy SourceFiles="@(BuildOutput)" DestinationFiles="@(BuildOutput->'$(RebornDir)\$(AddonType)\$(AddonName)\%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+  <Target Name="CleanIfInRebornBuddy" AfterTargets="CopySolutionItems" Condition="'$(RebornDir)' == '' Or $(IsInRebornDir)">
+    <!-- RebornBuddy does its own compilation and fails due to bin\obj folders, but manual VS builds are useful for finding compile-time errors -->
+    <!-- If solution is under RebornDir, clean build artifacts so RebornBuddy can do its own thing -->
+    <Message Importance="High" Text="Solution within RebornBuddy directory; cleaning build artifacts to avoid RB compile errors..." />
+    <CallTarget Targets="Clean" />
+  </Target>
 </Project>
