@@ -48,7 +48,7 @@ namespace LlamaUtilities.OrderbotTags
                     new Decorator(
                         r => RecommendEquip.Instance.IsOpen,
                         new Sequence(
-                            new Action(r => Log.Verbose($"{RecommendEquip.Instance.Name} Window open")),
+                            new Action(r => Log.Verbose($"{RecommendEquip.Instance.WindowName} Window open")),
                             new Action(r => RecommendEquip.Instance.Confirm()),
                             new Sleep(1000),
                             new Action(r => _isOpening = false),
