@@ -21,7 +21,7 @@ using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.Objects;
 using ff14bot.RemoteWindows;
-
+using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -168,6 +168,10 @@ namespace LlamaUtilities.OrderbotTags
                         ChatManager.SendChat("/" + Emote);
                         _doneEmote = true;
                     })
+                ),
+                new Decorator(
+                    ret => AkatsukiNote.Instance.IsOpen,
+                    new Action(r => AkatsukiNote.Instance.Close())
                 ),
                 new Decorator(
                     ret => SelectYesno.IsOpen,
