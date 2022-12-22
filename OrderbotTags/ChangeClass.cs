@@ -101,7 +101,7 @@ namespace LlamaUtilities.OrderbotTags
                 }
             }
 
-            _isDone = true;
+            _isDone = Core.Me.CurrentJob == newjob;
         }
 
         protected override Composite CreateBehavior()
