@@ -131,6 +131,7 @@
     <Compile Include="OrderbotTags\UseShortcut.cs" />
     <Compile Include="OrderbotTags\UseTransportConvo.cs" />
     <Compile Include="OrderbotTags\UseUnlockables.cs" />
+    <Compile Include="OrderbotTags\VoteMVP.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="LlamaUtilities\Utilities.resx" />
