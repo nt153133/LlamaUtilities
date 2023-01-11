@@ -45,24 +45,32 @@ namespace LlamaUtilities.LlamaUtilities
         public static bool IsBusy => DutyManager.InInstance || DutyManager.InQueue || DutyManager.DutyReady || Core.Me.IsCasting || Core.Me.IsMounted || Core.Me.InCombat || Talk.DialogOpen || MovementManager.IsMoving ||
                                      MovementManager.IsOccupied;
 
-        private static readonly List<string> DesynthList = new List<string>
+        private static readonly List<(string Name, uint ItemLevel)> DesynthList = new List<(string, uint)>
         {
-            "Warg",
-            "Amaurotine",
-            "Lakeland",
-            "Voeburtite",
-            "Fae",
-            "Ravel",
-            "Nabaath",
-            "Anamnesis",
-            "Shadowless",
-            "Heirloom",
-            "Paglth'an",
-            "Imperial",
-            "Manusya",
-            "Ktiseos",
-            "Palaka",
-            "Troian",
+            // 5.x Shadowbringers
+            ("Lakeland", 390),
+            ("Voeburtite", 400),
+            ("Fae", 400),
+            ("Ravel Keeper's", 406),
+            ("Nabaath", 412),
+            ("The Forgiven", 418),
+            ("Amaurotine", 430),
+            ("Warg", 445),
+            ("Anamnesis", 455),
+            ("Shadowless", 475),
+            ("Heirloom", 485),
+            ("Paglth'an", 505),
+
+            // 6.x Endwalker
+            ("Manusya", 520),
+            ("Imperial", 530),
+            ("Palaka", 536),
+            ("Ktiseos", 542),
+            ("Etheirys", 548),
+            ("The Last", 560),
+            ("Darbar", 575),
+            ("Troian", 595),
+            ("Manalis", 605),
         };
 
         public UtilitiesBase()
@@ -366,7 +374,8 @@ namespace LlamaUtilities.LlamaUtilities
 
             var toDesynthList = InventoryManager.GetBagsByInventoryBagId(BagsToCheck())
                 .SelectMany(bag => bag.FilledSlots
-                                .FindAll(bs => bs.IsDesynthesizable && (ShouldDesynth(bs.Item.EnglishName) || ExtraCheck(bs)))).ToList();
+                    .FindAll(bs => bs.IsDesynthesizable && (IsOnDesynthList(bs) || ShouldDesynthFish(bs))))
+                .ToList();
 
             if (!toDesynthList.Any())
             {
@@ -380,14 +389,16 @@ namespace LlamaUtilities.LlamaUtilities
             return true;
         }
 
-        private static bool ExtraCheck(BagSlot bs)
+        private static bool ShouldDesynthFish(BagSlot bs)
         {
             return ReduceSettings.Instance.IncludeFish && bs.Item.EquipmentCatagory == ItemUiCategory.Seafood && bs.CanDesynthesize;
         }
 
-        private static bool ShouldDesynth(string name)
+        private static bool IsOnDesynthList(BagSlot bagSlot)
         {
-            return DesynthList.Any(name.Contains);
+            return DesynthList.Any(x =>
+                bagSlot.Item.ItemLevel == x.ItemLevel
+                && bagSlot.Item.EnglishName.Contains(x.Name, StringComparison.InvariantCultureIgnoreCase));
         }
 
         private static InventoryBagId[] BagsToCheck()
