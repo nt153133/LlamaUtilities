@@ -8,6 +8,7 @@ using ff14bot.Behavior;
 using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.RemoteWindows;
+using LlamaLibrary.Enums;
 using LlamaLibrary.Helpers;
 using TreeSharp;
 
@@ -134,6 +135,9 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task JoinDutyTask(int DutyId, bool Undersized, bool Trial, bool Raid)
         {
+            
+            await GeneralFunctions.StopBusy();
+
             if (Undersized)
             {
                 Log.Information("Joining Duty as Undersized party.");
@@ -149,6 +153,8 @@ namespace LlamaUtilities.OrderbotTags
             {
                 while (DutyManager.QueueState == QueueState.None)
                 {
+
+
                     Log.Information("Queuing for " + DataManager.InstanceContentResults[(uint)DutyId].CurrentLocaleName);
                     DutyManager.Queue(DataManager.InstanceContentResults[(uint)DutyId]);
                     await Coroutine.Wait(10000, () => DutyManager.QueueState == QueueState.CommenceAvailable || DutyManager.QueueState == QueueState.JoiningInstance);
