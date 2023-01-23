@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.ComponentModel;
+using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot;
@@ -21,6 +22,10 @@ namespace LlamaUtilities.OrderbotTags
 
         [XmlAttribute("Qty")]
         public int Qty { get; set; }
+
+        [XmlAttribute("Overload")]
+        [DefaultValue(true)]
+        public bool Overload { get; set; }
 
         public override bool HighPriority => true;
 
@@ -50,7 +55,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task AWGrowthTradeTask()
         {
-            var result = await AgentAWGrowthFragTrade.BuyCrystalSand((uint)ItemToSpend, Qty);
+            var result = await AgentAWGrowthFragTrade.BuyCrystalSand((uint)ItemToSpend,Qty,Overload);
 
             _isDone = true;
         }
