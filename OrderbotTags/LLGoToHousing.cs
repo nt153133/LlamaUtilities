@@ -33,7 +33,9 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool IsDone => _isDone;
 
-        public LLGoToHousing() : base() { }
+        public LLGoToHousing() : base()
+        {
+        }
 
         protected override void OnStart()
         {
@@ -55,8 +57,11 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task GoToWard(int ward, string district)
         {
-            Navigator.PlayerMover = new SlideMover();
-            Navigator.NavigationProvider = new ServiceNavigationProvider();
+            if (Navigator.NavigationProvider == null)
+            {
+                Navigator.PlayerMover = new SlideMover();
+                Navigator.NavigationProvider = new ServiceNavigationProvider();
+            }
 
             if (district.Equals("Lavender Beds", StringComparison.InvariantCultureIgnoreCase))
             {

@@ -41,9 +41,11 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task GoToBarracksTask()
         {
-            Navigator.PlayerMover = new SlideMover();
-            Navigator.NavigationProvider = new ServiceNavigationProvider();
-
+            if (Navigator.NavigationProvider == null)
+            {
+                Navigator.PlayerMover = new SlideMover();
+                Navigator.NavigationProvider = new ServiceNavigationProvider();
+            }
             // Not in Barracks
             Log($"Moving to Barracks");
             await GrandCompanyHelper.InteractWithNpc(GCNpc.Entrance_to_the_Barracks);

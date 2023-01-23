@@ -26,8 +26,11 @@ namespace LlamaUtilities.LlamaUtilities
 
         public static async Task<bool> HandInItems()
         {
-            Navigator.NavigationProvider = new ServiceNavigationProvider();
-            Navigator.PlayerMover = new SlideMover();
+            if (Navigator.NavigationProvider == null)
+            {
+                Navigator.PlayerMover = new SlideMover();
+                Navigator.NavigationProvider = new ServiceNavigationProvider();
+            }
 
             if (!SubmarinePartsMenu.Instance.IsOpen)
             {
