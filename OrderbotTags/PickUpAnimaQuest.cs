@@ -103,20 +103,15 @@ namespace LlamaUtilities.OrderbotTags
             {
                 if (SelectIconString.IsOpen)
                 {
-                    if (QuestLogManager.IsQuestCompleted(67940))
+                    Logging.WriteDiagnostic("Choosing 'Anima Weapon Recreation'.");
+                    if (!SelectIconString.ClickLineContains($"Recreation"))
                     {
-                        Logging.WriteDiagnostic("Relic weapon completed before.");
-                        Logging.WriteDiagnostic("Choosing 'Anima Weapon Recreation'.");
-                        SelectIconString.ClickSlot(0);
-                        await Coroutine.Wait(10000, () => !SelectIconString.IsOpen);
+                        Logging.WriteDiagnostic($"We can't find 'Anima Weapon Recreation', exiting'.");
+                        _isDone = true;
+                        return;
                     }
-                    else
-                    {
-                        Logging.WriteDiagnostic("Never completed Anima before.");
-                        Logging.WriteDiagnostic("Choosing 'Anima Weapon Recreation'.");
-                        SelectIconString.ClickSlot(1);
-                        await Coroutine.Wait(10000, () => !SelectIconString.IsOpen);
-                    }
+
+                    await Coroutine.Wait(10000, () => !SelectIconString.IsOpen);
 
                     await Coroutine.Wait(10000, () => SelectString.IsOpen);
                     {
@@ -127,6 +122,7 @@ namespace LlamaUtilities.OrderbotTags
                             _isDone = true;
                             return;
                         }
+
                         await Coroutine.Wait(10000, () => !SelectString.IsOpen);
                     }
                 }
@@ -142,9 +138,11 @@ namespace LlamaUtilities.OrderbotTags
                         _isDone = true;
                         return;
                     }
+
                     await Coroutine.Wait(10000, () => !SelectIconString.IsOpen);
                 }
             }
+
             Logging.WriteDiagnostic("Waiting for dialog to open.");
             await Coroutine.Wait(10000, () => Talk.DialogOpen);
             while (!SelectString.IsOpen)
