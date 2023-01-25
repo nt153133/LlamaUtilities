@@ -78,6 +78,7 @@
     <Compile Include="OrderbotTags\ChangeClass.cs" />
     <Compile Include="OrderbotTags\CloseHowTos.cs" />
     <Compile Include="OrderbotTags\EnterSoloDuty.cs" />
+    <Compile Include="OrderbotTags\EquipAnima.cs" />
     <Compile Include="OrderbotTags\EquipWeapon.cs" />
     <Compile Include="OrderbotTags\Fate.cs" />
     <Compile Include="OrderbotTags\GCExpertTurnin.cs" />
@@ -123,6 +124,7 @@
     <Compile Include="OrderbotTags\NameChocobo.cs" />
     <Compile Include="OrderbotTags\OpenCoffers.cs" />
     <Compile Include="OrderbotTags\PassOnLoot.cs" />
+    <Compile Include="OrderbotTags\PickUpAnimaQuest.cs" />
     <Compile Include="OrderbotTags\RandomMoveTo.cs" />
     <Compile Include="OrderbotTags\RetainerHire.cs" />
     <Compile Include="OrderbotTags\SayHello.cs" />
