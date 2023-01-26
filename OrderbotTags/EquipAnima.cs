@@ -76,11 +76,11 @@ namespace LlamaUtilities.OrderbotTags
                     {
                         Logging.WriteDiagnostic("We are in combat and can't switch weapons.");
                         Logging.WriteDiagnostic("Waiting 10 seconds or until combat drops");
-                        await Coroutine.Wait(10000, () => Core.Me.InCombat);
+                        await Coroutine.Wait(10000, () => !Core.Me.InCombat);
                         while (Core.Me.InCombat)
                         {
                             Logging.WriteDiagnostic("Combat didn't end after 10 seconds. Trying again.");
-                            await Coroutine.Wait(10000, () => Core.Me.InCombat);
+                            await Coroutine.Wait(10000, () => !Core.Me.InCombat);
                         }
                     }
 
@@ -124,11 +124,11 @@ namespace LlamaUtilities.OrderbotTags
                         {
                             Logging.WriteDiagnostic("We are in combat and can't switch weapons.");
                             Logging.WriteDiagnostic("Waiting 10 seconds or until combat drops");
-                            await Coroutine.Wait(10000, () => Core.Me.InCombat);
+                            await Coroutine.Wait(10000, () => !Core.Me.InCombat);
                             while (Core.Me.InCombat)
                             {
                                 Logging.WriteDiagnostic("Combat didn't end after 10 seconds. Trying again.");
-                                await Coroutine.Wait(10000, () => Core.Me.InCombat);
+                                await Coroutine.Wait(10000, () => !Core.Me.InCombat);
                             }
                         }
 
