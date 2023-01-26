@@ -127,6 +127,7 @@
     <Compile Include="OrderbotTags\PickUpAnimaQuest.cs" />
     <Compile Include="OrderbotTags\RandomMoveTo.cs" />
     <Compile Include="OrderbotTags\RetainerHire.cs" />
+    <Compile Include="OrderbotTags\RetainerItemDump.cs" />
     <Compile Include="OrderbotTags\SayHello.cs" />
     <Compile Include="OrderbotTags\SetBluSpells.cs" />
     <Compile Include="OrderbotTags\ClimbSpiral.cs" />
