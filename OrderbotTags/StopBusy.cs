@@ -14,15 +14,15 @@ namespace LlamaUtilities.OrderbotTags
         private bool _isDone;
 
         [XmlAttribute("LeaveDuty")]
-        [DefaultValue("true")]
+        [DefaultValue(true)]
         public bool LeaveDuty { get; set; }
 
         [XmlAttribute("StopFishing")]
-        [DefaultValue("true")]
+        [DefaultValue(true)]
         public bool StopFishing { get; set; }
 
         [XmlAttribute("Dismount")]
-        [DefaultValue("true")]
+        [DefaultValue(true)]
         public bool Dismount { get; set; }
 
         public override bool HighPriority => true;
