@@ -13,6 +13,18 @@ namespace LlamaUtilities.OrderbotTags
     {
         private bool _isDone;
 
+        [XmlAttribute("LeaveDuty")]
+        [DefaultValue("true")]
+        public bool LeaveDuty { get; set; }
+
+        [XmlAttribute("StopFishing")]
+        [DefaultValue("true")]
+        public bool StopFishing { get; set; }
+
+        [XmlAttribute("Dismount")]
+        [DefaultValue("true")]
+        public bool Dismount { get; set; }
+
         public override bool HighPriority => true;
 
         public override bool IsDone => _isDone;
@@ -45,7 +57,7 @@ namespace LlamaUtilities.OrderbotTags
                 return;
             }
 
-            await GeneralFunctions.StopBusy();
+            await GeneralFunctions.StopBusy(LeaveDuty,StopFishing,Dismount);
 
             _isDone = true;
         }
