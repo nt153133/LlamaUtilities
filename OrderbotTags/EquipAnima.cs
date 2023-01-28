@@ -38,14 +38,14 @@ namespace LlamaUtilities.OrderbotTags
             { ClassJobType.Machinist, new uint[] { 13618, 13604, 13230, 14877, 15230, 15244, 15258, 16057 } },
             { ClassJobType.Monk, new uint[] { 13612, 13598, 13224, 14871, 15224, 15238, 15252, 16051 } },
             { ClassJobType.Ninja, new uint[] { 13616, 13602, 13228, 14875, 15228, 15242, 15256, 16055 } },
-            { ClassJobType.Paladin, new uint[] { 13611, 13597, 13223, 14870, 15223, 15237, 15264, 16063 } },
+            { ClassJobType.Paladin, new uint[] { 13611, 13597, 13223, 14870, 15223, 15237, 15251, 16050 } },
             { ClassJobType.Scholar, new uint[] { 13622, 13608, 13234, 14881, 15234, 15248, 15262, 16061 } },
             { ClassJobType.Summoner, new uint[] { 13621, 13607, 13233, 14880, 15233, 15247, 15261, 16060 } },
             { ClassJobType.Warrior, new uint[] { 13613, 13599, 13225, 14872, 15225, 15239, 15253, 16052 } },
             { ClassJobType.WhiteMage, new uint[] { 13619, 13605, 13231, 14878, 15231, 15245, 15259, 16058 } },
         };
 
-        public static uint[] AnimaRelicOffhands = new uint[] { 13624, 13610, 13236, 14870, 15236, 15250, 15251, 16050 };
+        public static uint[] AnimaRelicOffhands = new uint[] { 13624, 13610, 13236, 14870, 15236, 15250, 15264, 16063};
 
         protected override void OnDone()
         {
