@@ -42,6 +42,13 @@ namespace LlamaUtilities.OrderbotTags
             var gearSets = GearsetManager.GearSets.Where(i => i.InUse);
             var foundJob = Enum.TryParse(Job.Trim(), true, out ClassJobType newjob);
 
+            if (Core.Me.InCombat)
+            {
+                Log.Error("Currently in combat, can't switch gearsets. Exiting.");
+                _isDone = true;
+                return;
+            }
+
             Log.Information("Started");
             Log.Information($"Found job: {foundJob} Job:{newjob}");
             if (foundJob && gearSets.Any(gs => gs.Class == newjob))
