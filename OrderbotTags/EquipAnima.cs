@@ -45,7 +45,7 @@ namespace LlamaUtilities.OrderbotTags
             { ClassJobType.WhiteMage, new uint[] { 13619, 13605, 13231, 14878, 15231, 15245, 15259, 16058 } },
         };
 
-        public static uint[] AnimaRelicOffhands = new uint[] { 13624, 13610, 13236, 14870, 15236, 15250, 15264, 16063};
+        public static uint[] AnimaRelicOffhands = new uint[] { 13624, 13610, 13236, 14883, 15236, 15250, 15264, 16063};
 
         protected override void OnDone()
         {
@@ -66,7 +66,7 @@ namespace LlamaUtilities.OrderbotTags
             var mainhand = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.MainHand];
             if (AnimaRelicWeapons[Core.Me.CurrentJob].Contains(mainhand.RawItemId))
             {
-                Logging.WriteDiagnostic("Anima Relic Weapon Already Equipped");
+                Log.Information($"Main Hand: {mainhand.Name} already equipped");
             }
             else
             {
@@ -74,35 +74,36 @@ namespace LlamaUtilities.OrderbotTags
                 {
                     if (Core.Me.InCombat)
                     {
-                        Logging.WriteDiagnostic("We are in combat and can't switch weapons.");
-                        Logging.WriteDiagnostic("Waiting 10 seconds or until combat drops");
+                        Log.Information("We are in combat and can't switch weapons.");
+                        Log.Information("Waiting 10 seconds or until combat drops");
                         await Coroutine.Wait(10000, () => !Core.Me.InCombat);
                         while (Core.Me.InCombat)
                         {
-                            Logging.WriteDiagnostic("Combat didn't end after 10 seconds. Trying again.");
+                            Log.Error("Combat didn't end after 10 seconds. Trying again.");
                             await Coroutine.Wait(10000, () => !Core.Me.InCombat);
                         }
                     }
 
-                    Logging.WriteDiagnostic("Anima Relic Weapon Not already Equipped");
+                    Logging.WriteDiagnostic($"Main Hand: {mainhand.Name} not already equipped");
                     var item1 = InventoryManager.FilledInventoryAndArmory.FirstOrDefault(i => AnimaRelicWeapons[Core.Me.CurrentJob].Contains(i.RawItemId));
                     if (item1 != default(BagSlot))
                     {
+                        Log.Information($"Equipping {mainhand.Name}");
                         item1.Move(mainhand);
                         await BagSlotExtensions.BagSlotNotFilledWait(item1);
                         await Coroutine.Wait(10000, () => AnimaRelicWeapons[Core.Me.CurrentJob].Contains(mainhand.RawItemId));
                         if (!AnimaRelicWeapons[Core.Me.CurrentJob].Contains(mainhand.RawItemId))
                         {
-                            Logging.WriteDiagnostic("Anima Relic equipping failed");
+                            Log.Error($"Equipping {mainhand.Name} failed");
                         }
                         else
                         {
-                            Logging.WriteDiagnostic($"Now wearing {mainhand.Name}");
+                            Log.Information($"Now wearing {mainhand.Name}");
                         }
                     }
                     else
                     {
-                        Logging.WriteDiagnostic("No Anima Relic Weapon Found");
+                        Log.Error("No Anima Relic Weapon Found. Exiting");
                         _isDone = true;
                         return;
                     }
@@ -114,7 +115,7 @@ namespace LlamaUtilities.OrderbotTags
                 var offhand = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.OffHand];
                 if (AnimaRelicOffhands.Contains(offhand.RawItemId))
                 {
-                    Logging.WriteDiagnostic("Anima Relic Offhand Equipped");
+                    Log.Information($"OffHand: {offhand.Name} already equipped");
                 }
                 else
                 {
@@ -122,35 +123,36 @@ namespace LlamaUtilities.OrderbotTags
                     {
                         if (Core.Me.InCombat)
                         {
-                            Logging.WriteDiagnostic("We are in combat and can't switch weapons.");
-                            Logging.WriteDiagnostic("Waiting 10 seconds or until combat drops");
+                            Log.Information("We are in combat and can't switch weapons.");
+                            Log.Information("Waiting 10 seconds or until combat drops");
                             await Coroutine.Wait(10000, () => !Core.Me.InCombat);
                             while (Core.Me.InCombat)
                             {
-                                Logging.WriteDiagnostic("Combat didn't end after 10 seconds. Trying again.");
+                                Log.Error("Combat didn't end after 10 seconds. Trying again.");
                                 await Coroutine.Wait(10000, () => !Core.Me.InCombat);
                             }
                         }
 
-                        Logging.WriteDiagnostic("Paladin Anima Relic Offhand Not Equipped");
+                        Log.Information($"Offhand: {offhand.Name} Not Equipped");
                         var item2 = InventoryManager.FilledInventoryAndArmory.FirstOrDefault(i => AnimaRelicOffhands.Contains(i.RawItemId));
                         if (item2 != default(BagSlot))
                         {
+                            Log.Information($"Equipping {offhand.Name}");
                             item2.Move(offhand);
                             await BagSlotExtensions.BagSlotNotFilledWait(item2);
                             await Coroutine.Wait(10000, () => AnimaRelicOffhands.Contains(offhand.RawItemId));
                             if (!AnimaRelicOffhands.Contains(offhand.RawItemId))
                             {
-                                Logging.WriteDiagnostic("Paladin Anima Relic Offhand equipping failed");
+                                Log.Error($"Offhand: {offhand.Name} equipping failed. Trying again");
                             }
                             else
                             {
-                                Logging.WriteDiagnostic($"Now wearing {offhand.Name}");
+                                Log.Information($"Now wearing {offhand.Name}");
                             }
                         }
                         else
                         {
-                            Logging.WriteDiagnostic("No Anima Relic Offhand Found");
+                            Log.Error("No Anima Relic Offhand Found");
                             _isDone = true;
                             return;
                         }
