@@ -8,6 +8,7 @@ using ff14bot.Behavior;
 using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.RemoteWindows;
+using LlamaLibrary.Helpers;
 using LlamaLibrary.RemoteAgents;
 using LlamaLibrary.RemoteWindows;
 using TreeSharp;
@@ -58,6 +59,8 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task JoinDutyTask(int DutyId, bool Trial, bool Raid)
         {
+            await GeneralFunctions.StopBusy();
+
             while (DutyManager.QueueState == QueueState.None)
             {
                 Log.Information("Queuing for " + DataManager.InstanceContentResults[(uint)DutyId].CurrentLocaleName);
