@@ -38,7 +38,12 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task LastProfileTask()
         {
-            Log.Information($"{CharacterSettings.Instance.LastNeoProfile}");
+            if (CharacterSettings.Instance.LastNeoProfile == null)
+            {
+                Log.Error("Last profile not found. Exiting");
+                _isDone = true;
+            }
+            Log.Information($"Loading last profile");
             NeoProfileManager.Load(CharacterSettings.Instance.LastNeoProfile, false);
             NeoProfileManager.UpdateCurrentProfileBehavior();
 
