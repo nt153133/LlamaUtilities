@@ -121,6 +121,8 @@
     <Compile Include="OrderbotTags\LLUseSpell.cs" />
     <Compile Include="OrderbotTags\LoadAchievements.cs" />
     <Compile Include="OrderbotTags\LoadDungeonAssist.cs" />
+    <Compile Include="OrderbotTags\LastProfile.cs" />
+    <Compile Include="OrderbotTags\LoadServerProfile.cs" />
     <Compile Include="OrderbotTags\LowerCollectable.cs" />
     <Compile Include="OrderbotTags\NameChocobo.cs" />
     <Compile Include="OrderbotTags\OpenCoffers.cs" />
