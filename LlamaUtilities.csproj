@@ -86,6 +86,7 @@
     <Compile Include="OrderbotTags\GCRankUp.cs" />
     <Compile Include="OrderbotTags\GearSetEquipAll.cs" />
     <Compile Include="OrderbotTags\GetTo.cs" />
+    <Compile Include="OrderbotTags\InitiateLeve.cs" />
     <Compile Include="OrderbotTags\InviteToParty.cs" />
     <Compile Include="OrderbotTags\JoinDuty.cs" />
     <Compile Include="OrderbotTags\JoinSupportDuty.cs" />
@@ -128,6 +129,8 @@
     <Compile Include="OrderbotTags\OpenCoffers.cs" />
     <Compile Include="OrderbotTags\PassOnLoot.cs" />
     <Compile Include="OrderbotTags\PickUpAnimaQuest.cs" />
+    <Compile Include="OrderbotTags\PickupGuildLeve.cs" />
+    <Compile Include="OrderbotTags\PickupBattleLeve.cs" />
     <Compile Include="OrderbotTags\RandomMoveTo.cs" />
     <Compile Include="OrderbotTags\RetainerHire.cs" />
     <Compile Include="OrderbotTags\RetainerItemDump.cs" />

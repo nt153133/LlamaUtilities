@@ -103,10 +103,10 @@ namespace LlamaUtilities.OrderbotTags
             {
                 if (SelectIconString.IsOpen)
                 {
-                    Logging.WriteDiagnostic("Choosing 'Anima Weapon Recreation'.");
-                    if (!SelectIconString.ClickLineContains($"Recreation"))
+                    Logging.WriteDiagnostic($"Choosing '{LlamaLibrary.Helpers.Translator.AnimaWeaponRecreation}'.");
+                    if (!SelectIconString.ClickLineContains(LlamaLibrary.Helpers.Translator.AnimaWeaponRecreation))
                     {
-                        Logging.WriteDiagnostic($"We can't find 'Anima Weapon Recreation', exiting'.");
+                        Logging.WriteDiagnostic($"We can't find '{LlamaLibrary.Helpers.Translator.AnimaWeaponRecreation}', exiting'.");
                         _isDone = true;
                         return;
                     }
