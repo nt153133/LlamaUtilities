@@ -135,6 +135,7 @@
     <Compile Include="OrderbotTags\SetBluSpells.cs" />
     <Compile Include="OrderbotTags\ClimbSpiral.cs" />
     <Compile Include="OrderbotTags\StopBusy.cs" />
+    <Compile Include="OrderbotTags\UnlockTTCard.cs" />
     <Compile Include="OrderbotTags\UseInventoryItem.cs" />
     <Compile Include="OrderbotTags\UseShortcut.cs" />
     <Compile Include="OrderbotTags\UseTransportConvo.cs" />
