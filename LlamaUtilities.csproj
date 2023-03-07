@@ -131,9 +131,11 @@
     <Compile Include="OrderbotTags\PickUpAnimaQuest.cs" />
     <Compile Include="OrderbotTags\PickupGuildLeve.cs" />
     <Compile Include="OrderbotTags\PickupBattleLeve.cs" />
+    <Compile Include="OrderbotTags\PickUpMandervilleQuest.cs" />
     <Compile Include="OrderbotTags\RandomMoveTo.cs" />
     <Compile Include="OrderbotTags\RetainerHire.cs" />
     <Compile Include="OrderbotTags\RetainerItemDump.cs" />
+    <Compile Include="OrderbotTags\RunDuty.cs" />
     <Compile Include="OrderbotTags\SayHello.cs" />
     <Compile Include="OrderbotTags\SetBluSpells.cs" />
     <Compile Include="OrderbotTags\ClimbSpiral.cs" />

@@ -1,7 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
+using ff14bot;
 using ff14bot.Behavior;
+using ff14bot.Managers;
 using ff14bot.Navigation;
 using ff14bot.NeoProfiles;
 using ff14bot.Pathing.Service_Navigation;
@@ -48,6 +51,16 @@ namespace LlamaUtilities.OrderbotTags
             }
             // Not in Barracks
             Log($"Moving to Barracks");
+            uint[] entranceIds = { 2007527,2007529,2006962 };
+            var entranceNpc = GameObjectManager.GameObjects.Where(r => r.IsTargetable && r.IsValid && entranceIds.Contains(r.NpcId)).OrderBy(r => r.Distance()).FirstOrDefault();
+            if (entranceNpc != null)
+            {
+                while (Core.Me.Location.Distance2D(entranceNpc.Location) > 1.5f)
+                {
+                    await Coroutine.Yield();
+                    await Navigation.FlightorMove(entranceNpc.Location);
+                }
+            }
             await GrandCompanyHelper.InteractWithNpc(GCNpc.Entrance_to_the_Barracks);
             await Coroutine.Wait(5000, () => SelectYesno.IsOpen);
             await Buddy.Coroutines.Coroutine.Sleep(500);
