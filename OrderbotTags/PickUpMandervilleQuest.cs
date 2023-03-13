@@ -99,48 +99,17 @@ namespace LlamaUtilities.OrderbotTags
                 }
             }
 
-            if (QuestLogManager.IsQuestCompleted((uint) QuestId))
+            if (SelectIconString.IsOpen)
             {
-                if (SelectIconString.IsOpen)
+                Logging.WriteDiagnostic($"Choosing '{QuestName}'.");
+                if (!SelectIconString.ClickLineContains($"{QuestName}"))
                 {
-                    Logging.WriteDiagnostic($"Choosing '{LlamaLibrary.Helpers.Translator.AnimaWeaponRecreation}'.");
-                    if (!SelectIconString.ClickLineContains(LlamaLibrary.Helpers.Translator.AnimaWeaponRecreation))
-                    {
-                        Logging.WriteDiagnostic($"We can't find '{LlamaLibrary.Helpers.Translator.AnimaWeaponRecreation}', exiting'.");
-                        _isDone = true;
-                        return;
-                    }
-
-                    await Coroutine.Wait(10000, () => !SelectIconString.IsOpen);
-
-                    await Coroutine.Wait(10000, () => SelectString.IsOpen);
-                    {
-                        Logging.WriteDiagnostic($"Choosing '{QuestName}'.");
-                        if (!SelectString.ClickLineContains($"{QuestName}"))
-                        {
-                            Logging.WriteDiagnostic($"We can't find quest {QuestName}, exiting'.");
-                            _isDone = true;
-                            return;
-                        }
-
-                        await Coroutine.Wait(10000, () => !SelectString.IsOpen);
-                    }
+                    Logging.WriteDiagnostic($"We can't find quest {QuestName}, exiting'.");
+                    _isDone = true;
+                    return;
                 }
-            }
-            else
-            {
-                if (SelectIconString.IsOpen)
-                {
-                    Logging.WriteDiagnostic($"Choosing '{QuestName}'.");
-                    if (!SelectIconString.ClickLineContains($"{QuestName}"))
-                    {
-                        Logging.WriteDiagnostic($"We can't find quest {QuestName}, exiting'.");
-                        _isDone = true;
-                        return;
-                    }
 
-                    await Coroutine.Wait(10000, () => !SelectIconString.IsOpen);
-                }
+                await Coroutine.Wait(10000, () => !SelectIconString.IsOpen);
             }
 
             Logging.WriteDiagnostic("Waiting for dialog to open.");

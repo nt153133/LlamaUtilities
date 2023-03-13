@@ -55,7 +55,7 @@ namespace LlamaUtilities.OrderbotTags
         private async Task UseShortcutTask()
         {
             uint[] npcIds = { (uint)ShortcutId };
-            var shortcutNpc = GameObjectManager.GameObjects.Where(r => r.IsTargetable && Core.Me.Location.Distance2D(r.Location) <= Distance && npcIds.Contains(r.NpcId)).OrderBy(r => r.Distance()).FirstOrDefault();
+            var shortcutNpc = GameObjectManager.GameObjects.Where(r => r.IsTargetable && r.InLineOfSight() && Core.Me.Location.Distance2D(r.Location) <= Distance && npcIds.Contains(r.NpcId)).OrderBy(r => r.Distance()).FirstOrDefault();
             while (Core.Me.Location.Distance2D(shortcutNpc.Location) > 1.5f)
             {
                 await Coroutine.Yield();
