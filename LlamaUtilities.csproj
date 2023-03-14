@@ -82,6 +82,7 @@
     <Compile Include="OrderbotTags\EquipCurrentGearset.cs" />
     <Compile Include="OrderbotTags\EquipWeapon.cs" />
     <Compile Include="OrderbotTags\Fate.cs" />
+    <Compile Include="OrderbotTags\GatherTag.cs" />
     <Compile Include="OrderbotTags\GCExpertTurnin.cs" />
     <Compile Include="OrderbotTags\GCRankUp.cs" />
     <Compile Include="OrderbotTags\GearSetEquipAll.cs" />
@@ -135,7 +136,6 @@
     <Compile Include="OrderbotTags\RandomMoveTo.cs" />
     <Compile Include="OrderbotTags\RetainerHire.cs" />
     <Compile Include="OrderbotTags\RetainerItemDump.cs" />
-    <Compile Include="OrderbotTags\RunDuty.cs" />
     <Compile Include="OrderbotTags\SayHello.cs" />
     <Compile Include="OrderbotTags\SetBluSpells.cs" />
     <Compile Include="OrderbotTags\ClimbSpiral.cs" />
