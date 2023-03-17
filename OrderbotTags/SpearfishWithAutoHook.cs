@@ -306,10 +306,10 @@ namespace LlamaUtilities.OrderbotTags
                                                           new PrioritySelector(
                                                                                //new Decorator(r => movetoVector.Distance2D(Core.Player.Location) > 20 , CommonBehaviors.CreateMountBehavior()),
                                                                                CommonBehaviors.CreateMountBehavior(r => movetoVector),
-                                                                               new Decorator(r => Poi.Current.Location.Distance2D(movetoVector) > InteractDistance,
-                                                                                             new ActionRunCoroutine(obj => Lisbeth.TravelToZones(WorldManager.ZoneId, movetoVector))),
+                                                                               //new Decorator(r => Poi.Current.Location.Distance2D(movetoVector) > InteractDistance,
+                                                                                             //new ActionRunCoroutine(obj => Lisbeth.TravelToZones(WorldManager.ZoneId, movetoVector))),
 
-                                                                               //CommonBehaviors.MoveAndStop(z => movetoVector, 2f, true, "Moving to HotSpot"),
+                                                                               CommonBehaviors.MoveAndStop(z => movetoVector, 2f, true, "Moving to HotSpot"),
                                                                                new Decorator(r => movetoVector.Distance2D(Core.Player.Location) < 2, new Action(r => movetoVector = Vector3.Zero)))),
                                             new Decorator(r => Poi.Current.Unit == null || ((!Poi.Current.Unit.IsValid || !Poi.Current.Unit.IsVisible) && !SpearFishing.Instance.IsOpen), new Action(r => ChooseNewOre())));
             }
@@ -726,7 +726,7 @@ namespace LlamaUtilities.OrderbotTags
             return false;
         }
 
-        private async void LetAuotHookWork()
+        private async Task LetAutoHookWork()
         {
             if (SpearFishing.Instance.IsOpen)
             {
@@ -741,7 +741,7 @@ namespace LlamaUtilities.OrderbotTags
             {
                 return new PrioritySelector(new Decorator(r => !SpearFishing.Instance.IsOpen, new ActionRunCoroutine(r => Interact())),
                                             BonusAction,
-                                            new Decorator(r => SpearFishing.Instance.IsOpen, new Action(r => LetAuotHookWork())));
+                                            new Decorator(r => SpearFishing.Instance.IsOpen, new ActionRunCoroutine(r => LetAutoHookWork())));
             }
         }
     }
