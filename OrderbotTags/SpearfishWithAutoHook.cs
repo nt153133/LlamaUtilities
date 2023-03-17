@@ -728,6 +728,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task LetAutoHookWork()
         {
+            // update
             if (SpearFishing.Instance.IsOpen)
             {
                 Log("Waiting 30 seconds or for SpearFishing to close");
