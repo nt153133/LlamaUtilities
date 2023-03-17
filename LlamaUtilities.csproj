@@ -139,6 +139,7 @@
     <Compile Include="OrderbotTags\SayHello.cs" />
     <Compile Include="OrderbotTags\SetBluSpells.cs" />
     <Compile Include="OrderbotTags\ClimbSpiral.cs" />
+    <Compile Include="OrderbotTags\Snipe.cs" />
     <Compile Include="OrderbotTags\SpearfishWithAutoHook.cs" />
     <Compile Include="OrderbotTags\StopBusy.cs" />
     <Compile Include="OrderbotTags\UnlockTTCard.cs" />
