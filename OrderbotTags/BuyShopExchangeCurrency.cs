@@ -1,9 +1,11 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot;
+using ff14bot.Helpers;
 using ff14bot.Managers;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Helpers;
@@ -41,7 +43,9 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool HighPriority => true;
 
-        public BuyShopExchangeCurrency() : base() { }
+        public BuyShopExchangeCurrency() : base()
+        {
+        }
 
         protected override void OnStart()
         {
@@ -113,7 +117,7 @@ namespace LlamaUtilities.OrderbotTags
             if (ShopExchangeCurrency.Open)
             {
                 //Log.Information("ShopExchangeCurrency opened");
-                ShopExchangeCurrency.Purchase((uint)itemId, (uint)count);
+                Purchase((uint)itemId, (uint)count);
                 await Coroutine.Wait(2000, () => SelectYesno.IsOpen || Request.IsOpen);
 
                 if (SelectYesno.IsOpen)
@@ -136,6 +140,49 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             _isDone = true;
+        }
+
+        public static uint Purchase(uint itemId, uint itemCount)
+        {
+            if (!ShopExchangeCurrency.Open)
+            {
+                return 0;
+            }
+
+            var items = SpecialShopManager.Items;
+
+            if (items == null || items.Count == 0)
+            {
+                return 0;
+            }
+
+            if (!items.Any(i => i.ItemIds.Contains(itemId)))
+            {
+                return 0;
+            }
+
+            var item = items.FirstOrDefault(i => i.ItemIds.Contains(itemId));
+
+            var count = Math.Min(item.Item0.StackSize, itemCount);
+            count = Math.Min(count, CanAfford(item));
+
+            if (count == 0)
+            {
+                return 0;
+            }
+
+            RaptureAtkUnitManager.GetWindowByName("ShopExchangeCurrency").SendAction(4, 3, 0, 3, (ulong)items.IndexOf(item), 3, count, 0, 0);
+            return count;
+        }
+
+        public static uint CanAfford(SpecialShopItem item)
+        {
+            if (item.CurrencyExchangeMode == 3)
+            {
+                return CurrencyHelper.GetAmountOfCurrency(CurrencyHelper.GetCurrencyItemId(item.CurrencyTypes[0])) / item.CurrencyCosts[0];
+            }
+
+            return ShopExchangeCurrency.CanAfford(item);
         }
     }
 }
