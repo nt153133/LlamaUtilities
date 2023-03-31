@@ -11,6 +11,7 @@
     <AssemblyName>LlamaUtilities</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -63,6 +64,7 @@
       <DependentUpon>Utilities.cs</DependentUpon>
     </Compile>
     <Compile Include="LlamaUtilities\UtilitiesBase.cs" />
+    <Compile Include="OrderbotTags\AffixMateria.cs" />
     <Compile Include="OrderbotTags\AutoEquip.cs" />
     <Compile Include="OrderbotTags\AutoInventoryEquip.cs" />
     <Compile Include="OrderbotTags\AutoLisbethEquip.cs" />
@@ -134,6 +136,7 @@
     <Compile Include="OrderbotTags\PickupBattleLeve.cs" />
     <Compile Include="OrderbotTags\PickUpMandervilleQuest.cs" />
     <Compile Include="OrderbotTags\RandomMoveTo.cs" />
+    <Compile Include="OrderbotTags\RemoveMateria.cs" />
     <Compile Include="OrderbotTags\RetainerHire.cs" />
     <Compile Include="OrderbotTags\RetainerItemDump.cs" />
     <Compile Include="OrderbotTags\SayHello.cs" />
