@@ -34,6 +34,30 @@ namespace LlamaUtilities.LlamaUtilities
             InitializeComponent();
         }
 
+        public static void BindField(Control control, string propertyName, object dataSource, string dataMember)
+        {
+            Binding bd;
+
+            for (var index = control.DataBindings.Count - 1; index == 0; index--)
+            {
+                bd = control.DataBindings[index];
+                if (bd.PropertyName == propertyName)
+                {
+                    control.DataBindings.Remove(bd);
+                }
+            }
+
+            try
+            {
+                control.DataBindings.Add(propertyName, dataSource, dataMember, false, DataSourceUpdateMode.OnPropertyChanged);
+            }
+            catch (Exception e)
+            {
+                Log.Information($"{control.Name} {propertyName}");
+                Log.Exception(e);
+            }
+        }
+
         private void btnRefresh_Click(object sender, EventArgs e)
         {
             bindingSourceInventory.Clear();
@@ -116,6 +140,16 @@ namespace LlamaUtilities.LlamaUtilities
             pgInventory.SelectedObject = ReduceSettings.Instance;
             pgCustomDeliveries.SelectedObject = DeliveriesSettings.Instance;
 
+            /*
+            BindField(zhloeCheckBox, "Checked", DeliveriesSettings.Instance, nameof(DeliveriesSettings.DoZhloeDeliveries));
+            BindField(mnaagoCheckBox, "Checked", DeliveriesSettings.Instance, nameof(DeliveriesSettings.DoMnaagoDeliveries));
+            BindField(kurenaiCheckBox, "Checked", DeliveriesSettings.Instance, nameof(DeliveriesSettings.DoKurenaiDeliveries));
+            BindField(adkiraghCheckBox, "Checked", DeliveriesSettings.Instance, nameof(DeliveriesSettings.DoAdkiraghDeliveries));
+            BindField(kaishirrCheckBox, "Checked", DeliveriesSettings.Instance, nameof(DeliveriesSettings.DoKaishirrDeliveries));
+            BindField(ehlltouCheckBox, "Checked", DeliveriesSettings.Instance, nameof(DeliveriesSettings.DoEhlltouDeliveries));
+            BindField(charlemendCheckBox, "Checked", DeliveriesSettings.Instance, nameof(DeliveriesSettings.DoCharlemendDeliveries));
+            BindField(amelianceCheckBox, "Checked", DeliveriesSettings.Instance, nameof(DeliveriesSettings.DoAmelianceeliveries));
+*/
             filterCb.DataSource = new BindingSource(Filters, null);
             filterCb.DisplayMember = "Value";
             filterCb.ValueMember = "Key";
@@ -562,6 +596,8 @@ namespace LlamaUtilities.LlamaUtilities
             //MessageBox.Show("You are in the TabControl.SelectedIndexChanged event.");
         }
     }
+
+
 
     public class MateriaToAffix
     {

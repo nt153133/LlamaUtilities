@@ -192,7 +192,7 @@ namespace LlamaUtilities.LlamaUtilities
                     await Housing.CheckHousing();
                     break;
                 case TaskType.CustomDeliveries:
-                    await LlamaLibrary.Utilities.CustomDeliveries.RunCustomDeliveries(DeliveriesSettings.Instance.CraftingClass);
+                    await LlamaLibrary.Utilities.CustomDeliveries.RunCustomDeliveriesBySelection(DeliveriesSettings.Instance.DoZhloeDeliveries,DeliveriesSettings.Instance.DoMnaagoDeliveries,DeliveriesSettings.Instance.DoKurenaiDeliveries,DeliveriesSettings.Instance.DoAdkiraghDeliveries,DeliveriesSettings.Instance.DoKaishirrDeliveries,DeliveriesSettings.Instance.DoEhlltouDeliveries,DeliveriesSettings.Instance.DoCharlemendDeliveries,DeliveriesSettings.Instance.DoAmelianceeliveries,DeliveriesSettings.Instance.CraftingClass);
                     break;
                 case TaskType.GcTurnin:
                     await GCDailyTurnins.DoGCDailyTurnins();
