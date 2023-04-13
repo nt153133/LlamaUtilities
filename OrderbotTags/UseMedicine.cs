@@ -186,7 +186,7 @@ namespace LlamaUtilities.OrderbotTags
                 Log("Waiting until the item is usable.");
                     await Coroutine.Wait(Timeout.InfiniteTimeSpan, () => itemslot.CanUse(null));
 
-                Log("Eating {0}",itemData.CurrentLocaleName);
+                Log("Drinking {0}",itemData.CurrentLocaleName);
                 itemslot.UseItem();
                 await Coroutine.Sleep(2000);
 
