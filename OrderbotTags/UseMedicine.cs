@@ -188,9 +188,9 @@ namespace LlamaUtilities.OrderbotTags
 
                 Log("Drinking {0}",itemData.CurrentLocaleName);
                 itemslot.UseItem();
-                await Coroutine.Sleep(2000);
+                await Coroutine.Wait(2000, () => Core.Player.HasAura(49));
 
-                if (!alreadyPresent)
+                if (!Core.Player.HasAura(49))
                 {
                     Log("Waiting for the aura to appear");
                     await Coroutine.Wait(Timeout.InfiniteTimeSpan, () => Core.Player.HasAura(49));
