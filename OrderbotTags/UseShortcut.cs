@@ -5,6 +5,7 @@ using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot;
 using ff14bot.Behavior;
+using ff14bot.Helpers;
 using ff14bot.Managers;
 using ff14bot.Navigation;
 using ff14bot.RemoteWindows;
@@ -61,15 +62,45 @@ namespace LlamaUtilities.OrderbotTags
                 await Coroutine.Yield();
                 Navigator.PlayerMover.MoveTowards(shortcutNpc.Location);
             }
+
             Navigator.PlayerMover.MoveStop();
+            var location = Core.Me.Location;
             shortcutNpc.Interact();
-            await Coroutine.Wait(10000, () => SelectYesno.IsOpen);
-            ff14bot.RemoteWindows.SelectYesno.ClickYes();
-            await Coroutine.Wait(10000, () => CommonBehaviors.IsLoading);
+
+            if (!await Coroutine.Wait(10000, () => SelectYesno.IsOpen || CommonBehaviors.IsLoading || !Core.Me.Location.Equals(location) || QuestLogManager.InCutscene))
+            {
+                Log.Error("Nothing happened");
+                _isDone = true;
+                return;
+            }
+
+            if (SelectYesno.IsOpen)
+            {
+                ff14bot.RemoteWindows.SelectYesno.ClickYes();
+                await Coroutine.Wait(10000, () => !SelectYesno.IsOpen);
+            }
+
+            if (!await Coroutine.Wait(10000, () => CommonBehaviors.IsLoading || !Core.Me.Location.Equals(location) || QuestLogManager.InCutscene))
+            {
+                Log.Information("Timed out waiting for loading screen or position change");
+                Log.Information($"IsLoading: {CommonBehaviors.IsLoading}");
+                Log.Information($"Position: {Core.Me.Location}");
+                Log.Information($"Last Position: {location}");
+                Log.Information($"InCutscene: {QuestLogManager.InCutscene}");
+                _isDone = true;
+                return;
+            }
+
             while (CommonBehaviors.IsLoading)
             {
                 await Coroutine.Wait(20000, () => !CommonBehaviors.IsLoading);
                 await Coroutine.Sleep(500);
+            }
+
+            while (QuestLogManager.InCutscene)
+            {
+                Log.Information("Waiting for cutscene to end");
+                await Coroutine.Wait(20000, () => !QuestLogManager.InCutscene);
             }
 
             _isDone = true;
