@@ -22,6 +22,7 @@ using ff14bot.Settings;
 using LlamaLibrary.Helpers;
 using TreeSharp;
 using Action = TreeSharp.Action;
+
 /***
  * Modified version of Y2krazy's Fate tag
  *
@@ -108,12 +109,14 @@ namespace LlamaUtilities.OrderbotTags
         private ITargetingProvider tempProvider;
 
         //-------
-        public static int currentstep = 0;  //currentstep 1 we are in a fate / currentstep 0 we are not in a fate
+        public static int currentstep = 0; //currentstep 1 we are in a fate / currentstep 0 we are not in a fate
 
         private static readonly Stopwatch ClusterTimer = Stopwatch.StartNew();
         protected Func<bool> condition;
 
-        public LLFate() : base() { }
+        public LLFate() : base()
+        {
+        }
 
         private bool ShouldStop()
         {
@@ -145,149 +148,119 @@ namespace LlamaUtilities.OrderbotTags
         [Obsolete]
         protected override Composite CreateBehavior()
         {
-            return new PrioritySelector(
-                new Decorator(
-                    ret => ShouldStop(),
-                    new Action(r => OnDoneWhile())
-                ),
-                new Decorator(
-                    ret => DateTime.Now > saveNow + TimeSpan.FromSeconds(_timeout) && currentstep == 0,
-                    new Action(r => OnTimeout())
-                ),
+            return new PrioritySelector(new Decorator(ret => ShouldStop(),
+                                                      new Action(r => OnDoneWhile())),
+                                        new Decorator(ret => DateTime.Now > saveNow + TimeSpan.FromSeconds(_timeout) && currentstep == 0,
+                                                      new Action(r => OnTimeout())),
 
-                // This one will run always kind of a pulse one
-                new Sequence(
-                    new Action(r => CountDeath()),
-                    new Action(r => IsFateStillActive()),
-                    new Action(r => UpdateFateData()),
-                    new ActionAlwaysFail() //always fail that the rest of the tree is traveresd
-                 ),
+                                        // This one will run always kind of a pulse one
+                                        new Sequence(new Action(r => CountDeath()),
+                                                     new Action(r => IsFateStillActive()),
+                                                     new Action(r => UpdateFateData()),
+                                                     new ActionAlwaysFail() //always fail that the rest of the tree is traveresd
+                                                    ),
 
-                // Start fighting Fate Mobs but only when we are in close range to the fate position.
-                new Decorator(
-                    r => currentfate != null && FateManager.WithinFate && Core.Me.ElementalLevel > 0 && currentfate.MaxLevel < Core.Me.ElementalLevel,
-                    new ActionRunCoroutine(async r =>
-                    {
-                        Log.Information("Applying Eureka Level Sync.");
+                                        // Start fighting Fate Mobs but only when we are in close range to the fate position.
+                                        new Decorator(r => currentfate != null && FateManager.WithinFate && Core.Me.ElementalLevel > 0 && currentfate.MaxLevel < Core.Me.ElementalLevel,
+                                                      new ActionRunCoroutine(async r =>
+                                                      {
+                                                          Log.Information("Applying Eureka Level Sync.");
 
-                        ToDoList.LevelSync();
+                                                          ToDoList.LevelSync();
 
-                        await Coroutine.Sleep(500);
+                                                          await Coroutine.Sleep(500);
 
-                        return false;
-                    })
-                ),
-                new Decorator(
-                    r => currentfate != null && FateManager.WithinFate,
-                    new ActionRunCoroutine(r =>
-                    {
-                        Log.Information($"In fate {Core.Me.ElementalLevel} > 0 && {currentfate.MaxLevel} < {Core.Me.ElementalLevel}.");
+                                                          return false;
+                                                      })),
+                                        new Decorator(r => currentfate != null && FateManager.WithinFate,
+                                                      new ActionRunCoroutine(r =>
+                                                      {
+                                                          Log.Information($"In fate {Core.Me.ElementalLevel} > 0 && {currentfate.MaxLevel} < {Core.Me.ElementalLevel}.");
 
-                        return Task.FromResult(false);
-                    })
-                ),
-                new Decorator(
-                    r => currentfate != null && FateManager.WithinFate && currentfate.MaxLevel < Core.Player.ClassLevel && !Core.Me.IsLevelSynced,
-                    new ActionRunCoroutine(async r =>
-                    {
-                        Log.Information("Applying Level Sync.");
+                                                          return Task.FromResult(false);
+                                                      })),
+                                        new Decorator(r => currentfate != null && FateManager.WithinFate && currentfate.MaxLevel < Core.Player.ClassLevel && !Core.Me.IsLevelSynced,
+                                                      new ActionRunCoroutine(async r =>
+                                                      {
+                                                          Log.Information("Applying Level Sync.");
 
-                        ToDoList.LevelSync();
+                                                          ToDoList.LevelSync();
 
-                        await Coroutine.Sleep(500);
+                                                          await Coroutine.Sleep(500);
 
-                        return false;
-                    })
-                ),
-                new Decorator(
-                      ret => currentstep == 1 && Vector3.Distance(Core.Player.Location, Position) > (currentfate.Radius - 10),
-                      UseFlight ? new ActionRunCoroutine(obj => Lisbeth.TravelToZones(WorldManager.ZoneId, Position)) : new ActionRunCoroutine(obj => Navigation.FlightorMove(currentfate))
+                                                          return false;
+                                                      })),
+                                        new Decorator(ret => currentstep == 1 && Vector3.Distance(Core.Player.Location, Position) > (currentfate.Radius - 10),
+                                                      UseFlight ? new ActionRunCoroutine(obj => Lisbeth.TravelToZones(WorldManager.ZoneId, Position)) : new ActionRunCoroutine(obj => Navigation.FlightorMove(currentfate))
 
-                // CommonBehaviors.MoveAndStop(ret => Position, Distance, stopInRange: true, destinationName: "Moving to Fates.")
-                ),
-                new Decorator(
-                    r => currentfate != null && FateManager.WithinFate && currentfate.Icon == FateIconType.KillHandIn && currentfate.TimeLeft.Minutes <= 8,
-                    new Sequence(
-                        new ActionRunCoroutine(async r =>
-                        {
-                            Poi.Clear("Handing in items.");
-                            Log.Information("Hand-in Fate");
+                                                      // CommonBehaviors.MoveAndStop(ret => Position, Distance, stopInRange: true, destinationName: "Moving to Fates.")
+                                                     ),
+                                        new Decorator(r => currentfate != null && FateManager.WithinFate && currentfate.Icon == FateIconType.KillHandIn && currentfate.TimeLeft.Minutes <= 8,
+                                                      new Sequence(new ActionRunCoroutine(async r =>
+                                                                   {
+                                                                       Poi.Clear("Handing in items.");
+                                                                       Log.Information("Hand-in Fate");
 
-                            var fateNpcs = GameObjectManager
-                                .GetObjectsOfType<BattleCharacter>()
-                                .Where(bc => bc.IsFate && !bc.CanAttack && bc.FateId == currentfate.Id)
-                                .GroupBy(bc => bc)
-                                .OrderByDescending(group => group.Count())
-                                .Select(group => group.Key);
+                                                                       var fateNpcs = GameObjectManager
+                                                                           .GetObjectsOfType<BattleCharacter>()
+                                                                           .Where(bc => bc.IsFate && !bc.CanAttack && bc.FateId == currentfate.Id)
+                                                                           .GroupBy(bc => bc)
+                                                                           .OrderByDescending(group => group.Count())
+                                                                           .Select(group => group.Key);
 
-                            var handinNpc = fateNpcs.LastOrDefault();
+                                                                       var handinNpc = fateNpcs.LastOrDefault();
 
-                            if (handinNpc == null)
-                            {
-                                Log.Error("Could not find handin NPC. Something is wrong.");
-                                return;
-                            }
+                                                                       if (handinNpc == null)
+                                                                       {
+                                                                           Log.Error("Could not find handin NPC. Something is wrong.");
+                                                                           return;
+                                                                       }
 
-                            tempProvider = CombatTargeting.Instance.Provider;
-                            CombatTargeting.Instance.Provider = new NullTargetingProvider();
+                                                                       tempProvider = CombatTargeting.Instance.Provider;
+                                                                       CombatTargeting.Instance.Provider = new NullTargetingProvider();
 
-                            await MoveTo(handinNpc.Location);
+                                                                       await MoveTo(handinNpc.Location);
 
-                            GameObjectManager.GetObjectByNPCId(handinNpc.NpcId).Interact();
-                            Talk.Next();
-                            InventoryManager.GetBagByInventoryBagId(InventoryBagId.KeyItems).FilledSlots.LastOrDefault().Handover();
-                            Request.HandOver();
+                                                                       GameObjectManager.GetObjectByNPCId(handinNpc.NpcId).Interact();
+                                                                       Talk.Next();
+                                                                       InventoryManager.GetBagByInventoryBagId(InventoryBagId.KeyItems).FilledSlots.LastOrDefault().Handover();
+                                                                       Request.HandOver();
 
-                            CombatTargeting.Instance.Provider = tempProvider;
-                        }),
-                        new ActionAlwaysFail() //always fail that the rest of the tree is traveresd
-                    )
-                ),
-                new Decorator(
-                    ret => Talk.DialogOpen,
-                    new Action(r =>
-                    {
-                        Talk.Next();
-                    })
-                ),
-                new Decorator(
-                    ret => Request.IsOpen,
-                    new Action(r =>
-                    {
-                        GameObjectManager.GetObjectByNPCId(npc.NpcId).Interact();
-                        InventoryManager.GetBagByInventoryBagId(InventoryBagId.KeyItems).FilledSlots.LastOrDefault().Handover();
-                        Request.HandOver();
-                    })
-                ),
+                                                                       CombatTargeting.Instance.Provider = tempProvider;
+                                                                   }),
+                                                                   new ActionAlwaysFail() //always fail that the rest of the tree is traveresd
+                                                                  )),
+                                        new Decorator(ret => Talk.DialogOpen,
+                                                      new Action(r => { Talk.Next(); })),
+                                        new Decorator(ret => Request.IsOpen,
+                                                      new Action(r =>
+                                                      {
+                                                          GameObjectManager.GetObjectByNPCId(npc.NpcId).Interact();
+                                                          InventoryManager.GetBagByInventoryBagId(InventoryBagId.KeyItems).FilledSlots.LastOrDefault().Handover();
+                                                          Request.HandOver();
+                                                      })),
 
-                //Find fates
-                new Decorator(
-                    r => currentfate != null && fateid != 0 && Poi.Current.Type != PoiType.Kill,
-                    new ActionRunCoroutine(r =>
-                    {
-                        MoveToFocusedFate();
-                        return Task.CompletedTask;
-                    })
-                ),
-                new Decorator(
-                    ret => currentfate == null && currentstep == 0,
-                    new Sequence(
-                        new ActionRunCoroutine(async r =>
-                        {
-                            await GetFates();
-                            if (currentfate != null)
-                            {
-                                GoFate();
-                            }
-                            else
-                            {
-                                GoHunting();
-                            }
-                        })
-                    )
-                ),
-                new ActionAlwaysSucceed()
-            );
+                                        //Find fates
+                                        new Decorator(r => currentfate != null && fateid != 0 && Poi.Current.Type != PoiType.Kill,
+                                                      new ActionRunCoroutine(r =>
+                                                      {
+                                                          MoveToFocusedFate();
+                                                          return Task.CompletedTask;
+                                                      })),
+                                        new Decorator(ret => currentfate == null && currentstep == 0,
+                                                      new Sequence(new ActionRunCoroutine(async r =>
+                                                      {
+                                                          await GetFates();
+                                                          if (currentfate != null)
+                                                          {
+                                                              GoFate();
+                                                          }
+                                                          else
+                                                          {
+                                                              GoHunting();
+                                                          }
+                                                      }))),
+                                        new ActionAlwaysSucceed());
         }
 
         // End of B Tree
@@ -476,18 +449,16 @@ namespace LlamaUtilities.OrderbotTags
                     var z = 0.0f;
                     var total = 0.0f;
                     GameObjectManager.GetObjectsOfType<BattleCharacter>()
-                        .Where(
-                            bc =>
-                                ((bc.IsFate && bc.FateId == currentfate.Id && !bc.CanAttack) || bc.Type == GameObjectType.Pc) &&
-                                bc.Location.Distance(currentfate.Location) < currentfate.Radius)
-                        .ForEach(
-                            bc =>
-                            {
-                                total++;
-                                x += bc.Location.X;
-                                y += bc.Location.Y;
-                                z += bc.Location.Z;
-                            });
+                        .Where(bc =>
+                                   ((bc.IsFate && bc.FateId == currentfate.Id && !bc.CanAttack) || bc.Type == GameObjectType.Pc) &&
+                                   bc.Location.Distance(currentfate.Location) < currentfate.Radius)
+                        .ForEach(bc =>
+                        {
+                            total++;
+                            x += bc.Location.X;
+                            y += bc.Location.Y;
+                            z += bc.Location.Z;
+                        });
                     currentMove = new Vector3(x / total, y / total, z / total);
                     Navigator.MoveTo(currentMove);
 
@@ -596,12 +567,11 @@ namespace LlamaUtilities.OrderbotTags
             Log.Information("Escort FATE");
 
             if (currentfate.Icon == FateIconType.ProtectNPC ||
-                    currentfate.Icon == FateIconType.ProtectNPC2)
+                currentfate.Icon == FateIconType.ProtectNPC2)
             {
                 var npc = GameObjectManager
                     .GetObjectsOfType<BattleCharacter>()
-                    .FirstOrDefault(
-                        b => b.IsFate && !b.CanAttack && b.FateId == currentfate.Id);
+                    .FirstOrDefault(b => b.IsFate && !b.CanAttack && b.FateId == currentfate.Id);
                 Log.Information($"NPC = {npc}");
                 if (npc != null && npc.IsValid && (npc.IsBehind || npc.IsFlanking) &&
                     Core.Me.Distance(npc) > 7)
@@ -692,7 +662,7 @@ namespace LlamaUtilities.OrderbotTags
         public GameObject GetFateTargets()
         {
             var _target = GameObjectManager.GameObjects.Where(unit => (unit as BattleCharacter) != null && unit.CanAttack && unit.IsTargetable && unit.IsVisible
-                                                                         && (unit as BattleCharacter).FateId != 0 && !(unit as BattleCharacter).IsDead).OrderBy(unit => unit.Distance(Core.Player.Location)).Take(1);
+                                                                      && (unit as BattleCharacter).FateId != 0 && !(unit as BattleCharacter).IsDead).OrderBy(unit => unit.Distance(Core.Player.Location)).Take(1);
             Log.Information("Analyzing Fate Targets.");
             var targetArray = _target as GameObject[] ?? _target.ToArray();
 
@@ -702,7 +672,7 @@ namespace LlamaUtilities.OrderbotTags
         public GameObject GetNormalTargets()
         {
             var _target = GameObjectManager.GameObjects.Where(unit => (unit as BattleCharacter) != null && unit.CanAttack && unit.IsTargetable && unit.IsVisible
-                                                                    && (unit as BattleCharacter).FateId == 0 && !(unit as BattleCharacter).IsDead).OrderBy(unit => unit.Distance(Core.Player.Location)).Take(3);
+                                                                      && (unit as BattleCharacter).FateId == 0 && !(unit as BattleCharacter).IsDead).OrderBy(unit => unit.Distance(Core.Player.Location)).Take(3);
             var targetArray = _target as GameObject[] ?? _target.ToArray();
             if (targetArray.Length > 0 && targetArray[0].MaxHealth > Core.Me.CurrentHealth * 3)
             {
@@ -719,7 +689,7 @@ namespace LlamaUtilities.OrderbotTags
                 return targetArray[0];
             }
 
-            return null;  // pick a random target
+            return null; // pick a random target
         }
 
         public List<FateData> MyFilter(List<FateData> List)
@@ -824,12 +794,27 @@ namespace LlamaUtilities.OrderbotTags
             _done = false;
         }
 
+        private async Task<bool> CheckLevelSync()
+        {
+            if (currentfate != null && FateManager.WithinFate && currentfate.MaxLevel < Core.Player.ClassLevel && !Core.Me.IsLevelSynced)
+            {
+                ToDoList.LevelSync();
+                return true;
+            }
+
+            return false;
+        }
+
         private ITargetingProvider cachedProvider;
+
+        private Composite _coroutine;
 
         protected override void OnStart()
         {
             _min = Convert.ToInt32(MinLevel);
             _max = Convert.ToInt32(MaxLevel);
+            _coroutine = new ActionRunCoroutine(r => CheckLevelSync());
+            AddHooks();
             _timeout = Convert.ToInt32(Timeout);
             currentstep = 0;
             Log.Information("Doing fates and hunt in between.");
@@ -844,11 +829,25 @@ namespace LlamaUtilities.OrderbotTags
             saveNow = DateTime.Now;
         }
 
+        private void AddHooks()
+        {
+            Log.Information($"Adding LevelSync Hook");
+
+            TreeHooks.Instance.AddHook("TreeStart", _coroutine);
+        }
+
         protected override void OnDone()
         {
+            RemoveHooks();
             currentstep = 0;
 
             CombatTargeting.Instance.Provider = cachedProvider;
+        }
+
+        private void RemoveHooks()
+        {
+            Log.Information($"Removing LevelSync Hook");
+            TreeHooks.Instance.RemoveHook("TreeStart", _coroutine);
         }
     }
 
@@ -873,11 +872,11 @@ namespace LlamaUtilities.OrderbotTags
             _aggroedBattleCharacters = GameObjectManager.Attackers.ToArray();
             var inCombat = Core.Player.InCombat;
             var hostileUnits = allUnits.Where(r => IsValidUnit(inCombat, r))
-                    .Select(n => new Score
-                    {
-                        Unit = n,
-                        Weight = GetScoreForUnit(n)
-                    }).ToArray();
+                .Select(n => new Score
+                {
+                    Unit = n,
+                    Weight = GetScoreForUnit(n)
+                }).ToArray();
 
             // Order by weight (descending).
             return hostileUnits.OrderByDescending(s => s.Weight).Select(s => s.Unit).ToList();
