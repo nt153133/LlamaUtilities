@@ -192,7 +192,16 @@ namespace LlamaUtilities.LlamaUtilities
                     await Housing.CheckHousing();
                     break;
                 case TaskType.CustomDeliveries:
-                    await LlamaLibrary.Utilities.CustomDeliveries.RunCustomDeliveriesBySelection(DeliveriesSettings.Instance.DoZhloeDeliveries,DeliveriesSettings.Instance.DoMnaagoDeliveries,DeliveriesSettings.Instance.DoKurenaiDeliveries,DeliveriesSettings.Instance.DoAdkiraghDeliveries,DeliveriesSettings.Instance.DoKaishirrDeliveries,DeliveriesSettings.Instance.DoEhlltouDeliveries,DeliveriesSettings.Instance.DoCharlemendDeliveries,DeliveriesSettings.Instance.DoAmelianceeliveries,DeliveriesSettings.Instance.CraftingClass);
+                    await LlamaLibrary.Utilities.CustomDeliveries.RunCustomDeliveriesBySelection(DeliveriesSettings.Instance.DoZhloeDeliveries,
+                                                                                                 DeliveriesSettings.Instance.DoMnaagoDeliveries,
+                                                                                                 DeliveriesSettings.Instance.DoKurenaiDeliveries,
+                                                                                                 DeliveriesSettings.Instance.DoAdkiraghDeliveries,
+                                                                                                 DeliveriesSettings.Instance.DoKaishirrDeliveries,
+                                                                                                 DeliveriesSettings.Instance.DoEhlltouDeliveries,
+                                                                                                 DeliveriesSettings.Instance.DoCharlemendDeliveries,
+                                                                                                 DeliveriesSettings.Instance.DoAmelianceeliveries,
+                                                                                                 DeliveriesSettings.Instance.DoAndenDeliveries,
+                                                                                                 DeliveriesSettings.Instance.CraftingClass);
                     break;
                 case TaskType.GcTurnin:
                     await GCDailyTurnins.DoGCDailyTurnins();
@@ -374,7 +383,7 @@ namespace LlamaUtilities.LlamaUtilities
 
             var toDesynthList = InventoryManager.GetBagsByInventoryBagId(BagsToCheck())
                 .SelectMany(bag => bag.FilledSlots
-                    .FindAll(bs => bs.IsDesynthesizable && (IsOnDesynthList(bs) || ShouldDesynthFish(bs))))
+                                .FindAll(bs => bs.IsDesynthesizable))
                 .ToList();
 
             if (!toDesynthList.Any())
@@ -397,8 +406,8 @@ namespace LlamaUtilities.LlamaUtilities
         private static bool IsOnDesynthList(BagSlot bagSlot)
         {
             return DesynthList.Any(x =>
-                bagSlot.Item.ItemLevel == x.ItemLevel
-                && bagSlot.Item.EnglishName.Contains(x.Name, StringComparison.InvariantCultureIgnoreCase));
+                                       bagSlot.Item.ItemLevel == x.ItemLevel
+                                       && bagSlot.Item.EnglishName.Contains(x.Name, StringComparison.InvariantCultureIgnoreCase));
         }
 
         private static InventoryBagId[] BagsToCheck()

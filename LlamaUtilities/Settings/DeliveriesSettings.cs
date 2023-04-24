@@ -21,6 +21,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
 
         [Description("Job To use")]
         [DefaultValue(ClassJobType.Carpenter)]
+        [DisplayName(" Job To use")]
         public DohClasses CraftingClass
         {
             get => _job;
@@ -35,6 +36,8 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doZhloe;
+        [Description("Zhloe Aliapoh")]
+        [DisplayName("Zhloe Aliapoh")]
         public bool DoZhloeDeliveries
         {
             get => _doZhloe;
@@ -51,6 +54,8 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doMnaago;
+        [Description("Mnaago")]
+        [DisplayName("Mnaago")]
         public bool DoMnaagoDeliveries
         {
             get => _doMnaago;
@@ -67,6 +72,8 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doKurenai;
+        [Description("Kurenai")]
+        [DisplayName("Kurenai")]
         public bool DoKurenaiDeliveries
         {
             get => _doKurenai;
@@ -83,6 +90,8 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doAdkiragh;
+        [Description("Adkiragh")]
+        [DisplayName("Adkiragh")]
         public bool DoAdkiraghDeliveries
         {
             get => _doAdkiragh;
@@ -99,6 +108,8 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doKaishirr;
+        [Description("Kai-shirr")]
+        [DisplayName("Kai-shirr")]
         public bool DoKaishirrDeliveries
         {
             get => _doKaishirr;
@@ -115,6 +126,8 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doEhlltou;
+        [Description("Ehll Tou")]
+        [DisplayName("Ehll Tou")]
         public bool DoEhlltouDeliveries
         {
             get => _doEhlltou;
@@ -131,6 +144,8 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doCharlemend;
+        [Description("Charlemend")]
+        [DisplayName("Charlemend")]
         public bool DoCharlemendDeliveries
         {
             get => _doCharlemend;
@@ -147,6 +162,8 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doAmeliance;
+        [Description("Ameliance")]
+        [DisplayName("Ameliance")]
         public bool DoAmelianceeliveries
         {
             get => _doAmeliance;
@@ -158,6 +175,24 @@ namespace LlamaUtilities.LlamaUtilities.Settings
                 }
 
                 _doAmeliance = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _doAnden;
+        [Description("Anden")]
+        [DisplayName("Anden")]
+        public bool DoAndenDeliveries
+        {
+            get => _doAnden;
+            set
+            {
+                if (value == _doAnden)
+                {
+                    return;
+                }
+
+                _doAnden = value;
                 OnPropertyChanged();
             }
         }
