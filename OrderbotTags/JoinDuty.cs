@@ -135,7 +135,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task JoinDutyTask(int DutyId, bool Undersized, bool Trial, bool Raid)
         {
-            
+
             await GeneralFunctions.StopBusy();
 
             if (Undersized)
@@ -263,7 +263,7 @@ namespace LlamaUtilities.OrderbotTags
 
                         }
 
-                        await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(0, 59, 58));
+                        await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(0, 59, 59));
                     }
                 }
 
@@ -272,7 +272,7 @@ namespace LlamaUtilities.OrderbotTags
                     if (director.TimeLeftInDungeon >= new TimeSpan(2, 0, 0))
                     {
                         Log.Information("Barrier up");
-                        await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(1, 59, 58));
+                        await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(1, 59, 59));
                     }
                 }
                 else
@@ -280,7 +280,7 @@ namespace LlamaUtilities.OrderbotTags
                     if (director.TimeLeftInDungeon >= new TimeSpan(1, 30, 0))
                     {
                         Log.Information("Barrier up");
-                        await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(1, 29, 58));
+                        await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(1, 29, 59));
                     }
                 }
             }
