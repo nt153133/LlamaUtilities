@@ -10,6 +10,7 @@ using ff14bot.RemoteWindows;
 using LlamaLibrary.Helpers;
 using LlamaLibrary.RemoteAgents;
 using LlamaLibrary.RemoteWindows;
+using LlamaLibrary.Structs;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -133,6 +134,8 @@ namespace LlamaUtilities.OrderbotTags
 
         private static readonly Random _random = new Random();
 
+        private static readonly ShuffleCircularQueue<string> _farewellQueue = new ShuffleCircularQueue<string>(Farewells);
+
         public LeaveDuty() : base()
         {
         }
@@ -217,7 +220,7 @@ namespace LlamaUtilities.OrderbotTags
 
             if (SayGoodbye)
             {
-                var sentfarewell = Farewells[_random.Next(0, Farewells.Length)];
+                var sentfarewell = _farewellQueue.Dequeue();
 
                 Log.Information($"Saying '{sentfarewell}' the group");
                 await PartyBroadcaster.Send(sentfarewell);
