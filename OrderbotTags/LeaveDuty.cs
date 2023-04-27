@@ -6,7 +6,10 @@ using Clio.XmlEngine;
 using ff14bot.Behavior;
 using ff14bot.Enums;
 using ff14bot.Managers;
+using ff14bot.RemoteWindows;
 using LlamaLibrary.Helpers;
+using LlamaLibrary.RemoteAgents;
+using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -23,6 +26,22 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("RandomWait")]
         [DefaultValue(false)]
         public bool RandomWait { get; set; }
+
+        [XmlAttribute("PassOnLoot")]
+        [DefaultValue(true)]
+        public bool PassOnLoot { get; set; }
+
+        [XmlAttribute("VoteMVP")]
+        [DefaultValue(true)]
+        public bool VoteMVP { get; set; }
+
+        [XmlAttribute("MinWait")]
+        [DefaultValue(45000)]
+        public int MinWait { get; set; }
+
+        [XmlAttribute("MaxWait")]
+        [DefaultValue(90000)]
+        public int MaxWait { get; set; }
 
         public static ChatBroadcaster PartyBroadcaster = new ChatBroadcaster(MessageType.Party);
         public static ChatBroadcaster EmoteBroadcaster = new ChatBroadcaster(MessageType.StandardEmotes);
@@ -117,13 +136,88 @@ namespace LlamaUtilities.OrderbotTags
         public LeaveDuty() : base()
         {
         }
-
+        private Composite _coroutine;
         protected override void OnStart()
         {
+            if (PassOnLoot)
+            {
+                _coroutine = new ActionRunCoroutine(r => PassOnTheLoot());
+                AddHooks();
+            }
+            if (VoteMVP)
+            {
+                _coroutine = new ActionRunCoroutine(r => VoteMVPTask());
+                AddHooks();
+            }
+
+        }
+
+        private async Task<bool> VoteMVPTask()
+        {
+            Log.Information("Voting on MVP");
+
+            if (await Coroutine.Wait(60000, () => AgentVoteMVP.Instance.CanToggle || VoteMvp.Instance.IsOpen))
+            {
+                await AgentVoteMVP.Instance.OpenAndVote();
+            }
+
+            return false;
+        }
+
+        private async Task<bool> PassOnTheLoot()
+        {
+            if (!LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen)
+            {
+                return false;
+            }
+
+            Log.Information($"Passing on loot");
+            //if (!NeedGreed.Instance.IsOpen)
+            var window = RaptureAtkUnitManager.GetWindowByName("_Notification");
+
+            if (!NeedGreed.Instance.IsOpen && window != null)
+            {
+                window.SendAction(3, 3, 0, 3, 2, 6, 0x375B30E7);
+                await Coroutine.Wait(5000, () => NeedGreed.Instance.IsOpen);
+            }
+
+            if (NeedGreed.Instance.IsOpen)
+            {
+                for (var i = 0; i < NeedGreed.Instance.NumberOfItems; i++)
+                {
+                    NeedGreed.Instance.PassItem(i);
+                    await Coroutine.Sleep(500);
+                    await Coroutine.Wait(5000, () => SelectYesno.IsOpen);
+                    if (SelectYesno.IsOpen)
+                    {
+                        SelectYesno.Yes();
+                    }
+                }
+            }
+
+            if (NeedGreed.Instance.IsOpen)
+            {
+                NeedGreed.Instance.Close();
+            }
+
+            return false;
         }
 
         protected override void OnDone()
         {
+            RemoveHooks();
+        }
+        private void AddHooks()
+        {
+            Log.Information($"Adding Hooks");
+
+            TreeHooks.Instance.AddHook("TreeStart", _coroutine);
+        }
+
+        private void RemoveHooks()
+        {
+            Log.Information($"Removing Hook");
+            TreeHooks.Instance.RemoveHook("TreeStart", _coroutine);
         }
 
         protected override void OnResetCachedDone()
@@ -139,7 +233,7 @@ namespace LlamaUtilities.OrderbotTags
         private async Task LeaveDutyTask()
         {
             var rnd = new Random();
-            var waitTime = rnd.Next(45000, 90000);
+            var waitTime = rnd.Next(MinWait, MaxWait);
 
             if (SayGoodbye)
             {

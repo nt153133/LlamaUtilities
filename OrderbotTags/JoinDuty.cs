@@ -136,7 +136,7 @@ namespace LlamaUtilities.OrderbotTags
         private async Task JoinDutyTask(int DutyId, bool Undersized, bool Trial, bool Raid)
         {
 
-            await GeneralFunctions.StopBusy();
+            await GeneralFunctions.StopBusy(false);
 
             if (Undersized)
             {
@@ -272,6 +272,14 @@ namespace LlamaUtilities.OrderbotTags
                     if (director.TimeLeftInDungeon >= new TimeSpan(2, 0, 0))
                     {
                         Log.Information("Barrier up");
+                        if (SayHello)
+                        {
+                            var sentgreeting = Greetings[_random.Next(0, Greetings.Length)];
+
+                            Log.Information($"Saying '{sentgreeting}' the group");
+                            await PartyBroadcaster.Send(sentgreeting);
+
+                        }
                         await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(1, 59, 59));
                     }
                 }
@@ -280,6 +288,14 @@ namespace LlamaUtilities.OrderbotTags
                     if (director.TimeLeftInDungeon >= new TimeSpan(1, 30, 0))
                     {
                         Log.Information("Barrier up");
+                        if (SayHello)
+                        {
+                            var sentgreeting = Greetings[_random.Next(0, Greetings.Length)];
+
+                            Log.Information($"Saying '{sentgreeting}' the group");
+                            await PartyBroadcaster.Send(sentgreeting);
+
+                        }
                         await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(1, 29, 59));
                     }
                 }

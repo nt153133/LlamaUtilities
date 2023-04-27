@@ -37,6 +37,13 @@ namespace LlamaUtilities.OrderbotTags
 
         public async Task PassLoot()
         {
+
+            if (!LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen)
+            {
+                Log.Information($"Loot window not present, exiting");
+                return;
+            }
+
             //if (!NeedGreed.Instance.IsOpen)
             var window = RaptureAtkUnitManager.GetWindowByName("_Notification");
 
