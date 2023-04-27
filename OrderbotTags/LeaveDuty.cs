@@ -151,7 +151,9 @@ namespace LlamaUtilities.OrderbotTags
         {
             Log.Information("Voting on MVP");
 
-            await AgentVoteMVP.Instance.OpenAndVote();
+            var name = await AgentVoteMVP.Instance.OpenAndVoteName();
+
+            Log.Information($"Voted for {name}");
 
             return false;
         }
