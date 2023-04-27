@@ -10,6 +10,7 @@ using ff14bot.Managers;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Enums;
 using LlamaLibrary.Helpers;
+using LlamaLibrary.Structs;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -41,9 +42,6 @@ namespace LlamaUtilities.OrderbotTags
 
         public static ChatBroadcaster PartyBroadcaster = new ChatBroadcaster(MessageType.Party);
         public static ChatBroadcaster EmoteBroadcaster = new ChatBroadcaster(MessageType.StandardEmotes);
-
-        private static readonly Random _random = new Random();
-
         public override bool HighPriority => true;
 
         public override bool IsDone => _isDone;
@@ -110,6 +108,9 @@ namespace LlamaUtilities.OrderbotTags
             "Hey guys, glad to be here. Let's go have some fun.",
             "Oh yeah, love fighting this guy"
         };
+
+        private static readonly ShuffleCircularQueue<string> _greetingQueue = new ShuffleCircularQueue<string>(Greetings);
+
 
         public LLJoinDuty() : base()
         {
@@ -247,6 +248,8 @@ namespace LlamaUtilities.OrderbotTags
 
             Log.Information("Should be in duty");
 
+            var sentgreeting = _greetingQueue.Dequeue();
+
             if (DirectorManager.ActiveDirector is ff14bot.Directors.InstanceContentDirector director)
             {
                 if (Trial)
@@ -256,7 +259,6 @@ namespace LlamaUtilities.OrderbotTags
                         Log.Information("Barrier up");
                         if (SayHello)
                         {
-                            var sentgreeting = Greetings[_random.Next(0, Greetings.Length)];
 
                             Log.Information($"Saying '{sentgreeting}' the group");
                             await PartyBroadcaster.Send(sentgreeting);
@@ -274,8 +276,6 @@ namespace LlamaUtilities.OrderbotTags
                         Log.Information("Barrier up");
                         if (SayHello)
                         {
-                            var sentgreeting = Greetings[_random.Next(0, Greetings.Length)];
-
                             Log.Information($"Saying '{sentgreeting}' the group");
                             await PartyBroadcaster.Send(sentgreeting);
 
@@ -290,8 +290,6 @@ namespace LlamaUtilities.OrderbotTags
                         Log.Information("Barrier up");
                         if (SayHello)
                         {
-                            var sentgreeting = Greetings[_random.Next(0, Greetings.Length)];
-
                             Log.Information($"Saying '{sentgreeting}' the group");
                             await PartyBroadcaster.Send(sentgreeting);
 
