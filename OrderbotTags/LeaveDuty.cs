@@ -136,25 +136,26 @@ namespace LlamaUtilities.OrderbotTags
         public LeaveDuty() : base()
         {
         }
-        private Composite _coroutine;
+
+        private Composite _passOnLoot;
+        private Composite _voteMVP;
+
         protected override void OnStart()
         {
-            if (PassOnLoot)
-            {
-                _coroutine = new ActionRunCoroutine(r => PassOnTheLoot());
-                AddHooks();
-            }
-            if (VoteMVP)
-            {
-                _coroutine = new ActionRunCoroutine(r => VoteMVPTask());
-                AddHooks();
-            }
-
+            _passOnLoot = new ActionRunCoroutine(r => PassOnTheLoot());
+            _voteMVP = new ActionRunCoroutine(r => VoteMVPTask());
+            AddHooks();
         }
 
         private async Task<bool> VoteMVPTask()
         {
             Log.Information("Voting on MVP");
+
+            if (!AgentVoteMVP.Instance.CanToggle & !VoteMvp.Instance.IsOpen)
+            {
+                Log.Error($"Can't vote");
+                return false;
+            }
 
             if (await Coroutine.Wait(60000, () => AgentVoteMVP.Instance.CanToggle || VoteMvp.Instance.IsOpen))
             {
@@ -168,6 +169,7 @@ namespace LlamaUtilities.OrderbotTags
         {
             if (!LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen)
             {
+                Log.Error($"Loot not open");
                 return false;
             }
 
@@ -207,17 +209,27 @@ namespace LlamaUtilities.OrderbotTags
         {
             RemoveHooks();
         }
+
         private void AddHooks()
         {
-            Log.Information($"Adding Hooks");
+            if (PassOnLoot)
+            {
+                Log.Information($"Adding PassOnLoot Hook");
+                TreeHooks.Instance.AddHook("PassOnLoot", _passOnLoot);
+            }
 
-            TreeHooks.Instance.AddHook("TreeStart", _coroutine);
+            if (VoteMVP)
+            {
+                Log.Information($"Adding VoteOnMVP Hook");
+                TreeHooks.Instance.AddHook("VoteMVP", _voteMVP);
+            }
         }
 
         private void RemoveHooks()
         {
-            Log.Information($"Removing Hook");
-            TreeHooks.Instance.RemoveHook("TreeStart", _coroutine);
+            Log.Information($"Removing Hooks");
+            TreeHooks.Instance.RemoveHook("PassOnLoot", _passOnLoot);
+            TreeHooks.Instance.RemoveHook("VoteMVP", _voteMVP);
         }
 
         protected override void OnResetCachedDone()
@@ -259,7 +271,6 @@ namespace LlamaUtilities.OrderbotTags
                     await Coroutine.Wait(-1, () => !CommonBehaviors.IsLoading);
                 }
             }
-
 
             _isDone = true;
         }
