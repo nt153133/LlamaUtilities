@@ -142,37 +142,19 @@ namespace LlamaUtilities.OrderbotTags
 
         protected override void OnStart()
         {
-            _passOnLoot = new ActionRunCoroutine(r => PassOnTheLoot());
-            _voteMVP = new ActionRunCoroutine(r => VoteMVPTask());
-            AddHooks();
         }
 
         private async Task<bool> VoteMVPTask()
         {
             Log.Information("Voting on MVP");
 
-            if (!AgentVoteMVP.Instance.CanToggle & !VoteMvp.Instance.IsOpen)
-            {
-                Log.Error($"Can't vote");
-                return false;
-            }
-
-            if (await Coroutine.Wait(60000, () => AgentVoteMVP.Instance.CanToggle || VoteMvp.Instance.IsOpen))
-            {
-                await AgentVoteMVP.Instance.OpenAndVote();
-            }
+            await AgentVoteMVP.Instance.OpenAndVote();
 
             return false;
         }
 
         private async Task<bool> PassOnTheLoot()
         {
-            if (!LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen)
-            {
-                Log.Error($"Loot not open");
-                return false;
-            }
-
             Log.Information($"Passing on loot");
             //if (!NeedGreed.Instance.IsOpen)
             var window = RaptureAtkUnitManager.GetWindowByName("_Notification");
@@ -212,24 +194,10 @@ namespace LlamaUtilities.OrderbotTags
 
         private void AddHooks()
         {
-            if (PassOnLoot)
-            {
-                Log.Information($"Adding PassOnLoot Hook");
-                TreeHooks.Instance.AddHook("PassOnLoot", _passOnLoot);
-            }
-
-            if (VoteMVP)
-            {
-                Log.Information($"Adding VoteOnMVP Hook");
-                TreeHooks.Instance.AddHook("VoteMVP", _voteMVP);
-            }
         }
 
         private void RemoveHooks()
         {
-            Log.Information($"Removing Hooks");
-            TreeHooks.Instance.RemoveHook("PassOnLoot", _passOnLoot);
-            TreeHooks.Instance.RemoveHook("VoteMVP", _voteMVP);
         }
 
         protected override void OnResetCachedDone()
@@ -253,6 +221,16 @@ namespace LlamaUtilities.OrderbotTags
 
                 Log.Information($"Saying '{sentfarewell}' the group");
                 await PartyBroadcaster.Send(sentfarewell);
+            }
+
+            if (VoteMVP && (AgentVoteMVP.Instance.CanToggle || VoteMvp.Instance.IsOpen))
+            {
+                await VoteMVPTask();
+            }
+
+            if (PassOnLoot && LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen)
+            {
+                await PassOnTheLoot();
             }
 
             if (RandomWait)
