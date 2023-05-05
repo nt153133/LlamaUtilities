@@ -61,6 +61,14 @@ namespace LlamaUtilities.OrderbotTags
         {
             var materiaToUse = InventoryManager.FilledSlots.FirstOrDefault(i => i.RawItemId == (uint)MateriaItem);
             var equipmentToMeld = InventoryManager.FilledSlots.FirstOrDefault(i => i.RawItemId == (uint)EquipemntItem);
+            if (materiaToUse == null)
+            {
+                Log.Error($"Cannot find {DataManager.GetItem((uint)MateriaItem).CurrentLocaleName}. Please make sure it's in your inventory.");
+            }
+            if (equipmentToMeld == null)
+            {
+                Log.Error($"Cannot find {DataManager.GetItem((uint)EquipemntItem).CurrentLocaleName}. Please make sure it's in your inventory.");
+            }
 
             Log.Information($"Trying to affix {materiaToUse.Name} to {equipmentToMeld.Name}");
             if (!await OpenMeldWindow(equipmentToMeld))
