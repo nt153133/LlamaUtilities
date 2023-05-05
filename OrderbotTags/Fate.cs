@@ -92,6 +92,7 @@ namespace LlamaUtilities.OrderbotTags
 
         //some Statistics
         private FateData currentfate;
+        private FateData fateImIn;
 
         private readonly int fatesDone;
         private int mobsHunted;
@@ -796,10 +797,11 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task<bool> CheckLevelSync()
         {
-            if (currentfate != null && FateManager.WithinFate && currentfate.MaxLevel < Core.Player.ClassLevel && !Core.Me.IsLevelSynced)
+            fateImIn = FateManager.ActiveFates.OrderBy(fate => Core.Me.Distance(fate.Location)).FirstOrDefault(fate => fate.Level < _max && fate.Level > _min);
+            if (fateImIn != null && FateManager.WithinFate && fateImIn.MaxLevel < Core.Player.ClassLevel && !Core.Me.IsLevelSynced)
             {
                 ToDoList.LevelSync();
-                return true;
+                return false;
             }
 
             return false;
