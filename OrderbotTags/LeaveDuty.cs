@@ -3,9 +3,13 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
+using ff14bot;
 using ff14bot.Behavior;
 using ff14bot.Enums;
+using ff14bot.Helpers;
 using ff14bot.Managers;
+using ff14bot.Navigation;
+using ff14bot.Objects;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Helpers;
 using LlamaLibrary.RemoteAgents;
@@ -160,6 +164,8 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task<bool> PassOnTheLoot()
         {
+            LlamaLibrary.ScriptConditions.Extras.IsDutyEnded();
+
             Log.Information($"Passing on loot");
             //if (!NeedGreed.Instance.IsOpen)
             var window = RaptureAtkUnitManager.GetWindowByName("_Notification");
@@ -228,8 +234,12 @@ namespace LlamaUtilities.OrderbotTags
                 await PartyBroadcaster.Send(sentfarewell);
             }
 
-            if (VoteMVP && (AgentVoteMVP.Instance.CanToggle || VoteMvp.Instance.IsOpen))
+            JournalAccept.Decline();
+
+            if (VoteMVP)
             {
+                Log.Information($"Waiting to vote on MVP.");
+                await Coroutine.Wait(10000, () => AgentVoteMVP.Instance.CanToggle || VoteMvp.Instance.IsOpen);
                 await VoteMVPTask();
             }
 
