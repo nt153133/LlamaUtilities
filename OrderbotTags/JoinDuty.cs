@@ -285,6 +285,11 @@ namespace LlamaUtilities.OrderbotTags
                             await PartyBroadcaster.Send(sentgreeting);
                         }
 
+                        if (SayHelloCustom)
+                        {
+                            // Custom messages here
+                        }
+
                         await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(0, 59, 59));
                     }
                 }
