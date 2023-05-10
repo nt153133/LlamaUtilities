@@ -2,6 +2,7 @@
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot.Managers;
+using ff14bot.RemoteWindows;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -93,6 +94,11 @@ namespace LlamaUtilities.OrderbotTags
 
                     await Coroutine.Sleep(500);
                 } while (RaptureAtkUnitManager.GetWindowByName("HowToNotice") != null);
+            }
+
+            if (JournalAccept.IsOpen)
+            {
+                JournalAccept.Decline();
             }
 
             _isDone = true;
