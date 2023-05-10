@@ -39,6 +39,10 @@ namespace LlamaUtilities.OrderbotTags
         [DefaultValue(false)]
         public bool Raid { get; set; }
 
+        [XmlAttribute("Guildhest")]
+        [DefaultValue(false)]
+        public bool Guildhest { get; set; }
+
         [XmlAttribute("Undersized")]
         [DefaultValue(true)]
         public bool Undersized { get; set; }
@@ -46,6 +50,14 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("SayHello")]
         [DefaultValue(false)]
         public bool SayHello { get; set; }
+
+        [XmlAttribute("SayHelloCustom")]
+        [DefaultValue(false)]
+        public bool SayHelloCustom { get; set; }
+
+        [XmlAttribute("SayHelloMessages")]
+        [DefaultValue("gg/bye")]
+        public string SayHelloMessages { get; set; }
 
         public static ChatBroadcaster PartyBroadcaster = new ChatBroadcaster(MessageType.Party);
         public static ChatBroadcaster EmoteBroadcaster = new ChatBroadcaster(MessageType.StandardEmotes);
@@ -166,8 +178,6 @@ namespace LlamaUtilities.OrderbotTags
             {
                 while (DutyManager.QueueState == QueueState.None)
                 {
-
-
                     Log.Information("Queuing for " + DataManager.InstanceContentResults[(uint)DutyId].CurrentLocaleName);
                     DutyManager.Queue(DataManager.InstanceContentResults[(uint)DutyId]);
                     await Coroutine.Wait(10000, () => DutyManager.QueueState == QueueState.CommenceAvailable || DutyManager.QueueState == QueueState.JoiningInstance);
@@ -196,7 +206,7 @@ namespace LlamaUtilities.OrderbotTags
                     Log.Information("Waiting for queue pop.");
                     await Coroutine.Wait(-1,
                                          () => DutyManager.QueueState == QueueState.JoiningInstance ||
-                                                DutyManager.QueueState == QueueState.None);
+                                               DutyManager.QueueState == QueueState.None);
                 }
 
                 if (DutyManager.QueueState == QueueState.JoiningInstance)
@@ -209,7 +219,7 @@ namespace LlamaUtilities.OrderbotTags
                     DutyManager.Commence();
                     await Coroutine.Wait(-1,
                                          () => DutyManager.QueueState == QueueState.LoadingContent ||
-                                                DutyManager.QueueState == QueueState.CommenceAvailable);
+                                               DutyManager.QueueState == QueueState.CommenceAvailable);
                 }
 
                 if (DutyManager.QueueState == QueueState.LoadingContent)
@@ -271,13 +281,26 @@ namespace LlamaUtilities.OrderbotTags
                         Log.Information("Barrier up");
                         if (SayHello)
                         {
-
                             Log.Information($"Saying '{sentgreeting}' the group");
                             await PartyBroadcaster.Send(sentgreeting);
-
                         }
 
                         await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(0, 59, 59));
+                    }
+                }
+
+                if (Guildhest)
+                {
+                    if (director.TimeLeftInDungeon >= new TimeSpan(0, 30, 0))
+                    {
+                        Log.Information("Barrier up");
+                        if (SayHello)
+                        {
+                            Log.Information($"Saying '{sentgreeting}' the group");
+                            await PartyBroadcaster.Send(sentgreeting);
+                        }
+
+                        await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(0, 29, 59));
                     }
                 }
 
@@ -290,8 +313,8 @@ namespace LlamaUtilities.OrderbotTags
                         {
                             Log.Information($"Saying '{sentgreeting}' the group");
                             await PartyBroadcaster.Send(sentgreeting);
-
                         }
+
                         await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(1, 59, 59));
                     }
                 }
@@ -304,8 +327,8 @@ namespace LlamaUtilities.OrderbotTags
                         {
                             Log.Information($"Saying '{sentgreeting}' the group");
                             await PartyBroadcaster.Send(sentgreeting);
-
                         }
+
                         await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(1, 29, 59));
                     }
                 }
@@ -328,7 +351,8 @@ namespace LlamaUtilities.OrderbotTags
                 Navigator.PlayerMover = new SlideMover();
                 Navigator.NavigationProvider = new ServiceNavigationProvider();
             }
-            uint[] entranceIds = { 2007527,2007529,2006962 };
+
+            uint[] entranceIds = { 2007527, 2007529, 2006962 };
             var entranceNpc = GameObjectManager.GameObjects.Where(r => r.IsTargetable && r.IsValid && entranceIds.Contains(r.NpcId)).OrderBy(r => r.Distance()).FirstOrDefault();
             if (entranceNpc != null)
             {
@@ -338,19 +362,20 @@ namespace LlamaUtilities.OrderbotTags
                     await Navigation.FlightorMove(entranceNpc.Location);
                 }
             }
+
             await GrandCompanyHelper.InteractWithNpc(GCNpc.Entrance_to_the_Barracks);
             await Coroutine.Wait(5000, () => SelectYesno.IsOpen);
             await Buddy.Coroutines.Coroutine.Sleep(500);
             if (ff14bot.RemoteWindows.SelectYesno.IsOpen)
             {
-                Log($"Selecting Yes.");
+                Log.Information($"Selecting Yes.");
                 ff14bot.RemoteWindows.SelectYesno.ClickYes();
             }
 
             await Coroutine.Wait(5000, () => CommonBehaviors.IsLoading);
             while (CommonBehaviors.IsLoading)
             {
-                Log($"Waiting for zoning to finish...");
+                Log.Information($"Waiting for zoning to finish...");
                 await Coroutine.Wait(-1, () => !CommonBehaviors.IsLoading);
             }
         }
