@@ -50,6 +50,14 @@ namespace LlamaUtilities.OrderbotTags
         [DefaultValue(90000)]
         public int MaxWait { get; set; }
 
+        [XmlAttribute("SayGoodbyeCustom")]
+        [DefaultValue(false)]
+        public bool SayGoodbyeCustom { get; set; }
+
+        [XmlAttribute("SayGoodbyeMessages")]
+        [DefaultValue("gg/bye")]
+        public string SayGoodbyeMessages { get; set; }
+
         public static ChatBroadcaster PartyBroadcaster = new ChatBroadcaster(MessageType.Party);
         public static ChatBroadcaster EmoteBroadcaster = new ChatBroadcaster(MessageType.StandardEmotes);
 
@@ -142,6 +150,8 @@ namespace LlamaUtilities.OrderbotTags
 
         private static readonly ShuffleCircularQueue<string> _farewellQueue = new ShuffleCircularQueue<string>(Farewells);
 
+        private static ShuffleCircularQueue<string> _farewellQueueCustom;
+
         public LeaveGuildhest() : base()
         {
         }
@@ -191,13 +201,20 @@ namespace LlamaUtilities.OrderbotTags
         {
             var rnd = new Random();
             var waitTime = rnd.Next(MinWait, MaxWait);
+            ShuffleCircularQueue<string> _farewellQueueCustom = new ShuffleCircularQueue<string>(SayGoodbyeMessages.Split('/'));
 
-            if (SayGoodbye)
+            if (SayGoodbye && !SayGoodbyeCustom)
             {
                 var sentfarewell = _farewellQueue.Dequeue();
 
                 Log.Information($"Saying '{sentfarewell}' the group");
                 await PartyBroadcaster.Send(sentfarewell);
+            }
+            if (!SayGoodbye && SayGoodbyeCustom)
+            {
+                var sentcustomgreeting = _farewellQueueCustom.Dequeue();
+                Log.Information($"Saying '{sentcustomgreeting}' the group");
+                await PartyBroadcaster.Send(sentcustomgreeting);
             }
 
             if (VoteMVP)

@@ -130,6 +130,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private static readonly ShuffleCircularQueue<string> _greetingQueue = new ShuffleCircularQueue<string>(Greetings);
 
+        private static ShuffleCircularQueue<string> _greetingQueueCustom;
 
         public LLJoinDuty() : base()
         {
@@ -150,12 +151,11 @@ namespace LlamaUtilities.OrderbotTags
 
         protected override Composite CreateBehavior()
         {
-            return new ActionRunCoroutine(r => JoinDutyTask(DutyId, Undersized, Trial, Raid));
+            return new ActionRunCoroutine(r => JoinDutyTask());
         }
 
-        private async Task JoinDutyTask(int DutyId, bool Undersized, bool Trial, bool Raid)
+        private async Task JoinDutyTask()
         {
-
             await GeneralFunctions.StopBusy(false);
 
             if (GoToBarracks && (WorldManager.ZoneId != 534 && WorldManager.ZoneId != 535 && WorldManager.ZoneId != 536))
@@ -270,72 +270,44 @@ namespace LlamaUtilities.OrderbotTags
 
             Log.Information("Should be in duty");
 
-            var sentgreeting = _greetingQueue.Dequeue();
+            ShuffleCircularQueue<string> _greetingQueueCustom = new ShuffleCircularQueue<string>(SayHelloMessages.Split('/'));
 
             if (DirectorManager.ActiveDirector is ff14bot.Directors.InstanceContentDirector director)
             {
+                var time = new TimeSpan(1, 29, 59);
+                if (Raid)
+                {
+                    time = new TimeSpan(1, 59, 59);
+                }
+
                 if (Trial)
                 {
-                    if (director.TimeLeftInDungeon >= new TimeSpan(0, 60, 0))
-                    {
-                        Log.Information("Barrier up");
-                        if (SayHello)
-                        {
-                            Log.Information($"Saying '{sentgreeting}' the group");
-                            await PartyBroadcaster.Send(sentgreeting);
-                        }
-
-                        if (SayHelloCustom)
-                        {
-                            // Custom messages here
-                        }
-
-                        await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(0, 59, 59));
-                    }
+                    time = new TimeSpan(0, 59, 59);
                 }
 
                 if (Guildhest)
                 {
-                    if (director.TimeLeftInDungeon >= new TimeSpan(0, 30, 0))
-                    {
-                        Log.Information("Barrier up");
-                        if (SayHello)
-                        {
-                            Log.Information($"Saying '{sentgreeting}' the group");
-                            await PartyBroadcaster.Send(sentgreeting);
-                        }
-
-                        await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(0, 29, 59));
-                    }
+                    time = new TimeSpan(0, 29, 59);
                 }
 
-                if (Raid)
+                if (director.TimeLeftInDungeon >= time.Add(new TimeSpan(0,0,1)))
                 {
-                    if (director.TimeLeftInDungeon >= new TimeSpan(2, 0, 0))
+                    Log.Information("Barrier up");
+                    if (SayHello && !SayHelloCustom)
                     {
-                        Log.Information("Barrier up");
-                        if (SayHello)
-                        {
-                            Log.Information($"Saying '{sentgreeting}' the group");
-                            await PartyBroadcaster.Send(sentgreeting);
-                        }
-
-                        await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(1, 59, 59));
+                        var sentgreeting = _greetingQueue.Dequeue();
+                        Log.Information($"Saying '{sentgreeting}' the group");
+                        await PartyBroadcaster.Send(sentgreeting);
                     }
-                }
-                else
-                {
-                    if (director.TimeLeftInDungeon >= new TimeSpan(1, 30, 0))
+
+                    if (SayHelloCustom && !SayHello)
                     {
-                        Log.Information("Barrier up");
-                        if (SayHello)
-                        {
-                            Log.Information($"Saying '{sentgreeting}' the group");
-                            await PartyBroadcaster.Send(sentgreeting);
-                        }
-
-                        await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < new TimeSpan(1, 29, 59));
+                        var sentcustomgreeting = _greetingQueueCustom.Dequeue();
+                        Log.Information($"Saying '{sentcustomgreeting}' the group");
+                        await PartyBroadcaster.Send(sentcustomgreeting);
                     }
+
+                    await Coroutine.Wait(-1, () => director.TimeLeftInDungeon < time);
                 }
             }
             else
