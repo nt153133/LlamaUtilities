@@ -33,11 +33,11 @@ namespace LlamaUtilities.OrderbotTags
         public bool RandomWait { get; set; }
 
         [XmlAttribute("PassOnLoot")]
-        [DefaultValue(true)]
+        [DefaultValue(false)]
         public bool PassOnLoot { get; set; }
 
         [XmlAttribute("VoteMVP")]
-        [DefaultValue(true)]
+        [DefaultValue(false)]
         public bool VoteMVP { get; set; }
 
         [XmlAttribute("MinWait")]
