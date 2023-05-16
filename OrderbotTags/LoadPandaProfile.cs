@@ -30,6 +30,10 @@ public class LoadPandaProfile : LLProfileBehavior
     public int QueueType { get; set; }
     // Queue Type - 0 for standard, 1 for Undersized, 2 for Duty Support, 3 for Trust
 
+    [XmlAttribute("GoToBarracks")]
+    [DefaultValue(false)]
+    public bool GoToBarracks { get; set; }
+
     public override bool IsDone => _isDone;
 
     public override bool HighPriority => true;
@@ -55,7 +59,7 @@ public class LoadPandaProfile : LLProfileBehavior
     private async Task LoadServerProfileByNameTask()
     {
 
-        await LlamaLibrary.Helpers.LoadServerProfile.LoadProfile(ProfileName, QueueType);
+        await LlamaLibrary.Helpers.LoadServerProfile.LoadProfile(ProfileName, QueueType, GoToBarracks);
 
     }
 

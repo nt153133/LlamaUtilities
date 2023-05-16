@@ -160,7 +160,7 @@ namespace LlamaUtilities.OrderbotTags
 
             if (GoToBarracks && (WorldManager.ZoneId != 534 && WorldManager.ZoneId != 535 && WorldManager.ZoneId != 536))
             {
-                await GoToBarracksTask();
+                await LlamaLibrary.Helpers.GrandCompanyHelper.GetToGCBarracks();
             }
 
             if (Undersized)
