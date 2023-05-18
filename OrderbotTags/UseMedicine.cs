@@ -7,6 +7,7 @@
 // or send a letter to
 //      Creative Commons // 171 Second Street, Suite 300 // San Francisco, California, 94105, USA.
 //
+
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -33,15 +34,12 @@ namespace LlamaUtilities.OrderbotTags
     [XmlElement("UseMedicine")]
     public class UseMedicine : LLProfileBehavior
     {
-
-
         [XmlAttribute("ItemId")]
         public uint ItemId { get; set; }
 
         [XmlAttribute("MinDuration")]
         [DefaultValue(5)]
         public int MinDuration { get; set; }
-
 
         [XmlAttribute("HqOnly")]
         public bool HqOnly { get; set; }
@@ -51,24 +49,20 @@ namespace LlamaUtilities.OrderbotTags
 
         protected bool _IsDone;
 
-
         #region Overrides of ProfileBehavior
 
         public override bool IsDone
         {
-            get
-            {
-                return _IsDone;
-            }
+            get { return _IsDone; }
         }
 
         #endregion
 
         private BagSlot itemslot;
         private Item itemData;
+
         protected override void OnStart()
         {
-
             itemData = DataManager.GetItem(ItemId);
             if (itemData == null)
             {
@@ -86,11 +80,9 @@ namespace LlamaUtilities.OrderbotTags
 
             if (validItems.Length == 0)
             {
-                TreeRoot.Stop(string.Format("We don't have any {0} {1} in our inventory.", itemData.CurrentLocaleName,ItemId));
+                TreeRoot.Stop(string.Format("We don't have any {0} {1} in our inventory.", itemData.CurrentLocaleName, ItemId));
                 return;
             }
-
-
 
             if (HqOnly)
             {
@@ -122,21 +114,12 @@ namespace LlamaUtilities.OrderbotTags
             {
                 itemslot = validItems.OrderBy(r => r.IsHighQuality).FirstOrDefault();
             }
-
-
         }
-
-
-
 
         protected override void OnResetCachedDone()
         {
             _IsDone = false;
         }
-
-
-
-
 
         public override string StatusText
         {
@@ -146,12 +129,12 @@ namespace LlamaUtilities.OrderbotTags
                 {
                     return "Drinking " + itemData.CurrentLocaleName;
                 }
+
                 return "";
             }
         }
 
-
-        private async Task<bool> Eatfood()
+        private async Task<bool> TakeMedicine()
         {
             bool shouldEat = false;
             bool alreadyPresent = false;
@@ -169,8 +152,6 @@ namespace LlamaUtilities.OrderbotTags
                 shouldEat = true;
             }
 
-
-
             if (shouldEat)
             {
                 if (CraftingLog.IsOpen || CraftingManager.IsCrafting)
@@ -184,35 +165,31 @@ namespace LlamaUtilities.OrderbotTags
                 }
 
                 Log("Waiting until the item is usable.");
-                    await Coroutine.Wait(Timeout.InfiniteTimeSpan, () => itemslot.CanUse(null));
+                await Coroutine.Wait(Timeout.InfiniteTimeSpan, () => itemslot.CanUse(null));
 
-                Log("Drinking {0}",itemData.CurrentLocaleName);
-                itemslot.UseItem();
-                await Coroutine.Wait(10000, () => Core.Player.HasAura(49));
-
-                if (!Core.Player.HasAura(49))
+                while (!Core.Player.HasAura(49) || Core.Player.GetAuraById(49).TimespanLeft.TotalMinutes < MinDuration)
                 {
-                    Log("Waiting for the aura to appear");
-                    await Coroutine.Wait(Timeout.InfiniteTimeSpan, () => Core.Player.HasAura(49));
+                    Log("Drinking {0}", itemData.CurrentLocaleName);
+                    await Coroutine.Wait(10000, () => itemslot.CanUse() && !MovementManager.IsOccupied);
+                    itemslot.UseItem();
+                    await Coroutine.Wait(5000, () => Core.Player.HasAura(49));
+                    if (!Core.Player.HasAura(49))
+                    {
+                        Log("Aura didn't appear after 5 seconds, trying again.");
+                    }
                 }
-                else
-                {
-                    Log("Waiting until the duration is refreshed");
-                    await Coroutine.Wait(Timeout.InfiniteTimeSpan, () => Core.Player.GetAuraById(49).TimespanLeft.TotalMinutes > MinDuration);
-                }
-
             }
 
             _IsDone = true;
-
 
             return true;
         }
 
         private bool dialogwasopen;
+
         protected override Composite CreateBehavior()
         {
-            return new ActionRunCoroutine(ctx => Eatfood());
+            return new ActionRunCoroutine(ctx => TakeMedicine());
         }
     }
 }
