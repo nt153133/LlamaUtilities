@@ -12,6 +12,7 @@ using ff14bot.Managers;
 using ff14bot.Navigation;
 using ff14bot.Pathing.Service_Navigation;
 using ff14bot.RemoteWindows;
+using LlamaLibrary;
 using LlamaLibrary.Extensions;
 using LlamaLibrary.Helpers;
 using LlamaLibrary.Logging;
@@ -76,6 +77,7 @@ namespace LlamaUtilities.LlamaUtilities
         public UtilitiesBase()
         {
             OffsetManager.Init();
+            AssemblyProxy.AddAssembly("LlamaUtilities", typeof(UtilitiesBase).Assembly);
         }
 
         public override void Initialize()
