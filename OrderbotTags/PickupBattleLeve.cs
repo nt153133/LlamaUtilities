@@ -68,7 +68,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task PickupBattleLeveTask()
         {
-            var npcId = GameObjectManager.GetObjectByNPCId((uint) NpcId);
+            var npcId = GameObjectManager.GetObjectByNPCId((uint)NpcId);
             var QuestName = DataManager.GetLocalizedQuestName(QuestId);
 
             if (GuildLeve.Allowances == 0)
@@ -84,23 +84,17 @@ namespace LlamaUtilities.OrderbotTags
                 return;
             }
 
-            if (!npcId.IsWithinInteractRange)
-
+            while (!SelectIconString.IsOpen && !SelectString.IsOpen && !Request.IsOpen && !JournalResult.IsOpen && !Talk.DialogOpen)
             {
-                var _target = npcId.Location;
-                Navigator.PlayerMover.MoveTowards(_target);
-                while (_target.Distance2D(Core.Me.Location) >= 4)
+                // Movement
+                if (Core.Me.Distance2D(npcId.Location) > 3.5)
                 {
-                    Navigator.PlayerMover.MoveTowards(_target);
-                    await Coroutine.Sleep(100);
+                    Logging.WriteDiagnostic($"Moving to {npcId.Location}");
+                    await Navigation.FlightorMove(npcId.Location);
                 }
-
-                Navigator.PlayerMover.MoveStop();
+                npcId.Interact();
+                await Coroutine.Wait(5000, () => Conversation.IsOpen || Talk.DialogOpen);
             }
-
-            npcId.Interact();
-
-            await Coroutine.Wait(10000, () => Conversation.IsOpen || Talk.DialogOpen);
 
             if (Talk.DialogOpen)
             {
@@ -112,7 +106,6 @@ namespace LlamaUtilities.OrderbotTags
                     await Coroutine.Wait(500, () => Talk.DialogOpen);
                     await Coroutine.Yield();
                 }
-
             }
 
             if (!Conversation.IsOpen)
@@ -121,7 +114,7 @@ namespace LlamaUtilities.OrderbotTags
                 await Coroutine.Wait(10000, () => Conversation.IsOpen);
                 if (!Conversation.IsOpen)
                 {
-                     Log.Information($"Interacting with {npcId.Name} didn't happen, exiting'.");
+                    Log.Information($"Interacting with {npcId.Name} didn't happen, exiting'.");
                     _isDone = true;
                     return;
                 }
@@ -135,6 +128,7 @@ namespace LlamaUtilities.OrderbotTags
                     Log.Error($"Could not find {LlamaLibrary.Helpers.Translator.BattlecraftLeves}");
                     return;
                 }
+
                 await Coroutine.Wait(1000, () => LlamaLibrary.RemoteWindows.GuildLeve.Instance.IsOpen);
             }
 
@@ -144,7 +138,7 @@ namespace LlamaUtilities.OrderbotTags
                 {
                     if (GuildLeve.Allowances > 0)
                     {
-                        StatusText = "Picking up " +leveId;
+                        StatusText = "Picking up " + leveId;
                         Log.Information($"Picking up {leveId}");
 
                         await Coroutine.Sleep(1000);
@@ -170,6 +164,5 @@ namespace LlamaUtilities.OrderbotTags
 
             _isDone = true;
         }
-
     }
 }

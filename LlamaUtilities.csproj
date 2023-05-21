@@ -79,6 +79,7 @@
     <Compile Include="OrderbotTags\BuyWhiteScriptItem.cs" />
     <Compile Include="OrderbotTags\ChangeClass.cs" />
     <Compile Include="OrderbotTags\CloseHowTos.cs" />
+    <Compile Include="OrderbotTags\LLTurnInGuildLeveTag.cs" />
     <Compile Include="OrderbotTags\LeaveGuildhest.cs" />
     <Compile Include="OrderbotTags\LoadPandaProfile.cs" />
     <Compile Include="OrderbotTags\UseMedicine.cs" />

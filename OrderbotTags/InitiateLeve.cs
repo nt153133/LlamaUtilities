@@ -14,6 +14,7 @@ using ff14bot.RemoteWindows;
 using ff14bot.Enums;
 using ff14bot.Helpers;
 using LlamaLibrary.Helpers;
+using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
