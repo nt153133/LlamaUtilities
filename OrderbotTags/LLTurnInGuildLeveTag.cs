@@ -128,6 +128,11 @@ namespace LlamaUtilities.OrderbotTags
                 return true;
             }
 
+            if (Talk.DialogOpen)
+            {
+                await HandleTalk();
+            }
+
             if (SelectString.IsOpen)
             {
                 var lines = SelectString.Lines();
@@ -161,6 +166,11 @@ namespace LlamaUtilities.OrderbotTags
                 SelectString.ClickSlot((uint)index);
                 await Coroutine.Yield();
                 return true;
+            }
+
+            if (Talk.DialogOpen)
+            {
+                await HandleTalk();
             }
 
             if (Request.IsOpen)
@@ -248,8 +258,14 @@ namespace LlamaUtilities.OrderbotTags
                 await Coroutine.Wait(2000, () => JournalResult.ButtonClickable);
                 JournalResult.Complete();
                 Logging.WriteDiagnostic($"Completed on {WorldManager.EorzaTime} ET");
-
+                await Coroutine.Wait(2000, () => SelectYesno.IsOpen);
+                if (SelectYesno.IsOpen)
+                {
+                    Logging.WriteDiagnostic($"Clicking yes");
+                    SelectYesno.ClickYes();
+                }
                 await Coroutine.Wait(2000, () => !JournalResult.IsOpen);
+
                 await HandleTalk();
 
                 return true;
