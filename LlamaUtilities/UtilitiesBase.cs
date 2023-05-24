@@ -385,7 +385,7 @@ namespace LlamaUtilities.LlamaUtilities
 
             var toDesynthList = InventoryManager.GetBagsByInventoryBagId(BagsToCheck())
                 .SelectMany(bag => bag.FilledSlots
-                                .FindAll(bs => bs.IsDesynthesizable))
+                                .FindAll(bs => bs.IsDesynthesizable && (IsOnDesynthList(bs) || ShouldDesynthFish(bs))))
                 .ToList();
 
             if (!toDesynthList.Any())
