@@ -42,7 +42,7 @@ namespace LlamaUtilities.OrderbotTags
             { ClassJobType.WhiteMage, new uint[] { 2052, 6262, 7829, 7839, 7868, 8654, 9496, 10059 } },
         };
 
-        public static uint[] ZodiacRelicOffhands = new uint[] { 2306,6266,7833,7843,7872,8658,9500,10063};
+        public static uint[] ZodiacRelicOffhands = new uint[] { 2306,6266,7833,7843,7872,8658,9500,10063 };
 
         protected override void OnDone()
         {

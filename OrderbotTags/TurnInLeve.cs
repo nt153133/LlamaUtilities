@@ -4,6 +4,7 @@ using Buddy.Coroutines;
 using Clio.Utilities;
 using Clio.XmlEngine;
 using ff14bot;
+using ff14bot.Behavior;
 using ff14bot.Helpers;
 using ff14bot.Managers;
 using ff14bot.Objects;
@@ -64,6 +65,7 @@ namespace LlamaUtilities.OrderbotTags
                 {
                     Logging.WriteDiagnostic($"Moving to {Location}");
                     await Navigation.FlightorMove(Location);
+                    await CommonTasks.Land();
                 }
 
                 npc.Interact();
