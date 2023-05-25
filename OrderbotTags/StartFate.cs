@@ -1,12 +1,17 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot;
+using ff14bot.Behavior;
 using ff14bot.Helpers;
 using ff14bot.Managers;
+using ff14bot.Navigation;
+using ff14bot.Objects;
 using ff14bot.RemoteWindows;
+using LlamaLibrary.Helpers;
 using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 
@@ -25,7 +30,9 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool IsDone => _isDone;
 
-        public StartFate() : base() { }
+        public StartFate() : base()
+        {
+        }
 
         protected override void OnStart()
         {
@@ -47,14 +54,17 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task StartFateTask()
         {
-            var npc = GameObjectManager.GetObjectByNPCId((uint)NpcId);
+            var npc = GameObjectManager.GetObjectsByNPCId<GameObject>((uint)NpcId)
+                .FirstOrDefault(bc => bc.IsTargetable);
 
             while (!Conversation.IsOpen && !Talk.DialogOpen)
             {
-                while (Core.Me.Distance(npc.Location) < 2f)
+                while (Core.Me.Distance2D(npc.Location) > 2f)
                 {
-                    await LlamaLibrary.Helpers.Navigation.FlightorMove(npc.Location);
+                    await Navigation.FlightorMove(npc.Location);
+                    await CommonTasks.Land();
                 }
+
                 npc.Interact();
                 await Coroutine.Wait(10000, () => Conversation.IsOpen || Talk.DialogOpen);
                 if (!Conversation.IsOpen && !Talk.DialogOpen)
@@ -66,8 +76,9 @@ namespace LlamaUtilities.OrderbotTags
             while (!SelectYesno.IsOpen)
             {
                 Talk.Next();
+                await Coroutine.Wait(500, () => !Talk.DialogOpen);
+                await Coroutine.Wait(500, () => Talk.DialogOpen);
                 await Coroutine.Yield();
-                await Coroutine.Sleep(500);
             }
 
             if (SelectYesno.IsOpen)
