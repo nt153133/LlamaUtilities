@@ -46,32 +46,33 @@ namespace LlamaUtilities.LlamaUtilities
         public static bool IsBusy => DutyManager.InInstance || DutyManager.InQueue || DutyManager.DutyReady || Core.Me.IsCasting || Core.Me.IsMounted || Core.Me.InCombat || Talk.DialogOpen || MovementManager.IsMoving ||
                                      MovementManager.IsOccupied;
 
-        private static readonly List<(string Name, uint ItemLevel)> DesynthList = new List<(string, uint)>
+        private static readonly List<(string Name, uint ItemLevel, byte Rarity)> DesynthList = new()
         {
             // 5.x Shadowbringers
-            ("Lakeland", 390),
-            ("Voeburtite", 400),
-            ("Fae", 400),
-            ("Ravel Keeper's", 406),
-            ("Nabaath", 412),
-            ("The Forgiven", 418),
-            ("Amaurotine", 430),
-            ("Warg", 445),
-            ("Anamnesis", 455),
-            ("Shadowless", 475),
-            ("Heirloom", 485),
-            ("Paglth'an", 505),
+            ("Lakeland", 390, 2),
+            ("Voeburtite", 400, 2),
+            ("Fae", 400, 2),
+            ("Ravel Keeper's", 406, 2),
+            ("Nabaath", 412, 2),
+            ("The Forgiven", 418, 2),
+            ("Amaurotine", 430, 2),
+            ("Warg", 445, 2),
+            ("Anamnesis", 455, 2),
+            ("Shadowless", 475, 2),
+            ("Heirloom", 485, 2),
+            ("Paglth'an", 505, 2),
 
             // 6.x Endwalker
-            ("Manusya", 520),
-            ("Imperial", 530),
-            ("Palaka", 536),
-            ("Ktiseos", 542),
-            ("Etheirys", 548),
-            ("The Last", 560),
-            ("Darbar", 575),
-            ("Troian", 595),
-            ("Manalis", 605),
+            ("Manusya", 520, 2),
+            ("Imperial", 530, 2),
+            ("Palaka", 536, 2),
+            ("Ktiseos", 542, 2),
+            ("Etheirys", 548, 2),
+            ("The Last", 560, 2),
+            ("Darbar", 575, 2),
+            ("Troian", 595, 2),
+            ("Manalis", 605, 2),
+            ("Distance", 625, 2),
         };
 
         public UtilitiesBase()
@@ -408,8 +409,9 @@ namespace LlamaUtilities.LlamaUtilities
         private static bool IsOnDesynthList(BagSlot bagSlot)
         {
             return DesynthList.Any(x =>
-                                       bagSlot.Item.ItemLevel == x.ItemLevel
-                                       && bagSlot.Item.EnglishName.Contains(x.Name, StringComparison.InvariantCultureIgnoreCase));
+                bagSlot.Item.ItemLevel == x.ItemLevel
+                && bagSlot.Item.Rarity == x.Rarity
+                && bagSlot.Item.EnglishName.Contains(x.Name, StringComparison.InvariantCultureIgnoreCase));
         }
 
         private static InventoryBagId[] BagsToCheck()
