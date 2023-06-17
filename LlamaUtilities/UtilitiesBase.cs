@@ -13,8 +13,10 @@ using ff14bot.Navigation;
 using ff14bot.Pathing.Service_Navigation;
 using ff14bot.RemoteWindows;
 using LlamaLibrary;
+using LlamaLibrary.Enums;
 using LlamaLibrary.Extensions;
 using LlamaLibrary.Helpers;
+using LlamaLibrary.Helpers.HousingTravel.Districts;
 using LlamaLibrary.Logging;
 using LlamaLibrary.Memory;
 using LlamaLibrary.RemoteAgents;
@@ -46,33 +48,256 @@ namespace LlamaUtilities.LlamaUtilities
         public static bool IsBusy => DutyManager.InInstance || DutyManager.InQueue || DutyManager.DutyReady || Core.Me.IsCasting || Core.Me.IsMounted || Core.Me.InCombat || Talk.DialogOpen || MovementManager.IsMoving ||
                                      MovementManager.IsOccupied;
 
-        private static readonly List<(string Name, uint ItemLevel, byte Rarity)> DesynthList = new()
+        private static readonly List<(string Name, uint ItemLevel, ItemRarity Rarity)> TrustDungeonDesynthList = new()
         {
+            // 2.x A Realm Reborn
+            // Grouped by dungeon-shared loot, plus some 2.x weapons have unique names
+            // Sastasha, Tam-Tara Deepcroft, Copperbell Mines
+            ("Acolyte's", 17, ItemRarity.Green),
+            ("Foestriker's", 17, ItemRarity.Green),
+            ("Plundered", 17, ItemRarity.Green),
+            ("Warded Round Shield", 17, ItemRarity.Green),
+            ("Nightprowler's Targe", 17, ItemRarity.Green),
+            ("Pirate's", 17, ItemRarity.Green),
+            ("Aetherial Brass", 16, ItemRarity.Pink),
+
+            // Thousand Maws of Toto-Rak
+            ("Warden's", 26, ItemRarity.Green),
+            ("Torturer's", 26, ItemRarity.Green),
+            ("Brigand's", 26, ItemRarity.Green),
+            ("Ascetic's", 26, ItemRarity.Green),
+            ("Nighthawk Visor", 26, ItemRarity.Green),
+            ("Eternal Shade", 26, ItemRarity.Green),
+            ("Antares Needles", 26, ItemRarity.Green),
+            ("Bow of Owls", 26, ItemRarity.Green),
+            ("Crimson Tide", 26, ItemRarity.Green),
+            ("Elmlord's Tusk", 26, ItemRarity.Green),
+            ("Frostbite", 26, ItemRarity.Green),
+            ("Thalassian Shield", 26, ItemRarity.Green),
+            ("Howling Talons", 26, ItemRarity.Green),
+            ("Kple Kple", 26, ItemRarity.Green),
+            ("Pupil's Book of Brass", 26, ItemRarity.Green),
+            ("Taurus Staff", 26, ItemRarity.Green),
+            ("Thalassian Targe", 26, ItemRarity.Green),
+
+            // Haukke Manor
+            ("Aetherial", 28, ItemRarity.Pink),
+            ("Aetherial", 29, ItemRarity.Pink),
+            ("Aetherial", 30, ItemRarity.Pink),
+            ("Manor", 30, ItemRarity.Green),
+            ("Shield of the Savage", 30, ItemRarity.Green),
+            ("Charred Axe", 30, ItemRarity.Green),
+            ("Inquisitor's Tuck", 30, ItemRarity.Green),
+            ("Waning Sun Pelta", 30, ItemRarity.Green),
+            ("Heart Snatchers", 30, ItemRarity.Green),
+            ("Heart of House d'Arlendre", 30, ItemRarity.Green),
+            ("Joukil's Guile", 30, ItemRarity.Green),
+            ("Pupil's Leather Grimoire", 30, ItemRarity.Green),
+            ("Tenfinger Tallstaff", 30, ItemRarity.Green),
+            ("Tidesplitter", 30, ItemRarity.Green),
+            ("Unbreakable Knuckles", 30, ItemRarity.Green),
+
+            // Brayflox Longstop
+            ("Longstop", 34, ItemRarity.Green),
+            ("Battlemage", 34, ItemRarity.Green),
+            ("Cavalry", 34, ItemRarity.Green),
+            ("Infantry", 34, ItemRarity.Green),
+            ("Gladiator's Ring", 34, ItemRarity.Green),
+            ("Marauder's Ring", 34, ItemRarity.Green),
+            ("Lancer's Ring", 34, ItemRarity.Green),
+            ("Pugilist's Ring", 34, ItemRarity.Green),
+            ("Rogue's Ring", 34, ItemRarity.Green),
+            ("Archer's Ring", 34, ItemRarity.Green),
+            ("Thaumaturge's Ring", 34, ItemRarity.Green),
+            ("Arcanist's Ring", 34, ItemRarity.Green),
+            ("Conjurer's Ring", 34, ItemRarity.Green),
+
+            // The Stone Vigil
+            ("Vigil", 43, ItemRarity.Green),
+            ("Ancient Sword", 43, ItemRarity.Green),
+            ("Ars Almadel", 43, ItemRarity.Green),
+            ("Ars Notoria", 43, ItemRarity.Green),
+            ("Blue Steel", 43, ItemRarity.Green),
+            ("Capella", 43, ItemRarity.Green),
+            ("Dryad Cane", 43, ItemRarity.Green),
+            ("Eisentaenzer", 43, ItemRarity.Green),
+            ("Jamadhars", 43, ItemRarity.Green),
+            ("Jambiyas", 43, ItemRarity.Green),
+            ("Keep of Saints", 43, ItemRarity.Green),
+            ("Lockheart", 43, ItemRarity.Green),
+            ("Shadow Bow", 43, ItemRarity.Green),
+            ("Wyvern Spear", 43, ItemRarity.Green),
+
+            // Snowcloak
+            // Not sure about desynthing repurposed gear still available from tomes + MSQ
+            //("Hero's", 90, ItemRarity.Blue),
+
+            // The Keeper of the Lake
+            ("Bogatyr's", 100, ItemRarity.Green),
+            ("Picaroon's", 100, ItemRarity.Green),
+            ("Varlet's", 100, ItemRarity.Green),
+
+            // 3.x Heavensward
+            // Grouped by dungeon-shared loot, plus some 3.x weapons have unique names
+            // Sohm Al
+            ("Woad", 130, ItemRarity.Green),
+            ("Coffinmaker", 130, ItemRarity.Green),
+            ("Destroyers", 130, ItemRarity.Green),
+            ("Expunger", 130, ItemRarity.Green),
+            ("Foolkiller", 130, ItemRarity.Green),
+            ("Grandeur", 130, ItemRarity.Green),
+            ("Guespiere", 130, ItemRarity.Green),
+            ("Gunromaru", 130, ItemRarity.Green),
+            ("Metamorphosis", 130, ItemRarity.Green),
+            ("Ox Tongue", 130, ItemRarity.Green),
+            ("Dissector", 130, ItemRarity.Green),
+            ("Prester", 130, ItemRarity.Green),
+            ("Renegades", 130, ItemRarity.Green),
+            ("Skofnung", 130, ItemRarity.Green),
+            ("The Red Pullet", 130, ItemRarity.Green),
+            ("The Black Pullet", 130, ItemRarity.Green),
+
+            // The Aery
+            ("Orthodox", 136, ItemRarity.Green),
+            ("Astrild", 136, ItemRarity.Green),
+            ("Dainslaif", 136, ItemRarity.Green),
+            ("Fagrskinna", 136, ItemRarity.Green),
+            ("Gambanteinn", 136, ItemRarity.Green),
+            ("Gjallarhorn", 136, ItemRarity.Green),
+            ("Grasitha", 136, ItemRarity.Green),
+            ("Hofuds", 136, ItemRarity.Green),
+            ("Katayama", 136, ItemRarity.Green),
+            ("Mistilteinn", 136, ItemRarity.Green),
+            ("Morkinskinna", 136, ItemRarity.Green),
+            ("Muspell", 136, ItemRarity.Green),
+            ("Skeggiold", 136, ItemRarity.Green),
+            ("Verdun", 136, ItemRarity.Green),
+            ("Wargfangs", 136, ItemRarity.Green),
+            ("Tyrfing", 136, ItemRarity.Green),
+            ("Svalin", 136, ItemRarity.Green),
+
+            // The Vault
+            ("Halonic", 142, ItemRarity.Green),
+
+            // The Great Gubal Library
+            ("Sharlayan", 148, ItemRarity.Green),
+            ("Belah'dian", 148, ItemRarity.Green),
+            ("Kagehide", 148, ItemRarity.Green),
+            ("Lewphon's Eye", 148, ItemRarity.Green),
+            ("Nymian Royal Marine", 148, ItemRarity.Green),
+            ("Old World", 148, ItemRarity.Green),
+            ("The Southern Sun", 148, ItemRarity.Green),
+            ("Pre-imperial Garlean Revolver", 148, ItemRarity.Green),
+            ("Thavnairian", 148, ItemRarity.Green),
+
+            // The Antitower
+            ("Dravanian", 195, ItemRarity.Green),
+
+            // Sohr Khai
+            ("Berserker's", 215, ItemRarity.Green),
+            ("Conqueror's", 215, ItemRarity.Green),
+            ("Panegyrist's", 215, ItemRarity.Green),
+            ("Prophet's", 215, ItemRarity.Green),
+            ("Subjugator's", 215, ItemRarity.Green),
+            ("Wrangler's", 215, ItemRarity.Green),
+            ("Viking", 215, ItemRarity.Green),
+
+            // Xelphatol
+            ("Valkyrie's", 225, ItemRarity.Green),
+
+            // Baelsar's Wall
+            ("Filibuster's", 245, ItemRarity.Green),
+
+            // 4.x Stormblood
+            // Grouped by dungeon-shared loot, plus some 4.x weapons have unique names
+            // The Sirensong Sea
+            ("Ghost Barque", 260, ItemRarity.Green),
+
+            // Bardam's Mettle
+            ("Nomad's", 276, ItemRarity.Green),
+            ("The Awaited Stars", 276, ItemRarity.Green),
+            ("The Blazing Sun", 276, ItemRarity.Green),
+            ("The Coming Storm", 276, ItemRarity.Green),
+            ("The Crying Wind", 276, ItemRarity.Green),
+            ("The Dancing Reeds", 276, ItemRarity.Green),
+            ("The Eloquent Moon", 276, ItemRarity.Green),
+            ("The Everflowing Waters", 276, ItemRarity.Green),
+            ("The Heavens Devoured", 276, ItemRarity.Green),
+            ("The Impassible Peak", 276, ItemRarity.Green),
+            ("The Impassionate Tide", 276, ItemRarity.Green),
+            ("The Lone Beacon", 276, ItemRarity.Green),
+            ("The Nimble Beast", 276, ItemRarity.Green),
+            ("The Stained Earth", 276, ItemRarity.Green),
+            ("The Unsullied Skies", 276, ItemRarity.Green),
+            ("The Voiceless Moon", 276, ItemRarity.Green),
+            ("The Eminent Dominion", 276, ItemRarity.Green),
+            ("Mol Shield", 276, ItemRarity.Green),
+
+            // Doma Castle
+            ("Yanxian", 282, ItemRarity.Green),
+            ("Shin", 282, ItemRarity.Green),
+
+            // Castrum Abania
+            ("Valerian", 288, ItemRarity.Green),
+            ("Xenobian", 288, ItemRarity.Green),
+            ("Enhancing Sword", 288, ItemRarity.Green),
+            ("Ritter Shield", 288, ItemRarity.Green),
+            ("Acantha Shavers", 288, ItemRarity.Green),
+            ("Aurora", 288, ItemRarity.Green),
+            ("Cruadin", 288, ItemRarity.Green),
+            ("Deae Gratia", 288, ItemRarity.Green),
+            ("Ethica", 288, ItemRarity.Green),
+            ("Griffinbanes", 288, ItemRarity.Green),
+            ("Hrotti", 288, ItemRarity.Green),
+            ("Kaman", 288, ItemRarity.Green),
+            ("Kards", 288, ItemRarity.Green),
+            ("Kotetsu", 288, ItemRarity.Green),
+            ("Magnatus", 288, ItemRarity.Green),
+            ("Narval", 288, ItemRarity.Green),
+            ("Rigel", 288, ItemRarity.Green),
+            ("Schlaeger", 288, ItemRarity.Green),
+            ("Sparth", 288, ItemRarity.Green),
+            ("Teiwaz", 288, ItemRarity.Green),
+
+            // Ala Mhigo
+            ("Arhat", 300, ItemRarity.Green),
+            ("of the Crimson Lotus", 300, ItemRarity.Green),
+
+            // The Drowned City of Skalla
+            ("Skallic", 315, ItemRarity.Green),
+
+            // The Burn
+            ("Royal Volunteer's", 355, ItemRarity.Green),
+
+            // The Ghimlyt Dark
+            ("Alliance", 375, ItemRarity.Green),
+
             // 5.x Shadowbringers
-            ("Lakeland", 390, 2),
-            ("Voeburtite", 400, 2),
-            ("Fae", 400, 2),
-            ("Ravel Keeper's", 406, 2),
-            ("Nabaath", 412, 2),
-            ("The Forgiven", 418, 2),
-            ("Amaurotine", 430, 2),
-            ("Warg", 445, 2),
-            ("Anamnesis", 455, 2),
-            ("Shadowless", 475, 2),
-            ("Heirloom", 485, 2),
-            ("Paglth'an", 505, 2),
+            ("Lakeland", 390, ItemRarity.Green),
+            ("Voeburtite", 400, ItemRarity.Green),
+            ("Fae", 400, ItemRarity.Green),
+            ("Ravel Keeper's", 406, ItemRarity.Green),
+            ("Nabaath", 412, ItemRarity.Green),
+            ("The Forgiven", 418, ItemRarity.Green),
+            ("Amaurotine", 430, ItemRarity.Green),
+            ("Warg", 445, ItemRarity.Green),
+            ("Anamnesis", 455, ItemRarity.Green),
+            ("Shadowless", 475, ItemRarity.Green),
+            ("Heirloom", 485, ItemRarity.Green),
+            ("Paglth'an", 505, ItemRarity.Green),
 
             // 6.x Endwalker
-            ("Manusya", 520, 2),
-            ("Imperial", 530, 2),
-            ("Palaka", 536, 2),
-            ("Ktiseos", 542, 2),
-            ("Etheirys", 548, 2),
-            ("The Last", 560, 2),
-            ("Darbar", 575, 2),
-            ("Troian", 595, 2),
-            ("Manalis", 605, 2),
-            ("Distance", 625, 2),
+            ("Manusya", 520, ItemRarity.Green),
+            ("Monstrorum", 520, ItemRarity.Green),
+            ("Imperial", 530, ItemRarity.Green),
+            ("Palaka", 536, ItemRarity.Green),
+            ("Ktiseos", 542, ItemRarity.Green),
+            ("Etheirys", 548, ItemRarity.Green),
+            ("The Last", 560, ItemRarity.Green),
+            ("Darbar", 575, ItemRarity.Green),
+            ("Troian", 595, ItemRarity.Green),
+            ("Manalis", 605, ItemRarity.Green),
+            ("Distance", 625, ItemRarity.Green),
         };
 
         public UtilitiesBase()
@@ -408,9 +633,10 @@ namespace LlamaUtilities.LlamaUtilities
 
         private static bool IsOnDesynthList(BagSlot bagSlot)
         {
-            return DesynthList.Any(x =>
+            return TrustDungeonDesynthList.Any(x =>
                 bagSlot.Item.ItemLevel == x.ItemLevel
-                && bagSlot.Item.Rarity == x.Rarity
+                && (ItemRarity)bagSlot.Item.Rarity == x.Rarity
+                //&& is not gearset item, if we can figure that out one day
                 && bagSlot.Item.EnglishName.Contains(x.Name, StringComparison.InvariantCultureIgnoreCase));
         }
 
