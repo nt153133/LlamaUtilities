@@ -49,6 +49,9 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("XYZ")]
         public Vector3 Location { get; set; }
 
+        [XmlAttribute("ZoneId")]
+        public ushort ZoneId { get; set; }
+
         public override bool HighPriority => true;
 
         public override bool IsDone => _isDone;
@@ -82,58 +85,19 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task PickupGuildLeveTask()
         {
-            var npcId = GameObjectManager.GetObjectByNPCId((uint)NpcId);
-            var QuestName = DataManager.GetLocalizedQuestName(QuestId);
+            LlamaLibrary.Helpers.NPC.Npc npc = new((uint)NpcId, ZoneId, Location);
 
             if (GuildLeve.Allowances == 0)
             {
                 Log.Error($"No more leve allowances. Exiting.");
+                await TreeRoot.StopGently();
                 return;
             }
 
-            if (npcId == null)
+            if (!await LlamaLibrary.Helpers.Navigation.GetToInteractNpcSelectString(npc))
             {
-                Log.Information($"Couldn't find {npcId.Name}, exiting'.");
-                _isDone = true;
+                Logging.WriteDiagnostic($"Failed to get to {DataManager.GetLocalizedNPCName(NpcId)}");
                 return;
-            }
-
-            while (!SelectIconString.IsOpen && !SelectString.IsOpen && !Request.IsOpen && !JournalResult.IsOpen && !Talk.DialogOpen)
-            {
-                // Movement
-                if (Core.Me.Distance2D(npcId.Location) > 3.5)
-                {
-                    Logging.WriteDiagnostic($"Moving to {npcId.Location}");
-                    await Navigation.FlightorMove(npcId.Location);
-                    await CommonTasks.Land();
-                }
-
-                npcId.Interact();
-                await Coroutine.Wait(5000, () => Conversation.IsOpen || Talk.DialogOpen);
-            }
-
-            if (Talk.DialogOpen)
-            {
-                Log.Information($"Handling dialog.");
-                while (!Conversation.IsOpen)
-                {
-                    Talk.Next();
-                    await Coroutine.Wait(500, () => !Talk.DialogOpen);
-                    await Coroutine.Wait(500, () => Talk.DialogOpen);
-                    await Coroutine.Yield();
-                }
-            }
-
-            if (!Conversation.IsOpen)
-            {
-                npcId.Interact();
-                await Coroutine.Wait(10000, () => Conversation.IsOpen);
-                if (!Conversation.IsOpen)
-                {
-                    Log.Information($"Interacting with {npcId.Name} didn't happen, exiting'.");
-                    _isDone = true;
-                    return;
-                }
             }
 
             string type;
