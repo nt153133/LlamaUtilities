@@ -77,12 +77,12 @@ namespace LlamaUtilities.OrderbotTags
 
             if (Fish)
             {
-                amountToOrder = Math.Min(Total - (int)Math.Ceiling((decimal)((ConditionParser.ItemCount((uint)RewardItemId)) / 2)), (int)(InventoryManager.FreeSlots - 3));
+                amountToOrder = Math.Min(Total - (int)Math.Ceiling((decimal)((ConditionParser.ItemCount((uint)RewardItemId)) / 2)), (int)(InventoryManager.FreeSlots - 4));
 
             }
             else
             {
-                amountToOrder = Math.Min(Total - (int)Math.Ceiling((decimal)((ConditionParser.ItemCount((uint)RewardItemId)) / 3)), (int)(InventoryManager.FreeSlots - 3));
+                amountToOrder = Math.Min(Total - (int)Math.Ceiling((decimal)((ConditionParser.ItemCount((uint)RewardItemId)) / 3)), (int)(InventoryManager.FreeSlots - 4));
             }
 
             LisbethOrder order = new LisbethOrder(1, 1, ItemID, amountToOrder, Job);
