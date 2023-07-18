@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Buddy.Coroutines;
+using Clio.Utilities;
 using Clio.XmlEngine;
 using ff14bot;
 using ff14bot.Helpers;
@@ -23,6 +24,12 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("NpcID")]
         [XmlAttribute("NPCID")]
         public int NpcId { get; set; }
+
+        [XmlAttribute("XYZ")]
+        public Vector3 Location { get; set; }
+
+        [XmlAttribute("ZoneId")]
+        public ushort ZoneId { get; set; }
 
         public override bool HighPriority => true;
 
@@ -52,15 +59,8 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task PickUpMandervilleQuestTask()
         {
-            var npcId = GameObjectManager.GetObjectByNPCId((uint) NpcId);
-            var QuestName = DataManager.GetLocalizedQuestName(QuestId);
 
-            if (npcId == null)
-            {
-                Logging.WriteDiagnostic($"Couldn't find {npcId.Name}, exiting'.");
-                _isDone = true;
-                return;
-            }
+            LlamaLibrary.Helpers.NPC.Npc npc = new((uint)NpcId, ZoneId, Location);
 
             if (QuestLogManager.HasQuest(QuestId))
             {
@@ -69,34 +69,10 @@ namespace LlamaUtilities.OrderbotTags
                 return;
             }
 
-            if (!npcId.IsWithinInteractRange)
-
+            if (!await LlamaLibrary.Helpers.Navigation.GetToInteractNpcSelectString(npc))
             {
-                var _target = npcId.Location;
-                Navigator.PlayerMover.MoveTowards(_target);
-                while (_target.Distance2D(Core.Me.Location) >= 4)
-                {
-                    Navigator.PlayerMover.MoveTowards(_target);
-                    await Coroutine.Sleep(100);
-                }
-
-                Navigator.PlayerMover.MoveStop();
-            }
-
-            npcId.Interact();
-
-            await Coroutine.Wait(10000, () => SelectIconString.IsOpen);
-
-            if (!SelectIconString.IsOpen)
-            {
-                npcId.Interact();
-                await Coroutine.Wait(10000, () => SelectIconString.IsOpen);
-                if (!SelectIconString.IsOpen)
-                {
-                    Logging.WriteDiagnostic($"Interacting with {npcId.Name} didn't happen, exiting'.");
-                    _isDone = true;
-                    return;
-                }
+                Logging.WriteDiagnostic($"Failed to get to {DataManager.GetLocalizedNPCName(NpcId)}");
+                return;
             }
 
             if (SelectIconString.IsOpen)
