@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Buddy.Coroutines;
+using Clio.Utilities;
 using Clio.XmlEngine;
 using ff14bot;
 using ff14bot.Behavior;
@@ -14,7 +15,9 @@ using ff14bot.Navigation;
 using ff14bot.NeoProfiles;
 using ff14bot.Objects;
 using ff14bot.RemoteWindows;
+using LlamaLibrary.Extensions;
 using LlamaLibrary.Helpers;
+using LlamaLibrary.JsonObjects.Lisbeth;
 using LlamaLibrary.RemoteWindows;
 using LlamaLibrary.Structs;
 using Newtonsoft.Json;
@@ -37,7 +40,7 @@ namespace LlamaUtilities.OrderbotTags
         public int RewardItemId { get; set; }
 
         [XmlAttribute("Job")]
-        public string Job { get; set; }
+        public SourceType Job { get; set; }
 
         [XmlAttribute("Fish")]
         [DefaultValue(false)]
@@ -77,35 +80,40 @@ namespace LlamaUtilities.OrderbotTags
 
             if (Fish)
             {
-                amountToOrder = Math.Min(Total - (int)Math.Ceiling((decimal)((ConditionParser.ItemCount((uint)RewardItemId)) / 2)), (int)(InventoryManager.FreeSlots - 5));
+                var alreadyHas = Total - (int)Math.Ceiling((decimal)(ConditionParser.ItemCount((uint)RewardItemId)));
+                amountToOrder = Math.Min(alreadyHas/2, (int)(InventoryManager.FreeSlots - 5));
 
             }
             else
             {
-                amountToOrder = Math.Min(Total - (int)Math.Ceiling((decimal)((ConditionParser.ItemCount((uint)RewardItemId)) / 3)), (int)(InventoryManager.FreeSlots - 5));
+                var alreadyHas = Total - (int)Math.Ceiling((decimal)(ConditionParser.ItemCount((uint)RewardItemId)));
+                amountToOrder = Math.Min( alreadyHas/3, (int)(InventoryManager.FreeSlots - 5));
             }
 
-            LisbethOrder order = new LisbethOrder(1, 1, ItemID, amountToOrder, Job);
+            var orderToTest = new List<Order>();
+            var orderITem = new Order()
+            {
+                Item = (uint) ItemID, Amount = (uint) amountToOrder, Enabled = true, Group = 1, Type = Job, Collectable = true,
+            };
+            orderToTest.Add(orderITem);
 
-            outList.Add(order);
+           var finalorder = orderToTest.GetOrderJson();
 
-            var lisbethOrder = JsonConvert.SerializeObject(outList, Formatting.None);
+            Log.Information($"{orderToTest}");
 
-            Log.Information($"{lisbethOrder}");
-
-            if (lisbethOrder.ToString() == "")
+            if (finalorder == "")
             {
                 Log.Warning("Not Calling lisbeth.");
             }
             else
             {
                 Log.Information("Calling lisbeth");
-                if (!await Lisbeth.ExecuteOrders(lisbethOrder.ToString()))
+                if (!await Lisbeth.ExecuteOrders(finalorder))
                 {
                     Log.Error("Lisbeth order failed, Dumping order to GCSupply.json");
                     using (var outputFile = new StreamWriter("GCSupply.json", false))
                     {
-                        await outputFile.WriteAsync(lisbethOrder.ToString());
+                        await outputFile.WriteAsync(finalorder);
                     }
                 }
                 else
@@ -113,6 +121,18 @@ namespace LlamaUtilities.OrderbotTags
                     Log.Information("Lisbeth order should be done");
                 }
             }
+
+
+
+            var location = new Vector3(397.2991f,45.96232f,-145.3118f) ;
+            var pos = location;
+            while (Core.Me.Location.Distance2D(pos) > 0.5)
+            {
+                await CommonTasks.MoveTo(pos);
+                await Coroutine.Sleep(30);
+            }
+            await CommonTasks.StopMoving();
+            await Coroutine.Wait(-1, () => Core.Player.Location.Z < -390);
 
             _isDone = true;
         }
