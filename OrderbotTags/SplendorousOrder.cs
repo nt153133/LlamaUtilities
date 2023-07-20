@@ -80,14 +80,13 @@ namespace LlamaUtilities.OrderbotTags
 
             if (Fish)
             {
-                var alreadyHas = Total - (int)Math.Ceiling((decimal)(ConditionParser.ItemCount((uint)RewardItemId)));
-                amountToOrder = Math.Min(alreadyHas/2, (int)(InventoryManager.FreeSlots - 5));
-
+                var alreadyHas = (int)Math.Ceiling((decimal)(Total - ConditionParser.ItemCount((uint)RewardItemId)));
+                amountToOrder = Math.Min( (int)Math.Ceiling((decimal)alreadyHas/2), (int)(InventoryManager.FreeSlots - 5));
             }
             else
             {
-                var alreadyHas = Total - (int)Math.Ceiling((decimal)(ConditionParser.ItemCount((uint)RewardItemId)));
-                amountToOrder = Math.Min( alreadyHas/3, (int)(InventoryManager.FreeSlots - 5));
+                var alreadyHas = (int)Math.Ceiling((decimal)(Total - ConditionParser.ItemCount((uint)RewardItemId)));
+                amountToOrder = Math.Min( (int)Math.Ceiling((decimal)alreadyHas/3), (int)(InventoryManager.FreeSlots - 5));
             }
 
             var orderToTest = new List<Order>();
@@ -99,7 +98,7 @@ namespace LlamaUtilities.OrderbotTags
 
            var finalorder = orderToTest.GetOrderJson();
 
-            Log.Information($"{DataManager.GetItem((uint)ItemID).CurrentLocaleName}, Amount: {amountToOrder}");
+            Log.Information($"{DataManager.GetItem((uint)RewardItemId).CurrentLocaleName}, CurrentCount: {ConditionParser.ItemCount((uint)RewardItemId)}, AmountNeeded: {Total} AmountOrdered: {amountToOrder} InventorySlots: {InventoryManager.FreeSlots - 5}");
 
             if (finalorder == "")
             {
