@@ -99,7 +99,7 @@ namespace LlamaUtilities.OrderbotTags
 
            var finalorder = orderToTest.GetOrderJson();
 
-            Log.Information($"{orderToTest}");
+            Log.Information($"{DataManager.GetItem((uint)ItemID).CurrentLocaleName}, Amount: {amountToOrder}");
 
             if (finalorder == "")
             {
@@ -121,18 +121,6 @@ namespace LlamaUtilities.OrderbotTags
                     Log.Information("Lisbeth order should be done");
                 }
             }
-
-
-
-            var location = new Vector3(397.2991f,45.96232f,-145.3118f) ;
-            var pos = location;
-            while (Core.Me.Location.Distance2D(pos) > 0.5)
-            {
-                await CommonTasks.MoveTo(pos);
-                await Coroutine.Sleep(30);
-            }
-            await CommonTasks.StopMoving();
-            await Coroutine.Wait(-1, () => Core.Player.Location.Z < -390);
 
             _isDone = true;
         }
