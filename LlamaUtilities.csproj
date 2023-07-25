@@ -87,6 +87,7 @@
     <Compile Include="OrderbotTags\LoadPandaProfile.cs" />
     <Compile Include="OrderbotTags\SplendorousOrder.cs" />
     <Compile Include="OrderbotTags\StartFate.cs" />
+    <Compile Include="OrderbotTags\StatusText.cs" />
     <Compile Include="OrderbotTags\TurnInLeve.cs" />
     <Compile Include="OrderbotTags\UseMedicine.cs" />
     <Compile Include="OrderbotTags\EnterSoloDuty.cs" />
