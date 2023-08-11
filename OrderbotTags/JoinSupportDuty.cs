@@ -59,7 +59,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task JoinDutyTask(int DutyId, bool Trial, bool Raid)
         {
-            await GeneralFunctions.StopBusy();
+            await GeneralFunctions.StopBusy(false);
 
             while (DutyManager.QueueState == QueueState.None)
             {
