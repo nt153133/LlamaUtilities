@@ -20,7 +20,9 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool HighPriority => true;
 
-        public EquipWeapon() : base() { }
+        public EquipWeapon() : base()
+        {
+        }
 
         protected override void OnStart()
         {
@@ -49,6 +51,11 @@ namespace LlamaUtilities.OrderbotTags
                 if (itemRole == ItemRole.Shield)
                 {
                     EquipSlot = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.OffHand];
+                }
+
+                if (itemRole == (ItemRole)31)
+                {
+                    EquipSlot = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.SoulCrystal];
                 }
 
                 var item1 = InventoryManager.FilledInventoryAndArmory.FirstOrDefault(i => i.RawItemId == (uint)weapon);

@@ -82,6 +82,7 @@
     <Compile Include="OrderbotTags\CloseHowTos.cs" />
     <Compile Include="OrderbotTags\EquipZodiac.cs" />
     <Compile Include="OrderbotTags\InfuseSphereScroll.cs" />
+    <Compile Include="OrderbotTags\LeaveParty.cs" />
     <Compile Include="OrderbotTags\LLTurnInGuildLeveTag.cs" />
     <Compile Include="OrderbotTags\LeaveGuildhest.cs" />
     <Compile Include="OrderbotTags\LoadPandaProfile.cs" />
