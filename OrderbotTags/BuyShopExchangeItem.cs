@@ -78,41 +78,34 @@ namespace LlamaUtilities.OrderbotTags
 
             unit.Interact();
 
-            if (dialog)
+            await Coroutine.Wait(5000, () => ShopExchangeItem.Instance.IsOpen || Conversation.IsOpen || Talk.DialogOpen);
+
+            while (Talk.DialogOpen)
             {
-                await Coroutine.Wait(5000, () => Talk.DialogOpen);
+                Talk.Next();
+                await Coroutine.Sleep(1000);
+            }
+
+            if (Conversation.IsOpen)
+            {
+                Conversation.SelectLine((uint)selectString);
+
+                await Coroutine.Wait(5000, () => ShopExchangeItem.Instance.IsOpen || Talk.DialogOpen);
 
                 while (Talk.DialogOpen)
                 {
                     Talk.Next();
                     await Coroutine.Sleep(1000);
                 }
-            }
 
-            await Coroutine.Wait(5000, () => ShopExchangeItem.Instance.IsOpen || Conversation.IsOpen);
-
-            if (Conversation.IsOpen)
-            {
-                Conversation.SelectLine((uint)selectString);
-
-                if (dialog)
+                if (!await Coroutine.Wait(5000, () => ShopExchangeItem.Instance.IsOpen))
                 {
-                    await Coroutine.Wait(5000, () => Talk.DialogOpen);
-
-                    while (Talk.DialogOpen)
-                    {
-                        Talk.Next();
-                        await Coroutine.Sleep(1000);
-                    }
+                    Log.Error("ShopExchangeItem did not open");
+                    _isDone = true;
+                    return;
                 }
 
-                await Coroutine.Wait(5000, () => ShopExchangeItem.Instance.IsOpen);
-
-                if (ShopExchangeItem.Instance.IsOpen)
-                {
-                    //Log.Information("ShopExchangeItem opened");
-                    await ShopExchangeItem.Instance.Purchase((uint)itemId, (uint)count);
-                }
+                await ShopExchangeItem.Instance.Purchase((uint)itemId, (uint)count);
 
                 await Coroutine.Wait(2000, () => ShopExchangeItem.Instance.IsOpen);
                 if (ShopExchangeItem.Instance.IsOpen)
@@ -128,5 +121,6 @@ namespace LlamaUtilities.OrderbotTags
 
             _isDone = true;
         }
+
     }
 }
