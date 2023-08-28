@@ -15,7 +15,9 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool HighPriority => true;
 
-        public PassOnLoot() : base() { }
+        public PassOnLoot() : base()
+        {
+        }
 
         protected override void OnStart()
         {
@@ -37,40 +39,18 @@ namespace LlamaUtilities.OrderbotTags
 
         public async Task PassLoot()
         {
-
-            if (!LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen)
+            Log.Information($"Waiting for loot window.");
+            await Coroutine.Wait(5000, () => LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen || NeedGreed.Instance.IsOpen);
+            if (LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen || NeedGreed.Instance.IsOpen)
             {
-                Log.Information($"Loot window not present, exiting");
-                return;
+                await LlamaLibrary.Helpers.GeneralFunctions.PassOnAllLoot();
+            }
+            else
+            {
+                Log.Information($"Loot window did not open.");
             }
 
-            //if (!NeedGreed.Instance.IsOpen)
-            var window = RaptureAtkUnitManager.GetWindowByName("_Notification");
-
-            if (!NeedGreed.Instance.IsOpen && window != null)
-            {
-                window.SendAction(3, 3, 0, 3, 2, 6, 0x375B30E7);
-                await Coroutine.Wait(5000, () => NeedGreed.Instance.IsOpen);
-            }
-
-            if (NeedGreed.Instance.IsOpen)
-            {
-                for (var i = 0; i < NeedGreed.Instance.NumberOfItems; i++)
-                {
-                    NeedGreed.Instance.PassItem(i);
-                    await Coroutine.Sleep(500);
-                    await Coroutine.Wait(5000, () => SelectYesno.IsOpen);
-                    if (SelectYesno.IsOpen)
-                    {
-                        SelectYesno.Yes();
-                    }
-                }
-            }
-
-            if (NeedGreed.Instance.IsOpen)
-            {
-                NeedGreed.Instance.Close();
-            }
+            _isDone = true;
         }
 
         public override bool IsDone => _isDone;

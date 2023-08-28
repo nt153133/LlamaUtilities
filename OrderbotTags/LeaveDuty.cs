@@ -161,53 +161,6 @@ namespace LlamaUtilities.OrderbotTags
         {
         }
 
-        private async Task<bool> VoteMVPTask()
-        {
-            Log.Information("Voting on MVP");
-
-            var name = await AgentVoteMVP.Instance.OpenAndVoteName();
-
-            Log.Information($"Voted for {name}");
-
-            return false;
-        }
-
-        private async Task<bool> PassOnTheLoot()
-        {
-            LlamaLibrary.ScriptConditions.Extras.IsDutyEnded();
-
-            Log.Information($"Passing on loot");
-            //if (!NeedGreed.Instance.IsOpen)
-            var window = RaptureAtkUnitManager.GetWindowByName("_Notification");
-
-            if (!NeedGreed.Instance.IsOpen && window != null)
-            {
-                window.SendAction(3, 3, 0, 3, 2, 6, 0x375B30E7);
-                await Coroutine.Wait(5000, () => NeedGreed.Instance.IsOpen);
-            }
-
-            if (NeedGreed.Instance.IsOpen)
-            {
-                for (var i = 0; i < NeedGreed.Instance.NumberOfItems; i++)
-                {
-                    NeedGreed.Instance.PassItem(i);
-                    await Coroutine.Sleep(500);
-                    await Coroutine.Wait(5000, () => SelectYesno.IsOpen);
-                    if (SelectYesno.IsOpen)
-                    {
-                        SelectYesno.Yes();
-                    }
-                }
-            }
-
-            if (NeedGreed.Instance.IsOpen)
-            {
-                NeedGreed.Instance.Close();
-            }
-
-            return false;
-        }
-
         protected override void OnDone()
         {
             RemoveHooks();
@@ -244,6 +197,7 @@ namespace LlamaUtilities.OrderbotTags
                 Log.Information($"Saying '{sentfarewell}' the group");
                 await PartyBroadcaster.Send(sentfarewell);
             }
+
             if (!SayGoodbye && SayGoodbyeCustom)
             {
                 var sentcustomgreeting = _farewellQueueCustom.Dequeue();
@@ -256,13 +210,31 @@ namespace LlamaUtilities.OrderbotTags
             if (VoteMVP)
             {
                 Log.Information($"Waiting to vote on MVP.");
-                await Coroutine.Wait(10000, () => AgentVoteMVP.Instance.CanToggle || VoteMvp.Instance.IsOpen);
-                await VoteMVPTask();
+                await Coroutine.Wait(5000, () => AgentVoteMVP.Instance.CanToggle || VoteMvp.Instance.IsOpen);
+                if (AgentVoteMVP.Instance.CanToggle || VoteMvp.Instance.IsOpen)
+                {
+                    Log.Information($"MVP window open, voting on MVP");
+                    await LlamaLibrary.Helpers.GeneralFunctions.VoteMVPTask();
+                }
+                else
+                {
+                    Log.Information($"MVP window did not open.");
+                }
             }
 
-            if (PassOnLoot && LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen)
+            if (PassOnLoot)
             {
-                await PassOnTheLoot();
+                Log.Information($"Waiting for loot window.");
+                await Coroutine.Wait(5000, () => LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen || NeedGreed.Instance.IsOpen);
+                if (LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen || NeedGreed.Instance.IsOpen)
+                {
+                    Log.Information($"Loot window open, passing on loot");
+                    await LlamaLibrary.Helpers.GeneralFunctions.PassOnAllLoot();
+                }
+                else
+                {
+                    Log.Information($"Loot window did not open.");
+                }
             }
 
             if (RandomWait)
