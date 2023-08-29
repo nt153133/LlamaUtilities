@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
@@ -224,6 +225,11 @@ namespace LlamaUtilities.OrderbotTags
 
             if (PassOnLoot)
             {
+                if (GameObjectManager.GetObjectsOfType<Treasure>().Where(i => i.State == 0).Any())
+                {
+                    Log.Information($"There are chests that need to be opened.");
+                    await LlamaLibrary.Helpers.GeneralFunctions.OpenChests();
+                }
                 Log.Information($"Waiting for loot window.");
                 await Coroutine.Wait(5000, () => LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen || NeedGreed.Instance.IsOpen);
                 if (LlamaLibrary.RemoteWindows.NotificationLoot.Instance.IsOpen || NeedGreed.Instance.IsOpen)
