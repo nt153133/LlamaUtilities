@@ -81,6 +81,7 @@
     <Compile Include="OrderbotTags\ChangeClass.cs" />
     <Compile Include="OrderbotTags\CloseHowTos.cs" />
     <Compile Include="OrderbotTags\EquipZodiac.cs" />
+    <Compile Include="OrderbotTags\HandleDutyEndedLoot.cs" />
     <Compile Include="OrderbotTags\InfuseSphereScroll.cs" />
     <Compile Include="OrderbotTags\LeaveParty.cs" />
     <Compile Include="OrderbotTags\LLTurnInGuildLeveTag.cs" />
