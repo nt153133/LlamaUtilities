@@ -40,7 +40,10 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task TurnInSplendorousTask()
         {
-
+            if (QuestLogManager.IsQuestCompleted(70338))
+            {
+                await GeneralFunctions.TurninSplendorous651Crafting();
+            }
             if (QuestLogManager.IsQuestCompleted(70303))
             {
                 await GeneralFunctions.TurninSplendorousCrafting();
