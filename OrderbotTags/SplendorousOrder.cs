@@ -107,6 +107,8 @@ namespace LlamaUtilities.OrderbotTags
             else
             {
                 Log.Information("Calling lisbeth");
+                Lisbeth.SetTrashExclusionItems(new HashSet<uint> { (uint)RewardItemId });
+
                 if (!await Lisbeth.ExecuteOrders(finalorder))
                 {
                     Log.Error("Lisbeth order failed, Dumping order to GCSupply.json");
