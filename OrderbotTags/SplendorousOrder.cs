@@ -108,11 +108,14 @@ namespace LlamaUtilities.OrderbotTags
             {
                 Log.Information("Calling lisbeth");
                 Lisbeth.SetTrashExclusionItems(new HashSet<uint> { (uint)RewardItemId });
-
+                using (var outputFile = new StreamWriter("SplendorousOrder.json", false))
+                {
+                    await outputFile.WriteAsync(finalorder);
+                }
                 if (!await Lisbeth.ExecuteOrders(finalorder))
                 {
-                    Log.Error("Lisbeth order failed, Dumping order to GCSupply.json");
-                    using (var outputFile = new StreamWriter("GCSupply.json", false))
+                    Log.Error("Lisbeth order failed, Dumping order to SplendorousOrder.json");
+                    using (var outputFile = new StreamWriter("SplendorousOrder.json", false))
                     {
                         await outputFile.WriteAsync(finalorder);
                     }
