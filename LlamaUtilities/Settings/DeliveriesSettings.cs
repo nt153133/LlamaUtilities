@@ -196,5 +196,23 @@ namespace LlamaUtilities.LlamaUtilities.Settings
                 OnPropertyChanged();
             }
         }
+
+        private bool _doMargrat;
+        [Description("Margrat")]
+        [DisplayName("Margrat")]
+        public bool DoMargratDeliveries
+        {
+            get => _doMargrat;
+            set
+            {
+                if (value == _doMargrat)
+                {
+                    return;
+                }
+
+                _doMargrat = value;
+                OnPropertyChanged();
+            }
+        }
     }
 }

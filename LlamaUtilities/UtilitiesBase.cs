@@ -429,6 +429,7 @@ namespace LlamaUtilities.LlamaUtilities
                                                                                                  DeliveriesSettings.Instance.DoCharlemendDeliveries,
                                                                                                  DeliveriesSettings.Instance.DoAmelianceeliveries,
                                                                                                  DeliveriesSettings.Instance.DoAndenDeliveries,
+                                                                                                 DeliveriesSettings.Instance.DoMargratDeliveries,
                                                                                                  DeliveriesSettings.Instance.CraftingClass);
                     break;
                 case TaskType.GcTurnin:
