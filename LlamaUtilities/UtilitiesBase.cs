@@ -471,6 +471,9 @@ namespace LlamaUtilities.LlamaUtilities
 
                     await AffixMateria(equipmentSlot, materiaBagSlots);
                     break;
+                case TaskType.ChocoRace:
+                    await PandaRacer.Race();
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }

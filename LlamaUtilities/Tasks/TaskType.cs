@@ -15,6 +15,7 @@
         CustomDeliveries,
         GcTurnin,
         Retainers,
-        FCWorkshop
+        FCWorkshop,
+        ChocoRace
     }
 }

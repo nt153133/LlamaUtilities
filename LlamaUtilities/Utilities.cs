@@ -139,6 +139,7 @@ namespace LlamaUtilities.LlamaUtilities
             pgRetainers.SelectedObject = RetainerSettings.Instance;
             pgInventory.SelectedObject = ReduceSettings.Instance;
             pgCustomDeliveries.SelectedObject = DeliveriesSettings.Instance;
+            pgChocoRacer.SelectedObject = RaceSettings.Instance;
 
             /*
             BindField(zhloeCheckBox, "Checked", DeliveriesSettings.Instance, nameof(DeliveriesSettings.DoZhloeDeliveries));
@@ -306,6 +307,18 @@ namespace LlamaUtilities.LlamaUtilities
             var task = new BotTask()
             {
                 Type = TaskType.Desynth,
+                TaskInfo = ""
+            };
+
+            UtilitiesBase.BotTask = task;
+            StartBotBase();
+        }
+
+        private void raceStart_Click(object sender, EventArgs e)
+        {
+            var task = new BotTask()
+            {
+                Type = TaskType.ChocoRace,
                 TaskInfo = ""
             };
 
@@ -595,6 +608,8 @@ namespace LlamaUtilities.LlamaUtilities
             }
             //MessageBox.Show("You are in the TabControl.SelectedIndexChanged event.");
         }
+
+
     }
 
 

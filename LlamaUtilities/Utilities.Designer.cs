@@ -75,8 +75,11 @@ namespace LlamaUtilities.LlamaUtilities
             this.btnHousing = new System.Windows.Forms.Button();
             this.tabFC = new System.Windows.Forms.TabPage();
             this.btnFCWorkshop = new System.Windows.Forms.Button();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.pgChocoRacer = new System.Windows.Forms.PropertyGrid();
             this.bindingSourceInventory = new System.Windows.Forms.BindingSource(this.components);
             this.bindingSourceInventoryMateria = new System.Windows.Forms.BindingSource(this.components);
+            this.raceStart = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabRetainers.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -93,6 +96,7 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabGC.SuspendLayout();
             this.tabHousing.SuspendLayout();
             this.tabFC.SuspendLayout();
+            this.tabPage2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSourceInventory)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSourceInventoryMateria)).BeginInit();
             this.SuspendLayout();
@@ -107,6 +111,7 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabControl1.Controls.Add(this.tabGC);
             this.tabControl1.Controls.Add(this.tabHousing);
             this.tabControl1.Controls.Add(this.tabFC);
+            this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
@@ -538,9 +543,38 @@ namespace LlamaUtilities.LlamaUtilities
             this.btnFCWorkshop.UseVisualStyleBackColor = true;
             this.btnFCWorkshop.Click += new System.EventHandler(this.btnFCWorkshop_Click);
             // 
+            // tabPage2
+            // 
+            this.tabPage2.Controls.Add(this.raceStart);
+            this.tabPage2.Controls.Add(this.pgChocoRacer);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(511, 359);
+            this.tabPage2.TabIndex = 8;
+            this.tabPage2.Text = "ChocoRacer";
+            this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // pgChocoRacer
+            // 
+            this.pgChocoRacer.Location = new System.Drawing.Point(8, 6);
+            this.pgChocoRacer.Name = "pgChocoRacer";
+            this.pgChocoRacer.Size = new System.Drawing.Size(297, 204);
+            this.pgChocoRacer.TabIndex = 0;
+            // 
             // bindingSourceInventory
             // 
             this.bindingSourceInventory.CurrentChanged += new System.EventHandler(this.bindingSourceInventory_CurrentChanged);
+            // 
+            // raceStart
+            // 
+            this.raceStart.Location = new System.Drawing.Point(221, 216);
+            this.raceStart.Name = "raceStart";
+            this.raceStart.Size = new System.Drawing.Size(84, 24);
+            this.raceStart.TabIndex = 1;
+            this.raceStart.Text = "Start";
+            this.raceStart.UseVisualStyleBackColor = true;
+            this.raceStart.Click += new System.EventHandler(this.raceStart_Click);
             // 
             // Utilities
             // 
@@ -568,6 +602,7 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabGC.ResumeLayout(false);
             this.tabHousing.ResumeLayout(false);
             this.tabFC.ResumeLayout(false);
+            this.tabPage2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.bindingSourceInventory)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSourceInventoryMateria)).EndInit();
             this.ResumeLayout(false);
@@ -638,5 +673,8 @@ namespace LlamaUtilities.LlamaUtilities
         private System.Windows.Forms.Label lblDesynth;
         private System.Windows.Forms.PropertyGrid pgInventory;
         private System.Windows.Forms.Button btnDesynth;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.PropertyGrid pgChocoRacer;
+        private System.Windows.Forms.Button raceStart;
     }
 }
