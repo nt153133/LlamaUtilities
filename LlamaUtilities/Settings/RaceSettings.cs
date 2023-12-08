@@ -19,9 +19,13 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         public enum RaceToRun
         {
             Random = 1000021,
+            Random_NoReward = 1000025,
             SagoliiRoad = 1000018,
+            SagoliiRoad_NoReward = 1000022,
             CostadelSol = 1000019,
+            CostadelSol_NoReward = 1000023,
             TranquilPaths = 1000020,
+            TranquilPaths_NoReward = 1000024,
         }
         [Description("Which racing course would you like to run?")]
         [DefaultValue(RaceToRun.Random)]
