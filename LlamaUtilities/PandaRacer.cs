@@ -81,8 +81,8 @@ namespace LlamaUtilities.LlamaUtilities
                                 break;
                             case <= 20:
                                 //Log.Information($"Waiting to restore Stamina.");
-                                await Coroutine.Wait(-1, () => ChocoboRaceManager.Stamina > 30 || ChocoboRaceManager.CanUseItem || ChocoboRaceManager.CanUseAbility || RaceChocoboResult.IsOpen && RaceMaps.Contains(WorldManager.ZoneId));
-                                if (ChocoboRaceManager.CanUseItem && !RaceChocoboResult.IsOpen)
+                                await Coroutine.Wait(-1, () => ChocoboRaceManager.Stamina > 20 || ChocoboRaceManager.CanUseItem && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet || ChocoboRaceManager.CanUseAbility || RaceChocoboResult.IsOpen && RaceMaps.Contains(WorldManager.ZoneId));
+                                if (ChocoboRaceManager.CanUseItem && !RaceChocoboResult.IsOpen && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet)
                                 {
                                     await UseItem();
                                 }
@@ -100,7 +100,16 @@ namespace LlamaUtilities.LlamaUtilities
                     {
                         Log.Information($"Leaving race.");
                         RaceChocoboResult.Close();
-                        await Coroutine.Wait(-1, () => !DutyManager.InInstance);
+                        await Coroutine.Wait(-1, () => !RaceMaps.Contains(WorldManager.ZoneId));
+                        if (!RaceMaps.Contains(WorldManager.ZoneId))
+                        {
+                            if (CommonBehaviors.IsLoading)
+                            {
+                                await Coroutine.Wait(-1, () => !CommonBehaviors.IsLoading);
+                            }
+                            await Coroutine.Sleep(1000);
+                            Log.Information("All done.");
+                        }
                     }
                 }
             }
@@ -208,7 +217,7 @@ namespace LlamaUtilities.LlamaUtilities
             Log.Information("Should be in the race");
         }
 
-        private static  async Task UseItem()
+        private static async Task UseItem()
         {
             switch (ChocoboRaceManager.Item.BaseActionId)
             {
@@ -251,7 +260,7 @@ namespace LlamaUtilities.LlamaUtilities
             await Coroutine.Sleep(1000);
         }
 
-        private static  async Task UseAbility()
+        private static async Task UseAbility()
         {
             switch (ChocoboRaceManager.Ability.BaseActionId)
             {
@@ -264,12 +273,13 @@ namespace LlamaUtilities.LlamaUtilities
             await Coroutine.Sleep(1000);
         }
 
-        private static  async Task GoFaster()
+        private static async Task GoFaster()
         {
             switch (ChocoboRaceManager.Status)
             {
                 case ChocoboStatus.Normal:
-                    if (ChocoboRaceManager.CanUseItem && !RaceChocoboResult.IsOpen)
+                    // Excluding Stamina Tablet as it seems to lock up the bot every time
+                    if (ChocoboRaceManager.CanUseItem && !RaceChocoboResult.IsOpen && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet)
                     {
                         await UseItem();
                     }
