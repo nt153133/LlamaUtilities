@@ -474,6 +474,12 @@ namespace LlamaUtilities.LlamaUtilities
                 case TaskType.ChocoRace:
                     await PandaRacer.Race();
                     break;
+                case TaskType.GetToBreeder:
+                    await PandaRacer.GetToBreeder();
+                    break;
+                case TaskType.GetToCounter:
+                    await PandaRacer.GetToCounter();
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Media;
 using Buddy.Coroutines;
+using Clio.Utilities;
 using ff14bot;
 using ff14bot.Behavior;
 using ff14bot.Enums;
@@ -15,7 +16,9 @@ using ff14bot.RemoteWindows.ChocoboRace;
 using LlamaLibrary;
 using LlamaUtilities.LlamaUtilities.Settings;
 using LlamaLibrary.Helpers;
+using LlamaLibrary.Helpers.NPC;
 using LlamaLibrary.Logging;
+using LlamaLibrary.Managers;
 
 namespace LlamaUtilities.LlamaUtilities
 {
@@ -25,6 +28,9 @@ namespace LlamaUtilities.LlamaUtilities
 
         // My Variables
         private static uint _blueSpeedPlatform = 2005038; // Blue go fast platform
+        internal static Npc ChocoboBreeder = new((uint)1010472, 148, new Vector3(-51.04488f, -0.005054563f, 67.57738f));
+        internal static Npc ChocoboRegistrar = new((uint)1010465, 388, new Vector3(-5.037189f, -2.026558E-06f, -65.11401f));
+        internal static Npc LiftOperator = new((uint)1011044, 144, new Vector3(-81.73487f, 3.814697E-06f, 30.29126f));
 
         // Items
         public enum ChocoboItems : uint
@@ -46,7 +52,8 @@ namespace LlamaUtilities.LlamaUtilities
 
         public enum ChocoboAbilities : uint
         {
-            ChocoDashII = 2, // Instantly restores stamina by 10%.
+            ChocoDashII = 2, // Temporarily boosts speed without depleting stamina for 2s.
+            ChocoCureII = 5, // Restores 9% of total stamina.
         }
 
         // Ability
@@ -81,7 +88,9 @@ namespace LlamaUtilities.LlamaUtilities
                                 break;
                             case <= 20:
                                 //Log.Information($"Waiting to restore Stamina.");
-                                await Coroutine.Wait(-1, () => ChocoboRaceManager.Stamina > 20 || ChocoboRaceManager.CanUseItem && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet || ChocoboRaceManager.CanUseAbility || RaceChocoboResult.IsOpen && RaceMaps.Contains(WorldManager.ZoneId));
+                                await Coroutine.Wait(-1,
+                                                     () => ChocoboRaceManager.Stamina > 20 || ChocoboRaceManager.CanUseItem && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet || ChocoboRaceManager.CanUseAbility ||
+                                                           RaceChocoboResult.IsOpen && RaceMaps.Contains(WorldManager.ZoneId));
                                 if (ChocoboRaceManager.CanUseItem && !RaceChocoboResult.IsOpen && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet)
                                 {
                                     await UseItem();
@@ -107,6 +116,7 @@ namespace LlamaUtilities.LlamaUtilities
                             {
                                 await Coroutine.Wait(-1, () => !CommonBehaviors.IsLoading);
                             }
+
                             await Coroutine.Sleep(1000);
                             Log.Information("All done.");
                         }
@@ -115,6 +125,41 @@ namespace LlamaUtilities.LlamaUtilities
             }
 
             TreeRoot.Stop("Stop Requested");
+            return true;
+        }
+
+        public static async Task<bool> GetToBreeder()
+        {
+            if (await LlamaLibrary.Helpers.Navigation.GetTo(PandaRacer.ChocoboBreeder.Location))
+            {
+                TreeRoot.Stop($"Arrived at {DataManager.GetLocalizedNPCName((int)ChocoboBreeder.NpcId)}");
+            }
+            else
+            {
+                TreeRoot.Stop($"Something went wrong");
+            }
+
+            return true;
+        }
+
+        public static async Task<bool> GetToCounter()
+        {
+            /*
+            if (WorldManager.ZoneId != ChocoboRegistrar.Location.ZoneId)
+            {
+                await LlamaLibrary.Helpers.Navigation.UseNpcTransition(LiftOperator.Location.ZoneId,new Vector3(-81.73487f, 3.814697E-06f, 30.29126f),LiftOperator.NpcId,0);
+                //await Coroutine.Wait(5000, () => WorldManager.ZoneId == ChocoboRegistrar.Location.ZoneId);
+            }
+            */
+            if (await LlamaLibrary.Helpers.Navigation.GetTo(PandaRacer.ChocoboRegistrar.Location))
+            {
+                TreeRoot.Stop($"Arrived at {DataManager.GetLocalizedNPCName((int)ChocoboRegistrar.NpcId)}");
+            }
+            else
+            {
+                TreeRoot.Stop($"Something went wrong");
+            }
+
             return true;
         }
 

@@ -76,10 +76,14 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabFC = new System.Windows.Forms.TabPage();
             this.btnFCWorkshop = new System.Windows.Forms.Button();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.breederButton = new System.Windows.Forms.Button();
+            this.counterButton = new System.Windows.Forms.Button();
+            this.raceStart = new System.Windows.Forms.Button();
             this.pgChocoRacer = new System.Windows.Forms.PropertyGrid();
             this.bindingSourceInventory = new System.Windows.Forms.BindingSource(this.components);
             this.bindingSourceInventoryMateria = new System.Windows.Forms.BindingSource(this.components);
-            this.raceStart = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.rankLabel = new System.Windows.Forms.Label();
             this.tabControl1.SuspendLayout();
             this.tabRetainers.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -545,6 +549,10 @@ namespace LlamaUtilities.LlamaUtilities
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.rankLabel);
+            this.tabPage2.Controls.Add(this.label1);
+            this.tabPage2.Controls.Add(this.breederButton);
+            this.tabPage2.Controls.Add(this.counterButton);
             this.tabPage2.Controls.Add(this.raceStart);
             this.tabPage2.Controls.Add(this.pgChocoRacer);
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
@@ -554,6 +562,36 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabPage2.TabIndex = 8;
             this.tabPage2.Text = "ChocoRacer";
             this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // breederButton
+            // 
+            this.breederButton.Location = new System.Drawing.Point(8, 246);
+            this.breederButton.Name = "breederButton";
+            this.breederButton.Size = new System.Drawing.Size(142, 24);
+            this.breederButton.TabIndex = 3;
+            this.breederButton.Text = "GoTo Breeder";
+            this.breederButton.UseVisualStyleBackColor = true;
+            this.breederButton.Click += new System.EventHandler(this.breederButton_Click);
+            // 
+            // counterButton
+            // 
+            this.counterButton.Location = new System.Drawing.Point(8, 216);
+            this.counterButton.Name = "counterButton";
+            this.counterButton.Size = new System.Drawing.Size(142, 24);
+            this.counterButton.TabIndex = 2;
+            this.counterButton.Text = "GoTo Race Counter";
+            this.counterButton.UseVisualStyleBackColor = true;
+            this.counterButton.Click += new System.EventHandler(this.counterButton_Click);
+            // 
+            // raceStart
+            // 
+            this.raceStart.Location = new System.Drawing.Point(221, 216);
+            this.raceStart.Name = "raceStart";
+            this.raceStart.Size = new System.Drawing.Size(84, 24);
+            this.raceStart.TabIndex = 1;
+            this.raceStart.Text = "Start";
+            this.raceStart.UseVisualStyleBackColor = true;
+            this.raceStart.Click += new System.EventHandler(this.raceStart_Click);
             // 
             // pgChocoRacer
             // 
@@ -566,15 +604,23 @@ namespace LlamaUtilities.LlamaUtilities
             // 
             this.bindingSourceInventory.CurrentChanged += new System.EventHandler(this.bindingSourceInventory_CurrentChanged);
             // 
-            // raceStart
+            // label1
             // 
-            this.raceStart.Location = new System.Drawing.Point(221, 216);
-            this.raceStart.Name = "raceStart";
-            this.raceStart.Size = new System.Drawing.Size(84, 24);
-            this.raceStart.TabIndex = 1;
-            this.raceStart.Text = "Start";
-            this.raceStart.UseVisualStyleBackColor = true;
-            this.raceStart.Click += new System.EventHandler(this.raceStart_Click);
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(0, 0);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(35, 13);
+            this.label1.TabIndex = 4;
+            this.label1.Text = "label1";
+            // 
+            // rankLabel
+            // 
+            this.rankLabel.AutoSize = true;
+            this.rankLabel.Location = new System.Drawing.Point(330, 24);
+            this.rankLabel.Name = "rankLabel";
+            this.rankLabel.Size = new System.Drawing.Size(36, 13);
+            this.rankLabel.TabIndex = 5;
+            this.rankLabel.Text = "Rank:";
             // 
             // Utilities
             // 
@@ -603,6 +649,7 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabHousing.ResumeLayout(false);
             this.tabFC.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
+            this.tabPage2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSourceInventory)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSourceInventoryMateria)).EndInit();
             this.ResumeLayout(false);
@@ -676,5 +723,9 @@ namespace LlamaUtilities.LlamaUtilities
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.PropertyGrid pgChocoRacer;
         private System.Windows.Forms.Button raceStart;
+        private System.Windows.Forms.Button breederButton;
+        private System.Windows.Forms.Button counterButton;
+        private System.Windows.Forms.Label rankLabel;
+        private System.Windows.Forms.Label label1;
     }
 }

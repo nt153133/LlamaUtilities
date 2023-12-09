@@ -16,6 +16,8 @@
         GcTurnin,
         Retainers,
         FCWorkshop,
-        ChocoRace
+        ChocoRace,
+        GetToCounter,
+        GetToBreeder,
     }
 }

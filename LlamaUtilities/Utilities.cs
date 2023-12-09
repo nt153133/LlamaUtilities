@@ -9,6 +9,7 @@ using ff14bot.Managers;
 using LlamaLibrary.Extensions;
 using LlamaLibrary.JsonObjects;
 using LlamaLibrary.Logging;
+using LlamaLibrary.Managers;
 using LlamaUtilities.LlamaUtilities.Settings;
 using LlamaUtilities.LlamaUtilities.Tasks;
 using Newtonsoft.Json;
@@ -21,6 +22,7 @@ namespace LlamaUtilities.LlamaUtilities
         private BagSlot _selectedBagSlotAffix;
         private IEnumerable<BagSlot> _selectedFilter = Filters.First().Key;
         private static readonly LLogger Log = new LLogger("Utilities Form", Colors.Pink);
+        private string ChocooboRank => RaceChocoboManager.Rank.ToString();
 
         private static readonly Dictionary<IEnumerable<BagSlot>, string> Filters = new Dictionary<IEnumerable<BagSlot>, string>()
         {
@@ -130,6 +132,8 @@ namespace LlamaUtilities.LlamaUtilities
 
         private void Utilities_Load(object sender, EventArgs e)
         {
+            rankLabel.Text = $"Chocobo Rank: {RaceChocoboManager.Rank.ToString()}";
+
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
             itemCb.SelectionChangeCommitted += new System.EventHandler(itemCb_SelectionChangeCommitted);
             filterCb.SelectionChangeCommitted += new System.EventHandler(filterCb_SelectionChangeCommitted);
@@ -326,6 +330,30 @@ namespace LlamaUtilities.LlamaUtilities
             StartBotBase();
         }
 
+        private async void counterButton_Click(object sender, EventArgs e)
+        {
+            var task = new BotTask()
+            {
+                Type = TaskType.GetToCounter,
+                TaskInfo = ""
+            };
+
+            UtilitiesBase.BotTask = task;
+            StartBotBase();
+        }
+
+        private async void breederButton_Click(object sender, EventArgs e)
+        {
+            var task = new BotTask()
+            {
+                Type = TaskType.GetToBreeder,
+                TaskInfo = ""
+            };
+
+            UtilitiesBase.BotTask = task;
+            StartBotBase();
+        }
+
         private void button3_Click(object sender, EventArgs e)
         {
             bindingSourceAffix.Clear();
@@ -348,6 +376,8 @@ namespace LlamaUtilities.LlamaUtilities
             {
                 SetComboBoxes(_selectedBagSlotAffix);
             }
+
+
         }
 
         private void affixCb_SelectedIndexChanged(object sender, EventArgs e)
@@ -580,9 +610,7 @@ namespace LlamaUtilities.LlamaUtilities
 
         private void tabPageRemove_Click(object sender, EventArgs e)
         {
-
         }
-
         private void TabMateria_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (tabControlMateria.SelectedIndex == 1)
@@ -611,8 +639,6 @@ namespace LlamaUtilities.LlamaUtilities
 
 
     }
-
-
 
     public class MateriaToAffix
     {
