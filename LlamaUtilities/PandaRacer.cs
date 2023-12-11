@@ -343,6 +343,11 @@ namespace LlamaUtilities.LlamaUtilities
                         await Coroutine.Sleep(1000);
                     }
                     break;
+                case (uint)ChocoboAbilities.SuperSprint:
+                    Log.Information($"Using Super Sprint.");
+                    ChocoboRaceManager.UseAbility();
+                    await Coroutine.Sleep(1000);
+                    break;
             }
         }
 
@@ -363,6 +368,11 @@ namespace LlamaUtilities.LlamaUtilities
                         ChocoboRaceManager.UseAbility2();
                         await Coroutine.Sleep(1000);
                     }
+                    break;
+                case (uint)ChocoboAbilities.SuperSprint:
+                    Log.Information($"Using Super Sprint.");
+                    ChocoboRaceManager.UseAbility2();
+                    await Coroutine.Sleep(1000);
                     break;
             }
         }
