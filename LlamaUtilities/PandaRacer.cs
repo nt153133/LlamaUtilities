@@ -60,6 +60,7 @@ namespace LlamaUtilities.LlamaUtilities
         {
             ChocoDashII = 2, // Temporarily boosts speed without depleting stamina for 2s.
             ChocoCureII = 5, // Restores 9% of total stamina.
+            ChocoCureIII = 6, // Restores 12% of total stamina.
             SuperSprint = 58, // Restores 9% of total stamina.
         }
 
@@ -343,6 +344,14 @@ namespace LlamaUtilities.LlamaUtilities
                         await Coroutine.Sleep(1000);
                     }
                     break;
+                case (uint)ChocoboAbilities.ChocoCureIII:
+                    if (ChocoboRaceManager.Stamina <= RaceSettings.Instance.CureStamina)
+                    {
+                        Log.Information($"Using Choco Cure III. Stamina: {ChocoboRaceManager.Stamina}");
+                        ChocoboRaceManager.UseAbility();
+                        await Coroutine.Sleep(1000);
+                    }
+                    break;
                 case (uint)ChocoboAbilities.SuperSprint:
                     Log.Information($"Using Super Sprint.");
                     ChocoboRaceManager.UseAbility();
@@ -365,6 +374,14 @@ namespace LlamaUtilities.LlamaUtilities
                     if (ChocoboRaceManager.Stamina <= RaceSettings.Instance.CureStamina)
                     {
                         Log.Information($"Using Choco Cure II. Stamina: {ChocoboRaceManager.Stamina}");
+                        ChocoboRaceManager.UseAbility2();
+                        await Coroutine.Sleep(1000);
+                    }
+                    break;
+                case (uint)ChocoboAbilities.ChocoCureIII:
+                    if (ChocoboRaceManager.Stamina <= RaceSettings.Instance.CureStamina)
+                    {
+                        Log.Information($"Using Choco Cure III. Stamina: {ChocoboRaceManager.Stamina}");
                         ChocoboRaceManager.UseAbility2();
                         await Coroutine.Sleep(1000);
                     }
