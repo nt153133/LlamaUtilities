@@ -58,5 +58,37 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             }
         }
 
+        private bool _goLeft;
+        [Description("Continually press left while sprinting.")]
+        [DefaultValue(false)]
+        public bool GoLeft
+        {
+            get => _goLeft;
+            set
+            {
+                if (_goLeft != value)
+                {
+                    _goLeft = value;
+                    Save();
+                }
+            }
+        }
+
+        private int _cureStamina;
+        [Description("What stamina should we use Choco Cure at?")]
+        [DefaultValue(90)]
+        public int CureStamina
+        {
+            get => _cureStamina;
+            set
+            {
+                if (_cureStamina != value)
+                {
+                    _cureStamina = value;
+                    Save();
+                }
+            }
+        }
+
     }
 }

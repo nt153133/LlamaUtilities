@@ -23,6 +23,8 @@ namespace LlamaUtilities.LlamaUtilities
         private IEnumerable<BagSlot> _selectedFilter = Filters.First().Key;
         private static readonly LLogger Log = new LLogger("Utilities Form", Colors.Pink);
         private string ChocooboRank => RaceChocoboManager.Rank.ToString();
+        private string ChocooboCurrentExp => RaceChocoboManager.ExperienceCurrent.ToString();
+        private string ChocooboMaxExp => RaceChocoboManager.ExperienceMax.ToString();
 
         private static readonly Dictionary<IEnumerable<BagSlot>, string> Filters = new Dictionary<IEnumerable<BagSlot>, string>()
         {
@@ -132,7 +134,11 @@ namespace LlamaUtilities.LlamaUtilities
 
         private void Utilities_Load(object sender, EventArgs e)
         {
-            rankLabel.Text = $"Chocobo Rank: {RaceChocoboManager.Rank.ToString()}";
+            //nameLabel.Text = $"Chocobo Name: {RaceChocoboManager.NameFirst} {RaceChocoboManager.NameLast}";
+            rankLabel.Text = $"Chocobo Rank: {ChocooboRank}";
+            expLabel.Text = $"Chocobo EXP: {ChocooboCurrentExp}/{ChocooboMaxExp}";
+            //ability1Label.Text = $"Hereditary: {RaceChocoboManager.AbilityHereditary}";
+            //ability2Label.Text = $"Aquired: {RaceChocoboManager.AbilityLearned}";
 
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
             itemCb.SelectionChangeCommitted += new System.EventHandler(itemCb_SelectionChangeCommitted);

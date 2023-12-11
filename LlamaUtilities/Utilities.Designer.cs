@@ -76,14 +76,15 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabFC = new System.Windows.Forms.TabPage();
             this.btnFCWorkshop = new System.Windows.Forms.Button();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.expLabel = new System.Windows.Forms.Label();
+            this.rankLabel = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
             this.breederButton = new System.Windows.Forms.Button();
             this.counterButton = new System.Windows.Forms.Button();
             this.raceStart = new System.Windows.Forms.Button();
             this.pgChocoRacer = new System.Windows.Forms.PropertyGrid();
             this.bindingSourceInventory = new System.Windows.Forms.BindingSource(this.components);
             this.bindingSourceInventoryMateria = new System.Windows.Forms.BindingSource(this.components);
-            this.label1 = new System.Windows.Forms.Label();
-            this.rankLabel = new System.Windows.Forms.Label();
             this.tabControl1.SuspendLayout();
             this.tabRetainers.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -549,6 +550,7 @@ namespace LlamaUtilities.LlamaUtilities
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.expLabel);
             this.tabPage2.Controls.Add(this.rankLabel);
             this.tabPage2.Controls.Add(this.label1);
             this.tabPage2.Controls.Add(this.breederButton);
@@ -562,6 +564,33 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabPage2.TabIndex = 8;
             this.tabPage2.Text = "ChocoRacer";
             this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // expLabel
+            // 
+            this.expLabel.AutoSize = true;
+            this.expLabel.Location = new System.Drawing.Point(330, 37);
+            this.expLabel.Name = "expLabel";
+            this.expLabel.Size = new System.Drawing.Size(62, 13);
+            this.expLabel.TabIndex = 6;
+            this.expLabel.Text = "Choco Exp:";
+            // 
+            // rankLabel
+            // 
+            this.rankLabel.AutoSize = true;
+            this.rankLabel.Location = new System.Drawing.Point(330, 24);
+            this.rankLabel.Name = "rankLabel";
+            this.rankLabel.Size = new System.Drawing.Size(36, 13);
+            this.rankLabel.TabIndex = 5;
+            this.rankLabel.Text = "Rank:";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(0, 0);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(35, 13);
+            this.label1.TabIndex = 4;
+            this.label1.Text = "label1";
             // 
             // breederButton
             // 
@@ -603,24 +632,6 @@ namespace LlamaUtilities.LlamaUtilities
             // bindingSourceInventory
             // 
             this.bindingSourceInventory.CurrentChanged += new System.EventHandler(this.bindingSourceInventory_CurrentChanged);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(0, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(35, 13);
-            this.label1.TabIndex = 4;
-            this.label1.Text = "label1";
-            // 
-            // rankLabel
-            // 
-            this.rankLabel.AutoSize = true;
-            this.rankLabel.Location = new System.Drawing.Point(330, 24);
-            this.rankLabel.Name = "rankLabel";
-            this.rankLabel.Size = new System.Drawing.Size(36, 13);
-            this.rankLabel.TabIndex = 5;
-            this.rankLabel.Text = "Rank:";
             // 
             // Utilities
             // 
@@ -727,5 +738,6 @@ namespace LlamaUtilities.LlamaUtilities
         private System.Windows.Forms.Button counterButton;
         private System.Windows.Forms.Label rankLabel;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label expLabel;
     }
 }

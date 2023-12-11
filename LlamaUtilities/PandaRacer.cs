@@ -31,6 +31,12 @@ namespace LlamaUtilities.LlamaUtilities
         internal static Npc ChocoboBreeder = new((uint)1010472, 148, new Vector3(-51.04488f, -0.005054563f, 67.57738f));
         internal static Npc ChocoboRegistrar = new((uint)1010465, 388, new Vector3(-5.037189f, -2.026558E-06f, -65.11401f));
         internal static Npc LiftOperator = new((uint)1011044, 144, new Vector3(-81.73487f, 3.814697E-06f, 30.29126f));
+        /*
+         * Aura Name: Frenzied, Aura Id: 632
+         * Aura Name: Distracted, Aura Id: 635
+         * Aura Name: Heavy, Aura Id: 630
+         *
+         */
 
         // Items
         public enum ChocoboItems : uint
@@ -54,6 +60,7 @@ namespace LlamaUtilities.LlamaUtilities
         {
             ChocoDashII = 2, // Temporarily boosts speed without depleting stamina for 2s.
             ChocoCureII = 5, // Restores 9% of total stamina.
+            SuperSprint = 58, // Restores 9% of total stamina.
         }
 
         // Ability
@@ -81,27 +88,41 @@ namespace LlamaUtilities.LlamaUtilities
 
                     while (!RaceChocoboResult.IsOpen)
                     {
-                        switch (ChocoboRaceManager.Stamina)
+                        if (RaceSettings.Instance.GoLeft)
                         {
-                            case > 20:
-                                await GoFaster();
-                                break;
-                            case <= 20:
-                                //Log.Information($"Waiting to restore Stamina.");
-                                await Coroutine.Wait(-1,
-                                                     () => ChocoboRaceManager.Stamina > 20 || ChocoboRaceManager.CanUseItem && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet || ChocoboRaceManager.CanUseAbility ||
-                                                           RaceChocoboResult.IsOpen && RaceMaps.Contains(WorldManager.ZoneId));
-                                if (ChocoboRaceManager.CanUseItem && !RaceChocoboResult.IsOpen && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet)
-                                {
-                                    await UseItem();
-                                }
+                            await GoLeft();
+                        }
+                        else
+                        {
 
-                                if (ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen)
-                                {
-                                    await UseAbility();
-                                }
+                            switch (ChocoboRaceManager.Stamina)
+                            {
+                                case > 20:
+                                    await GoFaster();
+                                    break;
+                                case <= 20:
+                                    //Log.Information($"Waiting to restore Stamina.");
+                                    await Coroutine.Wait(-1,
+                                                         () => ChocoboRaceManager.Stamina > 20 || ChocoboRaceManager.CanUseItem && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet ||
+                                                               ChocoboRaceManager.CanUseAbility || ChocoboRaceManager.CanUseAbility2 ||
+                                                               RaceChocoboResult.IsOpen && RaceMaps.Contains(WorldManager.ZoneId));
+                                    if (ChocoboRaceManager.CanUseItem && !RaceChocoboResult.IsOpen && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet)
+                                    {
+                                        await UseItem();
+                                    }
 
-                                break;
+                                    if (ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen)
+                                    {
+                                        await UseAbility();
+                                    }
+
+                                    if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen)
+                                    {
+                                        await UseAbility2();
+                                    }
+
+                                    break;
+                            }
                         }
                     }
 
@@ -311,11 +332,39 @@ namespace LlamaUtilities.LlamaUtilities
             {
                 case (uint)ChocoboAbilities.ChocoDashII:
                     Log.Information($"Using Choco Dash II.");
+                    ChocoboRaceManager.UseAbility();
+                    await Coroutine.Sleep(1000);
+                    break;
+                case (uint)ChocoboAbilities.ChocoCureII:
+                    if (ChocoboRaceManager.Stamina <= RaceSettings.Instance.CureStamina)
+                    {
+                        Log.Information($"Using Choco Cure II. Stamina: {ChocoboRaceManager.Stamina}");
+                        ChocoboRaceManager.UseAbility();
+                        await Coroutine.Sleep(1000);
+                    }
                     break;
             }
+        }
 
-            ChocoboRaceManager.UseAbility();
-            await Coroutine.Sleep(1000);
+        private static async Task UseAbility2()
+        {
+
+            switch (ChocoboRaceManager.Ability2.BaseActionId)
+            {
+                case (uint)ChocoboAbilities.ChocoDashII:
+                    Log.Information($"Using Choco Dash II.");
+                    ChocoboRaceManager.UseAbility2();
+                    await Coroutine.Sleep(1000);
+                    break;
+                case (uint)ChocoboAbilities.ChocoCureII:
+                    if (ChocoboRaceManager.Stamina <= RaceSettings.Instance.CureStamina)
+                    {
+                        Log.Information($"Using Choco Cure II. Stamina: {ChocoboRaceManager.Stamina}");
+                        ChocoboRaceManager.UseAbility2();
+                        await Coroutine.Sleep(1000);
+                    }
+                    break;
+            }
         }
 
         private static async Task GoFaster()
@@ -333,6 +382,10 @@ namespace LlamaUtilities.LlamaUtilities
                     {
                         await UseAbility();
                     }
+                    if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen)
+                    {
+                        await UseAbility2();
+                    }
 
                     //Log.Information($"Going faster");
                     MovementManager.Move(MovementDirection.Forward, TimeSpan.FromSeconds(1));
@@ -348,6 +401,27 @@ namespace LlamaUtilities.LlamaUtilities
                     await Coroutine.Wait(10000, () => ChocoboRaceManager.Status != ChocoboStatus.Sprint || RaceChocoboResult.IsOpen);
                     break;
             }
+        }
+
+        private static async Task GoLeft()
+        {
+            if (ChocoboRaceManager.CanUseItem && !RaceChocoboResult.IsOpen && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet)
+            {
+                await UseItem();
+            }
+
+            if (ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen)
+            {
+                await UseAbility();
+            }
+            if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen)
+            {
+                await UseAbility2();
+            }
+
+            //Log.Information($"Going faster");
+            MovementManager.Move(MovementDirection.StrafeLeft, TimeSpan.FromSeconds(1));
+            await Coroutine.Wait(1000, () => RaceChocoboResult.IsOpen);
         }
     }
 }
