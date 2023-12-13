@@ -50,7 +50,6 @@ namespace LlamaUtilities.OrderbotTags
 
         protected override Composite CreateBehavior()
         {
-
             return new ActionRunCoroutine(r => TurnInLeveTask());
         }
 
@@ -66,6 +65,7 @@ namespace LlamaUtilities.OrderbotTags
                     Logging.WriteDiagnostic($"Moving to {Location}");
                     await Navigation.FlightorMove(Location);
                     await CommonTasks.Land();
+                    await CommonTasks.StopAndDismount();
                 }
 
                 npc.Interact();
@@ -102,11 +102,37 @@ namespace LlamaUtilities.OrderbotTags
 
             if (JournalResult.IsOpen)
             {
-                JournalResult.Complete();
-                await Coroutine.Wait(500, () => SelectYesno.IsOpen);
-                if (SelectYesno.IsOpen) // Checked for YesNo here to account for capped seals
+                foreach (var leve in LeveManager.Leves.Where(i => i.Step == 255).ToList())
                 {
-                    SelectYesno.Yes();
+                    //Log.Information("Turning in Leve");
+                    JournalResult.Complete();
+                    //Log.Information("Waiting for something to happen");
+                    await Coroutine.Wait(2000, () => SelectString.IsOpen || SelectYesno.IsOpen || Talk.DialogOpen);
+                    if (SelectYesno.IsOpen) // Checked for YesNo here to account for capped seals
+                    {
+                        //Log.Information("SelectYesNo is open");
+                        SelectYesno.Yes();
+                        await Coroutine.Wait(2000, () => SelectString.IsOpen || Talk.DialogOpen);
+
+                    }
+
+                    if (Talk.DialogOpen)
+                    {
+                        //Log.Information("handling talk");
+                        while (!JournalResult.IsOpen)
+                        {
+                            Talk.Next();
+                            await Coroutine.Wait(500, () => !Talk.DialogOpen);
+                            await Coroutine.Wait(500, () => Talk.DialogOpen);
+                            await Coroutine.Yield();
+                        }
+                    }
+
+                    if (SelectString.IsOpen)
+                    {
+                        //Log.Information("SelectString open, exiting");
+                        return;
+                    }
                 }
             }
 
@@ -114,6 +140,5 @@ namespace LlamaUtilities.OrderbotTags
 
             _isDone = true;
         }
-
     }
 }
