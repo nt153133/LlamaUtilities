@@ -106,7 +106,7 @@ namespace zzi.profiles
                 new Decorator(r => SnipeManager.addr != IntPtr.Zero, new PrioritySelector(
                     //wait for the state to become active
                     new Decorator(r => SnipeManager.addr != IntPtr.Zero && !SnipeManager.Ready, new Sequence(
-                        new SucceedLogger(r => $"Waiting for snipe state to be ready"),
+                        new SucceedLogger(r => $"Waiting for snipe state to be ready [state: {SnipeManager.State}]"),
                         new WaitContinue(5, ret => SnipeManager.addr == IntPtr.Zero || SnipeManager.Ready, new Action(ret => RunStatus.Failure))
                         )),
                     //Snipe our targets
