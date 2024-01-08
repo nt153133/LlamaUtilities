@@ -89,6 +89,7 @@
     <Compile Include="OrderbotTags\LLTurnInGuildLeveTag.cs" />
     <Compile Include="OrderbotTags\LeaveGuildhest.cs" />
     <Compile Include="OrderbotTags\LoadPandaProfile.cs" />
+    <Compile Include="OrderbotTags\RetainerJobs.cs" />
     <Compile Include="OrderbotTags\SplendorousOrder.cs" />
     <Compile Include="OrderbotTags\StartFate.cs" />
     <Compile Include="OrderbotTags\StatusText.cs" />
