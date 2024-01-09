@@ -1,10 +1,17 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Buddy.Coroutines;
+using Clio.Utilities;
 using Clio.XmlEngine;
 using ff14bot;
+using ff14bot.Enums;
+using ff14bot.Helpers;
 using ff14bot.Managers;
 using ff14bot.Navigation;
 using ff14bot.RemoteWindows;
+using LlamaLibrary.Helpers;
+using LlamaLibrary.Helpers.NPC;
 using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 
@@ -42,43 +49,24 @@ namespace LlamaUtilities.OrderbotTags
             return new ActionRunCoroutine(r => NameThatChocobo());
         }
 
+        // List of chocobos depending on which grand company you enrolled in
+        public static List<KeyValuePair<GrandCompany, Npc>> Chocobos = new List<KeyValuePair<GrandCompany, Npc>>()
+        {
+            new KeyValuePair<GrandCompany, Npc>(GrandCompany.Order_Of_The_Twin_Adder, new Npc(1006001, 132, new Vector3(35.38562f, -0.8990279f, 67.55164f))),
+            new KeyValuePair<GrandCompany, Npc>(GrandCompany.Maelstrom, new Npc(1006002, 129, new Vector3(45.82075f, 20f, -4.997596f))),
+            new KeyValuePair<GrandCompany, Npc>(GrandCompany.Immortal_Flames, new Npc(1006003, 130, new Vector3(51.62122f,4f,-142.2294f))),
+        };
         private async Task NameThatChocobo()
         {
             var name = await LlamaLibrary.Utilities.RetainerHire.GetName();
 
-            var npcId = GameObjectManager.GetObjectByNPCId(1006002);
+            var choco = Chocobos.FirstOrDefault(x => x.Key == Core.Me.GrandCompany).Value;
 
-            if (!npcId.IsWithinInteractRange)
-
+            if (!await LlamaLibrary.Helpers.Navigation.GetToInteractNpc(choco, LlamaLibrary.RemoteWindows.InputString.Instance))
             {
-                var _target = npcId.Location;
-                Navigator.PlayerMover.MoveTowards(_target);
-                while (_target.Distance2D(Core.Me.Location) >= 4)
-                {
-                    Navigator.PlayerMover.MoveTowards(_target);
-                    await Coroutine.Sleep(100);
-                }
-                Navigator.PlayerMover.MoveStop();
-            }
 
-            npcId.Interact();
-
-            await Coroutine.Wait(5000, () => Talk.DialogOpen || InputString.Instance.IsOpen);
-
-            if (!Talk.DialogOpen)
-            {
-                npcId.Interact();
-
-                await Coroutine.Wait(5000, () => Talk.DialogOpen);
-            }
-
-
-            while (Talk.DialogOpen)
-            {
-                Talk.Next();
-                await Coroutine.Wait(500, () => !Talk.DialogOpen);
-                await Coroutine.Wait(500, () => Talk.DialogOpen);
-                await Coroutine.Yield();
+                Log.Information($"Failed to get to {DataManager.GetLocalizedNPCName((int)choco.NpcId)}");
+                return;
             }
 
             if (InputString.Instance.IsOpen)
