@@ -82,6 +82,7 @@
     <Compile Include="OrderbotTags\BuyWhiteScriptItem.cs" />
     <Compile Include="OrderbotTags\ChangeClass.cs" />
     <Compile Include="OrderbotTags\CloseHowTos.cs" />
+    <Compile Include="OrderbotTags\EquipOtherWeapon.cs" />
     <Compile Include="OrderbotTags\EquipZodiac.cs" />
     <Compile Include="OrderbotTags\HandleDutyEndedLoot.cs" />
     <Compile Include="OrderbotTags\InfuseSphereScroll.cs" />
