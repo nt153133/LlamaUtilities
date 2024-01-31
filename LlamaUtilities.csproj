@@ -67,6 +67,7 @@
     </Compile>
     <Compile Include="LlamaUtilities\UtilitiesBase.cs" />
     <Compile Include="OrderbotTags\AffixMateria.cs" />
+    <Compile Include="OrderbotTags\AnimaBuyShopExchangeItem.cs" />
     <Compile Include="OrderbotTags\AnimusBooks.cs" />
     <Compile Include="OrderbotTags\AutoEquip.cs" />
     <Compile Include="OrderbotTags\AutoInventoryEquip.cs" />
