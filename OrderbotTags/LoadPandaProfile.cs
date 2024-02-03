@@ -23,6 +23,7 @@ public class LoadPandaProfile : LLProfileBehavior
     private bool _isDone;
 
     [XmlAttribute("ProfileName")]
+    [XmlAttribute("Name")]
     public string ProfileName { get; set; }
 
     [XmlAttribute("QueueType")]
