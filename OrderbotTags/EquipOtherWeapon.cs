@@ -27,6 +27,10 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool IsDone => _isDone;
 
+        internal string Job;
+
+        internal static int SquareMapleShield = 2219;
+
         public override bool HighPriority => true;
 
         public EquipOtherWeapon() : base()
@@ -45,6 +49,51 @@ namespace LlamaUtilities.OrderbotTags
         {
             _isDone = false;
         }
+
+        public static readonly Dictionary<ClassJobType, ClassJobType> ClassMap = new Dictionary<ClassJobType, ClassJobType>
+        {
+            { ClassJobType.Adventurer, ClassJobType.Adventurer },
+            { ClassJobType.Gladiator, ClassJobType.Gladiator },
+            { ClassJobType.Pugilist, ClassJobType.Pugilist },
+            { ClassJobType.Marauder, ClassJobType.Marauder },
+            { ClassJobType.Lancer, ClassJobType.Lancer },
+            { ClassJobType.Archer, ClassJobType.Archer },
+            { ClassJobType.Conjurer, ClassJobType.Conjurer },
+            { ClassJobType.Thaumaturge, ClassJobType.Thaumaturge },
+            { ClassJobType.Carpenter, ClassJobType.Carpenter },
+            { ClassJobType.Blacksmith, ClassJobType.Blacksmith },
+            { ClassJobType.Armorer, ClassJobType.Armorer },
+            { ClassJobType.Goldsmith, ClassJobType.Goldsmith },
+            { ClassJobType.Leatherworker, ClassJobType.Leatherworker },
+            { ClassJobType.Weaver, ClassJobType.Weaver },
+            { ClassJobType.Alchemist, ClassJobType.Alchemist },
+            { ClassJobType.Culinarian, ClassJobType.Culinarian },
+            { ClassJobType.Miner, ClassJobType.Miner },
+            { ClassJobType.Botanist, ClassJobType.Botanist },
+            { ClassJobType.Fisher, ClassJobType.Fisher },
+            { ClassJobType.Paladin, ClassJobType.Gladiator },
+            { ClassJobType.Monk, ClassJobType.Pugilist },
+            { ClassJobType.Warrior, ClassJobType.Marauder },
+            { ClassJobType.Dragoon, ClassJobType.Lancer },
+            { ClassJobType.Bard, ClassJobType.Archer },
+            { ClassJobType.WhiteMage, ClassJobType.Conjurer },
+            { ClassJobType.BlackMage, ClassJobType.Thaumaturge },
+            { ClassJobType.Arcanist, ClassJobType.Arcanist },
+            { ClassJobType.Summoner, ClassJobType.Arcanist },
+            { ClassJobType.Scholar, ClassJobType.Arcanist },
+            { ClassJobType.Rogue, ClassJobType.Rogue },
+            { ClassJobType.Ninja, ClassJobType.Rogue },
+            { ClassJobType.Machinist, ClassJobType.Machinist },
+            { ClassJobType.DarkKnight, ClassJobType.DarkKnight },
+            { ClassJobType.Astrologian, ClassJobType.Astrologian },
+            { ClassJobType.Samurai, ClassJobType.Samurai },
+            { ClassJobType.RedMage, ClassJobType.RedMage },
+            { ClassJobType.BlueMage, ClassJobType.BlueMage },
+            { ClassJobType.Gunbreaker, ClassJobType.Gunbreaker },
+            { ClassJobType.Dancer, ClassJobType.Dancer },
+            { ClassJobType.Reaper, ClassJobType.Reaper },
+            { ClassJobType.Sage, ClassJobType.Sage },
+        };
 
         private async Task ChangeJob()
         {
@@ -70,24 +119,46 @@ namespace LlamaUtilities.OrderbotTags
                 new KeyValuePair<ClassJobType, int>(ClassJobType.Scholar, 34091), // Gaja Codex
                 new KeyValuePair<ClassJobType, int>(ClassJobType.Summoner, 2142), // Weathered Grimoire
                 new KeyValuePair<ClassJobType, int>(ClassJobType.WhiteMage, 1995), // Weathered Cane
+
+                // Crafters
+                new KeyValuePair<ClassJobType, int>(ClassJobType.Carpenter, 2314), // Weathered Saw
+                new KeyValuePair<ClassJobType, int>(ClassJobType.Blacksmith, 2340), // Weathered Cross-pein Hammer
+                new KeyValuePair<ClassJobType, int>(ClassJobType.Armorer, 2366), // Weathered Doming Hammer
+                new KeyValuePair<ClassJobType, int>(ClassJobType.Goldsmith, 2391), // Weathered Chaser Hammer
+                new KeyValuePair<ClassJobType, int>(ClassJobType.Leatherworker, 2416), // Weathered Head Knife
+                new KeyValuePair<ClassJobType, int>(ClassJobType.Weaver, 2442), // Rusty Needle
+                new KeyValuePair<ClassJobType, int>(ClassJobType.Alchemist, 2467), // Weathered Alembic
+                new KeyValuePair<ClassJobType, int>(ClassJobType.Culinarian, 2493), // Weathered Skillet
+
+                // Gatherers
+                new KeyValuePair<ClassJobType, int>(ClassJobType.Miner, 2519), // Weathered Pickaxe
+                new KeyValuePair<ClassJobType, int>(ClassJobType.Botanist, 2545), // Weathered Hatchet
+                new KeyValuePair<ClassJobType, int>(ClassJobType.Botanist, 2571), // Weathered Fishing Rod
             };
 
-            var SquareMapleShield = 2219;
             var gearSets = GearsetManager.GearSets.Where(i => i.InUse);
             var foundJob = Enum.TryParse(Core.Me.CurrentJob.ToString().Trim(), true, out ClassJobType newjob);
             var weapon = StarterWeapons.FirstOrDefault(x => x.Key == newjob).Value;
 
-            var Job = Core.Me.CurrentJob.ToString().Trim() + "s_Primary_Tool";
+            if (Core.Me.CurrentJob.IsDow())
+            {
+                Job = ClassMap[Core.Me.CurrentJob].ToString().Trim() + "s_Arm";
+            }
+            else
+            {
+                Job = Core.Me.CurrentJob.ToString().Trim() + "s_Primary_Tool";
+            }
 
             var categoryFound = Enum.TryParse(Job, true, out ItemUiCategory category);
+            var item = InventoryManager.FilledInventoryAndArmory
+                .Where(i => i.Item.EquipmentCatagory == category && InventoryManager.GetBagByInventoryBagId(ff14bot.Enums.InventoryBagId.EquippedItems)[ff14bot.Enums.EquipmentSlot.MainHand].RawItemId != i.RawItemId)
+                .OrderByDescending(i => i.Item.ItemLevel).FirstOrDefault();
+            var EquipSlot = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.MainHand];
 
-            if (categoryFound)
+            if (categoryFound && item != null)
             {
-                Log.Information($"Found Item Category: {categoryFound} Category:{category}");
-                var item = InventoryManager.FilledInventoryAndArmory.Where(i => i.Item.EquipmentCatagory == category).OrderByDescending(i => i.Item.ItemLevel).FirstOrDefault();
-                var EquipSlot = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.MainHand];
-
-                Log.Information($"Found Item {item}");
+                Log.Information($"Found Item Category: {category}");
+                Log.Information($"Equipping {DataManager.GetItem(item.RawItemId).CurrentLocaleName}");
                 if (item != null)
                 {
                     item.Move(EquipSlot);
@@ -95,32 +166,69 @@ namespace LlamaUtilities.OrderbotTags
             }
             else
             {
-                var message = $"Couldn't find other weapon for {Core.Me.CurrentJob}. Attempting to purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName} with Lisbeth";
-                Core.OverlayManager.AddToast(() => $"" + message,
-                                             TimeSpan.FromMilliseconds(10000),
-                                             System.Windows.Media.Color.FromRgb((byte)13, (byte)106, (byte)175),
-                                             System.Windows.Media.Color.FromRgb(13, 106, 175),
-                                             new System.Windows.Media.FontFamily("Gautami"));
-                Log.Information(message);
-                if (!await LlamaLibrary.Helpers.Lisbeth.IsProductKeyValid())
-                {
-                    Log.Error("Lisbeth key is not valid, unable to automatically purchase weapon.");
-                    return;
-                }
+                Log.Information($"No other weapons found, buying new one.");
+                await BuyNewWeapon(weapon);
+            }
 
-                if (InventoryManager.GetBagByInventoryBagId(InventoryBagId.Armory_MainHand).FreeSlots < 1)
-                {
-                    Log.Error("You have no free slots in your MainHand armory so we can't equip a new weapon.");
-                    return;
-                }
+            _isDone = Core.Me.CurrentJob == newjob;
+        }
 
-                if (InventoryManager.GetBagByInventoryBagId(InventoryBagId.Armory_OffHand).FreeSlots < 1)
-                {
-                    Log.Error("You have no free slots in your OffHand armory so we can't equip a new weapon.");
-                    return;
-                }
+        internal async static Task BuyNewWeapon(int weapon)
+        {
+            var message = $"Couldn't find other weapon for {Core.Me.CurrentJob}. Attempting to purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName} with Lisbeth";
+            Core.OverlayManager.AddToast(() => $"" + message,
+                                         TimeSpan.FromMilliseconds(10000),
+                                         System.Windows.Media.Color.FromRgb((byte)13, (byte)106, (byte)175),
+                                         System.Windows.Media.Color.FromRgb(13, 106, 175),
+                                         new System.Windows.Media.FontFamily("Gautami"));
+            Log.Information(message);
+            if (!await LlamaLibrary.Helpers.Lisbeth.IsProductKeyValid())
+            {
+                Log.Error("Lisbeth key is not valid, unable to automatically purchase weapon.");
+                return;
+            }
 
-                var order = new LlamaLibrary.JsonObjects.Lisbeth.Order()
+            if (InventoryManager.GetBagByInventoryBagId(InventoryBagId.Armory_MainHand).FreeSlots < 1)
+            {
+                Log.Error("You have no free slots in your MainHand armory so we can't equip a new weapon.");
+                return;
+            }
+
+            if (InventoryManager.GetBagByInventoryBagId(InventoryBagId.Armory_OffHand).FreeSlots < 1)
+            {
+                Log.Error("You have no free slots in your OffHand armory so we can't equip a new weapon.");
+                return;
+            }
+
+            var order = new LlamaLibrary.JsonObjects.Lisbeth.Order()
+            {
+                Amount = 1,
+                AmountMode = LlamaLibrary.JsonObjects.Lisbeth.AmountMode.Restock,
+                Item = (uint)weapon,
+                Type = LlamaLibrary.JsonObjects.Lisbeth.SourceType.Purchase
+            };
+
+            if (!await LlamaLibrary.Helpers.Lisbeth.ExecuteOrders(LlamaLibrary.Extensions.OtherExtensions.GetOrderJson(new List<LlamaLibrary.JsonObjects.Lisbeth.Order>() { order })))
+            {
+                Log.Error($"Could not purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName}");
+            }
+
+            var item = InventoryManager.FilledInventoryAndArmory.Where(i => i.RawItemId == weapon).OrderByDescending(i => i.Item.ItemLevel).FirstOrDefault();
+            var EquipSlot = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.MainHand];
+
+            Log.Information($"Found Item {item}");
+            if (item != null)
+            {
+                item.Move(EquipSlot);
+            }
+
+            if (Core.Me.CurrentJob == ClassJobType.Paladin)
+            {
+                weapon = SquareMapleShield;
+
+                Log.Information($"Couldn't find item category for {Core.Me.CurrentJob}. Attempting to purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName} with Lisbeth");
+
+                order = new LlamaLibrary.JsonObjects.Lisbeth.Order()
                 {
                     Amount = 1,
                     AmountMode = LlamaLibrary.JsonObjects.Lisbeth.AmountMode.Restock,
@@ -133,46 +241,15 @@ namespace LlamaUtilities.OrderbotTags
                     Log.Error($"Could not purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName}");
                 }
 
-                var item = InventoryManager.FilledInventoryAndArmory.Where(i => i.RawItemId == weapon).OrderByDescending(i => i.Item.ItemLevel).FirstOrDefault();
-                var EquipSlot = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.MainHand];
+                item = InventoryManager.FilledInventoryAndArmory.Where(i => i.RawItemId == weapon).OrderByDescending(i => i.Item.ItemLevel).FirstOrDefault();
+                EquipSlot = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.OffHand];
 
                 Log.Information($"Found Item {item}");
                 if (item != null)
                 {
                     item.Move(EquipSlot);
                 }
-
-                if (Core.Me.CurrentJob == ClassJobType.Paladin)
-                {
-                    weapon = SquareMapleShield;
-
-                    Log.Information($"Couldn't find item category for {Core.Me.CurrentJob}. Attempting to purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName} with Lisbeth");
-
-                    order = new LlamaLibrary.JsonObjects.Lisbeth.Order()
-                    {
-                        Amount = 1,
-                        AmountMode = LlamaLibrary.JsonObjects.Lisbeth.AmountMode.Restock,
-                        Item = (uint)weapon,
-                        Type = LlamaLibrary.JsonObjects.Lisbeth.SourceType.Purchase
-                    };
-
-                    if (!await LlamaLibrary.Helpers.Lisbeth.ExecuteOrders(LlamaLibrary.Extensions.OtherExtensions.GetOrderJson(new List<LlamaLibrary.JsonObjects.Lisbeth.Order>() { order })))
-                    {
-                        Log.Error($"Could not purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName}");
-                    }
-
-                    item = InventoryManager.FilledInventoryAndArmory.Where(i => i.RawItemId == weapon).OrderByDescending(i => i.Item.ItemLevel).FirstOrDefault();
-                    EquipSlot = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.OffHand];
-
-                    Log.Information($"Found Item {item}");
-                    if (item != null)
-                    {
-                        item.Move(EquipSlot);
-                    }
-                }
             }
-
-            _isDone = Core.Me.CurrentJob == newjob;
         }
 
         protected override Composite CreateBehavior()
