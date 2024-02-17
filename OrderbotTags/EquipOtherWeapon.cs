@@ -33,6 +33,10 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool HighPriority => true;
 
+        [XmlAttribute("UpdateGearSet")]
+        [DefaultValue(false)]
+        public bool UpdateGearSet { get; set; } = false;
+
         public EquipOtherWeapon() : base()
         {
         }
@@ -162,6 +166,10 @@ namespace LlamaUtilities.OrderbotTags
                 if (item != null)
                 {
                     item.Move(EquipSlot);
+                    if (UpdateGearSet)
+                    {
+                        await LlamaLibrary.ScriptConditions.Helpers.UpdateGearSet();
+                    }
                 }
             }
             else
@@ -173,7 +181,7 @@ namespace LlamaUtilities.OrderbotTags
             _isDone = Core.Me.CurrentJob == newjob;
         }
 
-        internal async static Task BuyNewWeapon(int weapon)
+        internal async Task BuyNewWeapon(int weapon)
         {
             var message = $"Couldn't find other weapon for {Core.Me.CurrentJob}. Attempting to purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName} with Lisbeth";
             Core.OverlayManager.AddToast(() => $"" + message,
@@ -220,6 +228,10 @@ namespace LlamaUtilities.OrderbotTags
             if (item != null)
             {
                 item.Move(EquipSlot);
+                if (UpdateGearSet)
+                {
+                    await LlamaLibrary.ScriptConditions.Helpers.UpdateGearSet();
+                }
             }
 
             if (Core.Me.CurrentJob == ClassJobType.Paladin)
@@ -248,6 +260,10 @@ namespace LlamaUtilities.OrderbotTags
                 if (item != null)
                 {
                     item.Move(EquipSlot);
+                    if (UpdateGearSet)
+                    {
+                        await LlamaLibrary.ScriptConditions.Helpers.UpdateGearSet();
+                    }
                 }
             }
         }
