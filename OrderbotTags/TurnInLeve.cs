@@ -22,6 +22,7 @@ namespace LlamaUtilities.OrderbotTags
         private bool _isDone;
 
         [XmlAttribute("XYZ")]
+        [XmlAttribute("NpcLocation")]
         public Vector3 Location { get; set; }
 
         [XmlAttribute("NpcId")]

@@ -26,9 +26,11 @@ namespace LlamaUtilities.OrderbotTags
         private uint[] ids;
 
         [XmlAttribute("LeveIds")]
+        [XmlAttribute("leveIds")]
         public int[] LeveIds { get; set; }
 
         [XmlAttribute("LeveType")]
+        [XmlAttribute("leveType")]
         public int LeveType { get; set; }
 
         /*
@@ -39,7 +41,8 @@ namespace LlamaUtilities.OrderbotTags
         */
         [XmlAttribute("NpcId")]
         [XmlAttribute("NpcID")]
-        [XmlAttribute("NPCID")]
+        [XmlAttribute("NpcID")]
+        [XmlAttribute("npcId")]
         public int NpcId { get; set; }
 
         [DefaultValue(30)]
@@ -47,6 +50,7 @@ namespace LlamaUtilities.OrderbotTags
         public int Timeout { get; set; }
 
         [XmlAttribute("XYZ")]
+        [XmlAttribute("npcLocation")]
         public Vector3 Location { get; set; }
 
         [XmlAttribute("ZoneId")]
