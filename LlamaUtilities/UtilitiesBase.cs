@@ -400,6 +400,12 @@ namespace LlamaUtilities.LlamaUtilities
                         huntTypes.AddRange(HuntHelper.NutClanHunts);
                     }
 
+                    if (HuntsSettings.Instance.EwHunts)
+                    {
+                        huntTypes.AddRange(HuntHelper.EwHunts);
+                    }
+
+
                     if (huntTypes.Count > 0)
                     {
                         await Hunts.DoHunts(huntTypes.ToArray());

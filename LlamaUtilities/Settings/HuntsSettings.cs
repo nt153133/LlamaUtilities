@@ -19,6 +19,8 @@ namespace LlamaUtilities.LlamaUtilities.Settings
 
         private bool _NutClanHunts;
 
+        private bool _EwHunts;
+
         public HuntsSettings() : base(Path.Combine(JsonHelper.UniqueCharacterSettingsDirectory, "HuntsSettings.json"))
         {
         }
@@ -78,6 +80,21 @@ namespace LlamaUtilities.LlamaUtilities.Settings
                 if (_NutClanHunts != value)
                 {
                     _NutClanHunts = value;
+                    Save();
+                }
+            }
+        }
+
+        [Description("Complete EW Daily Hunts")]
+        [DefaultValue(true)]
+        public bool EwHunts
+        {
+            get => _EwHunts;
+            set
+            {
+                if (_EwHunts != value)
+                {
+                    _EwHunts = value;
                     Save();
                 }
             }
