@@ -262,7 +262,7 @@ namespace LlamaUtilities.LlamaUtilities
         private static bool CanUseAbility2()
         {
             // I'm thinking that when Mimic is equipped it's freezing up RB when it checks for CanUseAbility, so returning false if that's the case? Might help
-            if (ChocoboRaceManager.Ability.BaseActionId == (uint)ChocoboAbilities.MimicIII)
+            if (ChocoboRaceManager.Ability2.BaseActionId == (uint)ChocoboAbilities.MimicIII)
             {
                 return false;
             }
