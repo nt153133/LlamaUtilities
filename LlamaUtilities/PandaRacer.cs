@@ -30,6 +30,7 @@ namespace LlamaUtilities.LlamaUtilities
         private static uint _blueSpeedPlatform = 2005038; // Blue go fast platform
         internal static Npc ChocoboBreeder = new((uint)1010472, 148, new Vector3(-51.04488f, -0.005054563f, 67.57738f));
         internal static Npc ChocoboRegistrar = new((uint)1010465, 388, new Vector3(-5.037189f, -2.026558E-06f, -65.11401f));
+
         internal static Npc LiftOperator = new((uint)1011044, 144, new Vector3(-81.73487f, 3.814697E-06f, 30.29126f));
         /*
          * Aura Name: Frenzied, Aura Id: 632
@@ -61,6 +62,7 @@ namespace LlamaUtilities.LlamaUtilities
             ChocoDashII = 2, // Temporarily boosts speed without depleting stamina for 2s.
             ChocoCureII = 5, // Restores 9% of total stamina.
             ChocoCureIII = 6, // Restores 12% of total stamina.
+            MimicIII = 54, //
             SuperSprint = 58, // Restores 9% of total stamina.
         }
 
@@ -95,7 +97,6 @@ namespace LlamaUtilities.LlamaUtilities
                         }
                         else
                         {
-
                             switch (ChocoboRaceManager.Stamina)
                             {
                                 case > 20:
@@ -183,6 +184,28 @@ namespace LlamaUtilities.LlamaUtilities
             }
 
             return true;
+        }
+
+        private static bool CanUseAbility1()
+        {
+            // I'm thinking that when Mimic is equipped it's freezing up RB when it checks for CanUseAbility, so returning false if that's the case? Might help
+            if (ChocoboRaceManager.Ability.BaseActionId == (uint)ChocoboAbilities.MimicIII)
+            {
+                return false;
+            }
+
+            return ChocoboRaceManager.CanUseAbility;
+        }
+
+        private static bool CanUseAbility2()
+        {
+            // I'm thinking that when Mimic is equipped it's freezing up RB when it checks for CanUseAbility, so returning false if that's the case? Might help
+            if (ChocoboRaceManager.Ability.BaseActionId == (uint)ChocoboAbilities.MimicIII)
+            {
+                return false;
+            }
+
+            return ChocoboRaceManager.CanUseAbility2;
         }
 
         private static async Task QueueChocoRace()
@@ -343,6 +366,7 @@ namespace LlamaUtilities.LlamaUtilities
                         ChocoboRaceManager.UseAbility();
                         await Coroutine.Sleep(1000);
                     }
+
                     break;
                 case (uint)ChocoboAbilities.ChocoCureIII:
                     if (ChocoboRaceManager.Stamina <= RaceSettings.Instance.CureStamina)
@@ -351,9 +375,15 @@ namespace LlamaUtilities.LlamaUtilities
                         ChocoboRaceManager.UseAbility();
                         await Coroutine.Sleep(1000);
                     }
+
                     break;
                 case (uint)ChocoboAbilities.SuperSprint:
                     Log.Information($"Using Super Sprint.");
+                    ChocoboRaceManager.UseAbility();
+                    await Coroutine.Sleep(1000);
+                    break;
+                case (uint)ChocoboAbilities.MimicIII:
+                    Log.Information($"Using Mimic III.");
                     ChocoboRaceManager.UseAbility();
                     await Coroutine.Sleep(1000);
                     break;
@@ -362,7 +392,6 @@ namespace LlamaUtilities.LlamaUtilities
 
         private static async Task UseAbility2()
         {
-
             switch (ChocoboRaceManager.Ability2.BaseActionId)
             {
                 case (uint)ChocoboAbilities.ChocoDashII:
@@ -377,6 +406,7 @@ namespace LlamaUtilities.LlamaUtilities
                         ChocoboRaceManager.UseAbility2();
                         await Coroutine.Sleep(1000);
                     }
+
                     break;
                 case (uint)ChocoboAbilities.ChocoCureIII:
                     if (ChocoboRaceManager.Stamina <= RaceSettings.Instance.CureStamina)
@@ -385,10 +415,16 @@ namespace LlamaUtilities.LlamaUtilities
                         ChocoboRaceManager.UseAbility2();
                         await Coroutine.Sleep(1000);
                     }
+
                     break;
                 case (uint)ChocoboAbilities.SuperSprint:
                     Log.Information($"Using Super Sprint.");
                     ChocoboRaceManager.UseAbility2();
+                    await Coroutine.Sleep(1000);
+                    break;
+                case (uint)ChocoboAbilities.MimicIII:
+                    Log.Information($"Using Mimic III.");
+                    ChocoboRaceManager.UseAbility();
                     await Coroutine.Sleep(1000);
                     break;
             }
@@ -409,6 +445,7 @@ namespace LlamaUtilities.LlamaUtilities
                     {
                         await UseAbility();
                     }
+
                     if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
                     {
                         await UseAbility2();
@@ -441,6 +478,7 @@ namespace LlamaUtilities.LlamaUtilities
             {
                 await UseAbility();
             }
+
             if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
             {
                 await UseAbility2();
