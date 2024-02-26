@@ -59,11 +59,73 @@ namespace LlamaUtilities.LlamaUtilities
 
         public enum ChocoboAbilities : uint
         {
+            ChocoDash = 1,
             ChocoDashII = 2, // Temporarily boosts speed without depleting stamina for 2s.
+            ChocoDashIII = 3,
+            ChocoCure = 4,
             ChocoCureII = 5, // Restores 9% of total stamina.
             ChocoCureIII = 6, // Restores 12% of total stamina.
+            ChocoEsuna = 7,
+            ChocoEsunaII = 8,
+            ChocoEsunaIII = 9,
+            ChocoEase = 10,
+            ChocoEaseII = 11,
+            ChocoEaseIII = 12,
+            ChocoCalm = 13,
+            ChocoCalmII = 14,
+            ChocoCalmIII = 15,
+            ChocoReflect = 16,
+            ChocoReflectII = 17,
+            ChocoReflectIII = 18,
+            ChocoSteal = 19,
+            ChocoStealII = 20,
+            ChocoStealIII = 21,
+            ChocoSilence = 22,
+            ChocoSilenceII = 23,
+            ChocoSilenceIII = 24,
+            ChocoShock = 25,
+            ChocoShockII = 26,
+            ChocoShockIII = 27,
+            IncreasedStamina = 28,
+            IncreasedStaminaII = 29,
+            IncreasedStaminaIII = 30,
+            HeavyResistance = 31,
+            HeavyResistanceII = 32,
+            HeavyResistanceIII = 33,
+            HeavyResistanceIV = 34,
+            HeavyResistanceV = 35,
+            LevelHead = 36,
+            LevelHeadII = 37,
+            LevelHeadIII = 38,
+            LevelHeadIV = 39,
+            LevelHeadV = 40,
+            SpeedyRecovery = 31,
+            SpeedyRecoveryII = 42,
+            SpeedyRecoveryIII = 43,
+            Dressage = 44,
+            DressageII = 45,
+            DressageIII = 46,
+            HeadStart = 47,
+            ChocoDrain = 48,
+            ChocoDrainII = 49,
+            ChocoDrainIII = 50,
+            ParadigmShift = 51,
+            Mimic = 52,
+            MimicII = 53,
             MimicIII = 54, //
+            FeatherField = 55,
+            FeatherFieldII = 56,
+            FeatherFieldIII = 57,
             SuperSprint = 58, // Restores 9% of total stamina.
+            ChocoReraise = 59,
+            ChocoReraiseII = 60,
+            ChocoReraiseIII = 61,
+            EnfeeblementClause = 62,
+            EnfeeblementClauseII = 63,
+            EnfeeblementClauseIII = 64,
+            Breather = 65,
+            BreatherII = 66,
+            BreatherIII = 67,
         }
 
         // Ability
@@ -106,19 +168,19 @@ namespace LlamaUtilities.LlamaUtilities
                                     //Log.Information($"Waiting to restore Stamina.");
                                     await Coroutine.Wait(-1,
                                                          () => ChocoboRaceManager.Stamina > 20 || ChocoboRaceManager.CanUseItem && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet ||
-                                                               ChocoboRaceManager.CanUseAbility || ChocoboRaceManager.CanUseAbility2 ||
-                                                               RaceChocoboResult.IsOpen && RaceMaps.Contains(WorldManager.ZoneId));
+                                                               CanUseAbility1() || CanUseAbility2() ||
+                                                                                                   RaceChocoboResult.IsOpen && RaceMaps.Contains(WorldManager.ZoneId));
                                     if (ChocoboRaceManager.CanUseItem && !RaceChocoboResult.IsOpen && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet)
                                     {
                                         await UseItem();
                                     }
 
-                                    if (ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
+                                    if (CanUseAbility1() && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
                                     {
                                         await UseAbility();
                                     }
 
-                                    if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
+                                    if (CanUseAbility2() && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
                                     {
                                         await UseAbility2();
                                     }
@@ -441,12 +503,12 @@ namespace LlamaUtilities.LlamaUtilities
                         await UseItem();
                     }
 
-                    if (ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
+                    if (CanUseAbility1() && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
                     {
                         await UseAbility();
                     }
 
-                    if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
+                    if (CanUseAbility2() && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
                     {
                         await UseAbility2();
                     }
@@ -474,12 +536,12 @@ namespace LlamaUtilities.LlamaUtilities
                 await UseItem();
             }
 
-            if (ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
+            if (CanUseAbility1() && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
             {
                 await UseAbility();
             }
 
-            if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
+            if (CanUseAbility2() && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
             {
                 await UseAbility2();
             }
