@@ -112,12 +112,12 @@ namespace LlamaUtilities.LlamaUtilities
                                         await UseItem();
                                     }
 
-                                    if (ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen)
+                                    if (ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
                                     {
                                         await UseAbility();
                                     }
 
-                                    if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen)
+                                    if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
                                     {
                                         await UseAbility2();
                                     }
@@ -405,11 +405,11 @@ namespace LlamaUtilities.LlamaUtilities
                         await UseItem();
                     }
 
-                    if (ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen)
+                    if (ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
                     {
                         await UseAbility();
                     }
-                    if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen)
+                    if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
                     {
                         await UseAbility2();
                     }
@@ -437,11 +437,11 @@ namespace LlamaUtilities.LlamaUtilities
                 await UseItem();
             }
 
-            if (ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen)
+            if (ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
             {
                 await UseAbility();
             }
-            if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen)
+            if (ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
             {
                 await UseAbility2();
             }

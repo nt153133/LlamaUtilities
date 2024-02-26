@@ -58,6 +58,38 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             }
         }
 
+        private bool _useAbility1;
+        [Description("Should we use the ability in hotbar slot 1?")]
+        [DefaultValue(false)]
+        public bool UseAbility1
+        {
+            get => _useAbility1;
+            set
+            {
+                if (_useAbility1 != value)
+                {
+                    _useAbility1 = value;
+                    Save();
+                }
+            }
+        }
+
+        private bool _useAbility2;
+        [Description("Should we use the ability in hotbar slot 2?")]
+        [DefaultValue(false)]
+        public bool UseAbility2
+        {
+            get => _useAbility2;
+            set
+            {
+                if (_useAbility2 != value)
+                {
+                    _useAbility2 = value;
+                    Save();
+                }
+            }
+        }
+
         private bool _goLeft;
         [Description("Continually press left while sprinting.")]
         [DefaultValue(false)]
