@@ -60,7 +60,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
 
         private bool _useAbility1;
         [Description("Should we use the ability in hotbar slot 1?")]
-        [DefaultValue(false)]
+        [DefaultValue(true)]
         public bool UseAbility1
         {
             get => _useAbility1;
@@ -76,7 +76,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
 
         private bool _useAbility2;
         [Description("Should we use the ability in hotbar slot 2?")]
-        [DefaultValue(false)]
+        [DefaultValue(true)]
         public bool UseAbility2
         {
             get => _useAbility2;

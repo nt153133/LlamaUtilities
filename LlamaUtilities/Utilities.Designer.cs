@@ -76,6 +76,7 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabFC = new System.Windows.Forms.TabPage();
             this.btnFCWorkshop = new System.Windows.Forms.Button();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.label2 = new System.Windows.Forms.Label();
             this.expLabel = new System.Windows.Forms.Label();
             this.rankLabel = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
@@ -550,6 +551,7 @@ namespace LlamaUtilities.LlamaUtilities
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.label2);
             this.tabPage2.Controls.Add(this.expLabel);
             this.tabPage2.Controls.Add(this.rankLabel);
             this.tabPage2.Controls.Add(this.label1);
@@ -564,6 +566,14 @@ namespace LlamaUtilities.LlamaUtilities
             this.tabPage2.TabIndex = 8;
             this.tabPage2.Text = "ChocoRacer";
             this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // label2
+            // 
+            this.label2.Location = new System.Drawing.Point(350, 303);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(153, 51);
+            this.label2.TabIndex = 7;
+            this.label2.Text = "This Bot only supports Choco Cure II, Cure III, Dash II and Super Sprint.";
             // 
             // expLabel
             // 
@@ -664,8 +674,9 @@ namespace LlamaUtilities.LlamaUtilities
             ((System.ComponentModel.ISupportInitialize)(this.bindingSourceInventory)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSourceInventoryMateria)).EndInit();
             this.ResumeLayout(false);
-
         }
+
+        private System.Windows.Forms.Label label2;
 
         private System.Windows.Forms.ComboBox filterCb;
 

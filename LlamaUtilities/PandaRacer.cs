@@ -138,6 +138,14 @@ namespace LlamaUtilities.LlamaUtilities
             389, // Costa del Sol
         };
 
+        private static List<uint> SupportedAbilities = new()
+        {
+            2, // ChocoDashII
+            5, // ChocoCureII
+            6, // ChocoCureIII
+            58, // SuperSprint
+        };
+
         public static async Task<bool> Race()
         {
             while (RaceSettings.Instance.Loop)
@@ -166,22 +174,27 @@ namespace LlamaUtilities.LlamaUtilities
                                     break;
                                 case <= 20:
                                     //Log.Information($"Waiting to restore Stamina.");
-                                    await Coroutine.Wait(-1,
-                                                         () => ChocoboRaceManager.Stamina > 20 || ChocoboRaceManager.CanUseItem && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet ||
-                                                               CanUseAbility1() || CanUseAbility2() ||
+
+                                    await Coroutine.Wait(1000,
+                                                         () => ChocoboRaceManager.Stamina > 20 ||
+                                                               ChocoboRaceManager.CanUseItem && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet ||
+                                                               SupportedAbilities.Contains(ChocoboRaceManager.Ability.BaseActionId) && ChocoboRaceManager.CanUseAbility && RaceSettings.Instance.UseAbility1||
+                                                               SupportedAbilities.Contains(ChocoboRaceManager.Ability2.BaseActionId) && ChocoboRaceManager.CanUseAbility2 && RaceSettings.Instance.UseAbility2 ||
                                                                                                    RaceChocoboResult.IsOpen && RaceMaps.Contains(WorldManager.ZoneId));
                                     if (ChocoboRaceManager.CanUseItem && !RaceChocoboResult.IsOpen && ChocoboRaceManager.Item.BaseActionId != (int)ChocoboItems.StaminaTablet)
                                     {
                                         await UseItem();
                                     }
 
-                                    if (CanUseAbility1() && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
+                                    if (SupportedAbilities.Contains(ChocoboRaceManager.Ability.BaseActionId) && ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
                                     {
+                                        //Log.Information("Using ability 1");
                                         await UseAbility();
                                     }
 
-                                    if (CanUseAbility2() && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
+                                    if (SupportedAbilities.Contains(ChocoboRaceManager.Ability2.BaseActionId) && ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
                                     {
+                                        //Log.Information("Using ability 2");
                                         await UseAbility2();
                                     }
 
@@ -246,28 +259,6 @@ namespace LlamaUtilities.LlamaUtilities
             }
 
             return true;
-        }
-
-        private static bool CanUseAbility1()
-        {
-            // I'm thinking that when Mimic is equipped it's freezing up RB when it checks for CanUseAbility, so returning false if that's the case? Might help
-            if (ChocoboRaceManager.Ability.IsFilled && ChocoboRaceManager.Ability.BaseActionId == (uint)ChocoboAbilities.MimicIII)
-            {
-                return false;
-            }
-
-            return ChocoboRaceManager.CanUseAbility;
-        }
-
-        private static bool CanUseAbility2()
-        {
-            // I'm thinking that when Mimic is equipped it's freezing up RB when it checks for CanUseAbility, so returning false if that's the case? Might help
-            if (ChocoboRaceManager.Ability2.IsFilled && ChocoboRaceManager.Ability2.BaseActionId == (uint)ChocoboAbilities.MimicIII)
-            {
-                return false;
-            }
-
-            return ChocoboRaceManager.CanUseAbility2;
         }
 
         private static async Task QueueChocoRace()
@@ -414,6 +405,18 @@ namespace LlamaUtilities.LlamaUtilities
 
         private static async Task UseAbility()
         {
+            if (!RaceSettings.Instance.UseAbility1)
+            {
+                //Log.Information("Hotbarslot1 is turned off");
+                return;
+            }
+
+            if (!SupportedAbilities.Contains(ChocoboRaceManager.Ability.BaseActionId))
+            {
+                //Log.Information("Hotbar1 does not have a supported ability.");
+                return;
+            }
+
             switch (ChocoboRaceManager.Ability.BaseActionId)
             {
                 case (uint)ChocoboAbilities.ChocoDashII:
@@ -444,16 +447,25 @@ namespace LlamaUtilities.LlamaUtilities
                     ChocoboRaceManager.UseAbility();
                     await Coroutine.Sleep(1000);
                     break;
-                case (uint)ChocoboAbilities.MimicIII:
-                    Log.Information($"Using Mimic III.");
-                    ChocoboRaceManager.UseAbility();
-                    await Coroutine.Sleep(1000);
+                default:
                     break;
             }
         }
 
         private static async Task UseAbility2()
         {
+            if (!RaceSettings.Instance.UseAbility2)
+            {
+                Log.Information("Hotbarslot2 is turned off");
+                return;
+            }
+
+            if (!SupportedAbilities.Contains(ChocoboRaceManager.Ability2.BaseActionId))
+            {
+                Log.Information("Hotbar2 does not have a supported ability.");
+                return;
+            }
+
             switch (ChocoboRaceManager.Ability2.BaseActionId)
             {
                 case (uint)ChocoboAbilities.ChocoDashII:
@@ -468,7 +480,6 @@ namespace LlamaUtilities.LlamaUtilities
                         ChocoboRaceManager.UseAbility2();
                         await Coroutine.Sleep(1000);
                     }
-
                     break;
                 case (uint)ChocoboAbilities.ChocoCureIII:
                     if (ChocoboRaceManager.Stamina <= RaceSettings.Instance.CureStamina)
@@ -477,17 +488,13 @@ namespace LlamaUtilities.LlamaUtilities
                         ChocoboRaceManager.UseAbility2();
                         await Coroutine.Sleep(1000);
                     }
-
                     break;
                 case (uint)ChocoboAbilities.SuperSprint:
                     Log.Information($"Using Super Sprint.");
                     ChocoboRaceManager.UseAbility2();
                     await Coroutine.Sleep(1000);
                     break;
-                case (uint)ChocoboAbilities.MimicIII:
-                    Log.Information($"Using Mimic III.");
-                    ChocoboRaceManager.UseAbility();
-                    await Coroutine.Sleep(1000);
+                default:
                     break;
             }
         }
@@ -503,12 +510,12 @@ namespace LlamaUtilities.LlamaUtilities
                         await UseItem();
                     }
 
-                    if (CanUseAbility1() && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
+                    if (SupportedAbilities.Contains(ChocoboRaceManager.Ability.BaseActionId) && ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
                     {
                         await UseAbility();
                     }
 
-                    if (CanUseAbility2() && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
+                    if (SupportedAbilities.Contains(ChocoboRaceManager.Ability2.BaseActionId) && ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
                     {
                         await UseAbility2();
                     }
@@ -536,12 +543,12 @@ namespace LlamaUtilities.LlamaUtilities
                 await UseItem();
             }
 
-            if (CanUseAbility1() && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
+            if (SupportedAbilities.Contains(ChocoboRaceManager.Ability.BaseActionId) && ChocoboRaceManager.CanUseAbility && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility1)
             {
                 await UseAbility();
             }
 
-            if (CanUseAbility2() && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
+            if (SupportedAbilities.Contains(ChocoboRaceManager.Ability2.BaseActionId) && ChocoboRaceManager.CanUseAbility2 && !RaceChocoboResult.IsOpen && RaceSettings.Instance.UseAbility2)
             {
                 await UseAbility2();
             }
