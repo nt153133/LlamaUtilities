@@ -12,6 +12,7 @@ using ff14bot.NeoProfiles;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Logging;
 using TreeSharp;
+using static LlamaLibrary.Helpers.GeneralFunctions;
 
 namespace LlamaUtilities.OrderbotTags;
 
@@ -34,6 +35,10 @@ public class LoadPandaProfile : LLProfileBehavior
     [XmlAttribute("GoToBarracks")]
     [DefaultValue(false)]
     public bool GoToBarracks { get; set; }
+
+    [XmlAttribute("EquipGear")]
+    [DefaultValue(false)]
+    public bool EquipGear { get; set; }
 
     public override bool IsDone => _isDone;
 
@@ -60,6 +65,10 @@ public class LoadPandaProfile : LLProfileBehavior
     private async Task LoadServerProfileByNameTask()
     {
 
+        if (EquipGear)
+        {
+            await InventoryEquipBest(false, true);
+        }
         await LlamaLibrary.Helpers.LoadServerProfile.LoadProfile(ProfileName, QueueType, GoToBarracks);
 
     }
