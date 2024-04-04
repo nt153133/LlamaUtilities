@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
+using ff14bot.Helpers;
 using ff14bot.Managers;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Utilities;
@@ -43,7 +44,13 @@ namespace LlamaUtilities.OrderbotTags
             while (PartyManager.IsInParty)
             {
                 ChatManager.SendChat("/pcmd leave");
-                await Coroutine.Wait(5000, () => !PartyManager.IsInParty);
+                await Coroutine.Wait(5000, () => !PartyManager.IsInParty || SelectYesno.IsOpen);
+                if (SelectYesno.IsOpen)
+                {
+                    Logging.WriteDiagnostic("Clicking Yes");
+                    SelectYesno.ClickYes();
+                    await Coroutine.Wait(5000, () => !PartyManager.IsInParty);
+                }
             }
 
             _isDone = true;
