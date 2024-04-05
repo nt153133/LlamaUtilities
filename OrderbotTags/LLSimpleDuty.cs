@@ -18,7 +18,7 @@ using Action = TreeSharp.Action;
 
 namespace ff14bot.NeoProfiles.Tags
 {
-    [XmlElement("LLSimpleDuty")]	
+    [XmlElement("LLSimpleDuty")]
     [XmlElement("SoSimpleDuty")]
     public class LLSimpleDuty : SimpleDutyTag
     {
@@ -172,13 +172,13 @@ namespace ff14bot.NeoProfiles.Tags
                 ),
                 new Decorator(ret => HasInteractObjects && DutyManager.InInstance && !Core.Player.InCombat && InteractableTarget != null,
                     new PrioritySelector(
-                        new Decorator(ret => Core.Player.Location.Distance(InteractableTarget.Location) <= 5,
+                        new Decorator(ret => Core.Player.Location.Distance(InteractableTarget.Location) <= 3,
                             new Action(r =>
                             {
                                 InteractableTarget.Interact();
                             })
                         ),
-                        new Decorator(ret => Core.Player.Location.Distance(InteractableTarget.Location) > 5,
+                        new Decorator(ret => Core.Player.Location.Distance(InteractableTarget.Location) > 3,
                             CommonBehaviors.MoveAndStop(ret => InteractableTarget.Location, 3)
                         ),
                         new ActionAlwaysSucceed()
@@ -186,13 +186,13 @@ namespace ff14bot.NeoProfiles.Tags
                 ),
                 new Decorator(ret => HasCheckpoints && DutyManager.InInstance,
                     new PrioritySelector(
-                        new Decorator(ret => Core.Player.Location.Distance(CurrentCheckpoint) < 5,
+                        new Decorator(ret => Core.Player.Location.Distance(CurrentCheckpoint) < 3,
                             new Action(r =>
                             {
                                 Checkpoints.Remove(Checkpoints.First());
                             })
                         ),
-                        new Decorator(ret => Core.Player.Location.Distance(CurrentCheckpoint) > 5,
+                        new Decorator(ret => Core.Player.Location.Distance(CurrentCheckpoint) > 3,
                             CommonBehaviors.MoveAndStop(ret => CurrentCheckpoint, 3)
                         )
                     )
@@ -206,12 +206,12 @@ namespace ff14bot.NeoProfiles.Tags
         {
             if (HasInteractObjects && InteractableTarget != null)
             {
-                if (Core.Player.Distance(InteractableTarget.Location) > 5)
+                if (Core.Player.Distance(InteractableTarget.Location) > 3)
                 {
                     return await CommonTasks.MoveAndStop(new MoveToParameters(InteractableTarget.Location), 3);
                 }
 
-                if (Core.Player.Distance(InteractableTarget.Location) < 5)
+                if (Core.Player.Distance(InteractableTarget.Location) < 3)
                 {
                     InteractableTarget.Interact();
                     await Coroutine.Wait(10000, () => !Core.Player.IsCasting);
