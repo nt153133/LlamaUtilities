@@ -47,7 +47,7 @@ namespace LlamaUtilities.OrderbotTags
             return new ActionRunCoroutine(r => EquipWeapons(Item));
         }
 
-        private Task EquipWeapons(int[] weapons)
+        private async Task EquipWeapons(int[] weapons)
         {
             foreach (var weapon in weapons)
             {
@@ -72,11 +72,11 @@ namespace LlamaUtilities.OrderbotTags
 
             if (UpdateGearSet)
             {
-                return LlamaLibrary.ScriptConditions.Helpers.UpdateGearSet();
+                Log.Information("Updating gearset");
+                await LlamaLibrary.ScriptConditions.Helpers.UpdateGearSet();
             }
 
             _isDone = true;
-            return Task.CompletedTask;
         }
 
         public override bool IsDone => _isDone;
