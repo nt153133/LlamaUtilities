@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Clio.XmlEngine;
 using ff14bot.Enums;
@@ -17,6 +18,10 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("itemID")]
         [XmlAttribute("ItemID")]
         public int[] Item { get; set; }
+
+        [XmlAttribute("UpdateGearSet")]
+        [DefaultValue(false)]
+        public bool UpdateGearSet { get; set; } = false;
 
         public override bool HighPriority => true;
 
@@ -63,6 +68,11 @@ namespace LlamaUtilities.OrderbotTags
                 {
                     item1.Move(EquipSlot);
                 }
+            }
+
+            if (UpdateGearSet)
+            {
+                return LlamaLibrary.ScriptConditions.Helpers.UpdateGearSet();
             }
 
             _isDone = true;
