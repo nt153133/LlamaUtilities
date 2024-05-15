@@ -40,6 +40,18 @@ public class LoadPandaProfile : LLProfileBehavior
     [DefaultValue(false)]
     public bool EquipGear { get; set; }
 
+    [XmlAttribute("SayHello")]
+    [DefaultValue(false)]
+    public bool SayHello { get; set; }
+
+    [XmlAttribute("SayHelloCustom")]
+    [DefaultValue(false)]
+    public bool SayHelloCustom { get; set; }
+
+    [XmlAttribute("SayHelloMessages")]
+    [DefaultValue("hi/hiya")]
+    public string SayHelloMessages { get; set; }
+
     public override bool IsDone => _isDone;
 
     public override bool HighPriority => true;
@@ -69,7 +81,7 @@ public class LoadPandaProfile : LLProfileBehavior
         {
             await InventoryEquipBest(false, true);
         }
-        await LlamaLibrary.Helpers.LoadServerProfile.LoadProfile(ProfileName, QueueType, GoToBarracks);
+        await LlamaLibrary.Helpers.LoadServerProfile.LoadProfile(ProfileName, QueueType, GoToBarracks, SayHello, SayHelloCustom, SayHelloMessages);
 
     }
 
