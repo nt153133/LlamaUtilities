@@ -199,7 +199,7 @@ namespace LlamaUtilities.OrderbotTags
                 await PartyBroadcaster.Send(sentfarewell);
             }
 
-            if (!SayGoodbye && SayGoodbyeCustom)
+            if (SayGoodbye && SayGoodbyeCustom)
             {
                 var sentcustomgreeting = _farewellQueueCustom.Dequeue();
                 Log.Information($"Saying '{sentcustomgreeting}' the group");
