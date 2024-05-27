@@ -44,38 +44,46 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task GoToBarracksTask()
         {
-            if (Navigator.NavigationProvider == null)
+            if (WorldManager.ZoneId != 534 && WorldManager.ZoneId != 535 && WorldManager.ZoneId != 536)
             {
-                Navigator.PlayerMover = new SlideMover();
-                Navigator.NavigationProvider = new ServiceNavigationProvider();
-            }
-            // Not in Barracks
-            Log($"Moving to Barracks");
-            uint[] entranceIds = { 2007527,2007529,2006962 };
-            var entranceNpc = GameObjectManager.GameObjects.Where(r => r.IsTargetable && r.IsValid && entranceIds.Contains(r.NpcId)).OrderBy(r => r.Distance()).FirstOrDefault();
-            if (entranceNpc != null)
-            {
-                while (Core.Me.Location.Distance2D(entranceNpc.Location) > 1.5f)
+                if (Navigator.NavigationProvider == null)
                 {
-                    await Coroutine.Yield();
-                    await Navigation.FlightorMove(entranceNpc.Location);
+                    Navigator.PlayerMover = new SlideMover();
+                    Navigator.NavigationProvider = new ServiceNavigationProvider();
+                }
+                // Not in Barracks
+                Log($"Moving to Barracks");
+                uint[] entranceIds = { 2007527,2007529,2006962 };
+                var entranceNpc = GameObjectManager.GameObjects.Where(r => r.IsTargetable && r.IsValid && entranceIds.Contains(r.NpcId)).OrderBy(r => r.Distance()).FirstOrDefault();
+                if (entranceNpc != null)
+                {
+                    while (Core.Me.Location.Distance2D(entranceNpc.Location) > 1.5f)
+                    {
+                        await Coroutine.Yield();
+                        await Navigation.FlightorMove(entranceNpc.Location);
+                    }
+                }
+                await GrandCompanyHelper.InteractWithNpc(GCNpc.Entrance_to_the_Barracks);
+                await Coroutine.Wait(5000, () => SelectYesno.IsOpen);
+                await Buddy.Coroutines.Coroutine.Sleep(500);
+                if (ff14bot.RemoteWindows.SelectYesno.IsOpen)
+                {
+                    Log($"Selecting Yes.");
+                    ff14bot.RemoteWindows.SelectYesno.ClickYes();
+                }
+
+                await Coroutine.Wait(5000, () => CommonBehaviors.IsLoading);
+                while (CommonBehaviors.IsLoading)
+                {
+                    Log($"Waiting for zoning to finish...");
+                    await Coroutine.Wait(-1, () => !CommonBehaviors.IsLoading);
                 }
             }
-            await GrandCompanyHelper.InteractWithNpc(GCNpc.Entrance_to_the_Barracks);
-            await Coroutine.Wait(5000, () => SelectYesno.IsOpen);
-            await Buddy.Coroutines.Coroutine.Sleep(500);
-            if (ff14bot.RemoteWindows.SelectYesno.IsOpen)
+            else
             {
-                Log($"Selecting Yes.");
-                ff14bot.RemoteWindows.SelectYesno.ClickYes();
+                Log($"Already in barracks");
             }
 
-            await Coroutine.Wait(5000, () => CommonBehaviors.IsLoading);
-            while (CommonBehaviors.IsLoading)
-            {
-                Log($"Waiting for zoning to finish...");
-                await Coroutine.Wait(-1, () => !CommonBehaviors.IsLoading);
-            }
 
             _isDone = true;
         }
