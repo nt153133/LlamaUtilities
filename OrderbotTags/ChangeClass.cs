@@ -100,7 +100,7 @@ namespace LlamaUtilities.OrderbotTags
                     Log.Error($"Couldn't find item category for {Job}");
                 }
             }
-
+            await Coroutine.Sleep(1500);
             _isDone = Core.Me.CurrentJob == newjob;
         }
 
