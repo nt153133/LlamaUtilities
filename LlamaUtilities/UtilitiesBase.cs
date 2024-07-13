@@ -298,6 +298,14 @@ namespace LlamaUtilities.LlamaUtilities
             ("Troian", 595, ItemRarity.Green),
             ("Manalis", 605, ItemRarity.Green),
             ("Distance", 625, ItemRarity.Green),
+			
+			// 7.x Dawntrail
+            ("Riversbreath", 650, ItemRarity.Green),
+            ("Zormor", 660, ItemRarity.Green),
+            ("Skydeep", 666, ItemRarity.Green),
+            ("Vanguard", 672, ItemRarity.Green),
+            ("Origenics", 678, ItemRarity.Green),
+            ("Epochal", 690, ItemRarity.Green),
         };
 
         public UtilitiesBase()
