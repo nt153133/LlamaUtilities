@@ -31,6 +31,12 @@ namespace LlamaUtilities.OrderbotTags
     // ReSharper disable once InconsistentNaming
     public class LLTurnInTag : LLProfileBehavior
     {
+#if RB_DT
+        private const int _optionalRewardsBaseIndex = 0;
+#else
+        // Before Dawntrail, RB's optional rewards come after static rewards; start part way through reward list.
+        private const int _optionalRewardsBaseIndex = 5;
+#endif
         private readonly Queue<int> _selectStringIndex = new Queue<int>();
         private bool _dialogwasopen;
         private bool _doneEmote;
@@ -118,7 +124,7 @@ namespace LlamaUtilities.OrderbotTags
                         values = values.OrderByDescending(r => r.Reward.Worth).ToArray();
                     }
 
-                    RewardSlot = _questdata.Rewards.IndexOf(values[0].Reward);
+                    RewardSlot = _questdata.Rewards.IndexOf(values[0].Reward) + _optionalRewardsBaseIndex;
                     hasrewards = true;
 
                     //AsmManager.JournalResult_SelectItem(window, );
@@ -126,7 +132,7 @@ namespace LlamaUtilities.OrderbotTags
             }
             else
             {
-                RewardSlot = 0;
+                RewardSlot += _optionalRewardsBaseIndex;
                 hasrewards = true;
             }
 
