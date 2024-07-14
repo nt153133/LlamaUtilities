@@ -31,6 +31,8 @@ namespace LlamaUtilities.OrderbotTags
     // ReSharper disable once InconsistentNaming
     public class LLTurnInTag : LLProfileBehavior
     {
+        // Optional rewards come after static rewards; start part way through reward list.
+        private const int _optionalRewardsBaseIndex = 7;
         private readonly Queue<int> _selectStringIndex = new Queue<int>();
         private bool _dialogwasopen;
         private bool _doneEmote;
@@ -118,8 +120,7 @@ namespace LlamaUtilities.OrderbotTags
                         values = values.OrderByDescending(r => r.Reward.Worth).ToArray();
                     }
 
-                    //Now in heavensward the rewardlist doesnt start at 0 for some reason
-                    RewardSlot = _questdata.Rewards.IndexOf(values[0].Reward) + 5;
+                    RewardSlot = _questdata.Rewards.IndexOf(values[0].Reward) + _optionalRewardsBaseIndex;
                     hasrewards = true;
 
                     //AsmManager.JournalResult_SelectItem(window, );
@@ -127,7 +128,7 @@ namespace LlamaUtilities.OrderbotTags
             }
             else
             {
-                RewardSlot += 5;
+                RewardSlot += _optionalRewardsBaseIndex;
                 hasrewards = true;
             }
 
