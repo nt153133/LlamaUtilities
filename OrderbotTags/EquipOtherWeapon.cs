@@ -212,7 +212,7 @@ namespace LlamaUtilities.OrderbotTags
             {
                 Amount = 1,
                 AmountMode = LlamaLibrary.JsonObjects.Lisbeth.AmountMode.Restock,
-                Item = (uint)weapon,
+                Item = weapon,
                 Type = LlamaLibrary.JsonObjects.Lisbeth.SourceType.Purchase
             };
 
@@ -244,7 +244,7 @@ namespace LlamaUtilities.OrderbotTags
                 {
                     Amount = 1,
                     AmountMode = LlamaLibrary.JsonObjects.Lisbeth.AmountMode.Restock,
-                    Item = (uint)weapon,
+                    Item = weapon,
                     Type = LlamaLibrary.JsonObjects.Lisbeth.SourceType.Purchase
                 };
 

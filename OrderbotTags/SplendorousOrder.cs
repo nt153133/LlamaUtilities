@@ -92,7 +92,7 @@ namespace LlamaUtilities.OrderbotTags
             var orderToTest = new List<Order>();
             var orderITem = new Order()
             {
-                Item = (uint) ItemID, Amount = (uint) amountToOrder, Enabled = true, Group = 1, Type = Job, Collectable = true,
+                Item = ItemID, Amount = amountToOrder, Enabled = true, Group = 1, Type = Job, Collectable = true,
             };
             orderToTest.Add(orderITem);
 
