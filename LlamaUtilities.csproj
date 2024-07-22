@@ -38,7 +38,7 @@
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="RebornBuddy">
-      <HintPath>..\..\RebornBuddy.exe</HintPath>
+      <HintPath>..\..\..\Reborn - Arelia\RebornBuddy.exe</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -83,6 +83,7 @@
     <Compile Include="OrderbotTags\BuyWhiteScriptItem.cs" />
     <Compile Include="OrderbotTags\ChangeClass.cs" />
     <Compile Include="OrderbotTags\CloseHowTos.cs" />
+    <Compile Include="OrderbotTags\DungeonCounter.cs" />
     <Compile Include="OrderbotTags\EquipOtherWeapon.cs" />
     <Compile Include="OrderbotTags\EquipZodiac.cs" />
     <Compile Include="OrderbotTags\HandleDutyEndedLoot.cs" />
@@ -96,6 +97,7 @@
     <Compile Include="OrderbotTags\SplendorousOrder.cs" />
     <Compile Include="OrderbotTags\StartFate.cs" />
     <Compile Include="OrderbotTags\StatusText.cs" />
+    <Compile Include="OrderbotTags\SummonMinion.cs" />
     <Compile Include="OrderbotTags\TurnInLeve.cs" />
     <Compile Include="OrderbotTags\TurnInSplendorous.cs" />
     <Compile Include="OrderbotTags\UseMedicine.cs" />
