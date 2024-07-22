@@ -46,7 +46,7 @@ namespace LlamaUtilities.OrderbotTags
             _counter++;
 
             // Compare the counter with the saved variable
-            if (_counter < MaxCount)
+            if (_counter <= MaxCount)
             {
                 // Do one thing if counter is less than savedVariable
                 Log.Information($"Counter ({_counter}) is less than ({MaxCount}). Continuing profile.");
