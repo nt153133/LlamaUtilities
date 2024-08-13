@@ -21,12 +21,14 @@ namespace LlamaUtilities.LlamaUtilities.Settings
 
         private bool _EwHunts;
 
+        private bool _DtHunts;
+
         public HuntsSettings() : base(Path.Combine(JsonHelper.UniqueCharacterSettingsDirectory, "HuntsSettings.json"))
         {
         }
 
         [Description("Complete ARR Daily Hunts")]
-        [DefaultValue(true)]
+        [DefaultValue(false)]
         public bool ARRHunts
         {
             get => _ARRHunts;
@@ -41,7 +43,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         [Description("Complete Clan Mark Daily Hunts")]
-        [DefaultValue(true)]
+        [DefaultValue(false)]
         public bool ClanHunts
         {
             get => _ClanHunts;
@@ -56,7 +58,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         [Description("Complete Veteran Clan Mark Daily Hunts")]
-        [DefaultValue(true)]
+        [DefaultValue(false)]
         public bool VerteranClanHunts
         {
             get => _VerteranClanHunts;
@@ -71,7 +73,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         [Description("Complete Nut Clan Mark Daily Hunts")]
-        [DefaultValue(true)]
+        [DefaultValue(false)]
         public bool NutClanHunts
         {
             get => _NutClanHunts;
@@ -86,7 +88,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         [Description("Complete EW Daily Hunts")]
-        [DefaultValue(true)]
+        [DefaultValue(false)]
         public bool EwHunts
         {
             get => _EwHunts;
@@ -95,6 +97,21 @@ namespace LlamaUtilities.LlamaUtilities.Settings
                 if (_EwHunts != value)
                 {
                     _EwHunts = value;
+                    Save();
+                }
+            }
+        }
+
+        [Description("Complete DT Daily Hunts")]
+        [DefaultValue(false)]
+        public bool DtHunts
+        {
+            get => _DtHunts;
+            set
+            {
+                if (_DtHunts != value)
+                {
+                    _DtHunts = value;
                     Save();
                 }
             }

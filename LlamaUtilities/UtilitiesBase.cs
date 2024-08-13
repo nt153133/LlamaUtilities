@@ -298,7 +298,7 @@ namespace LlamaUtilities.LlamaUtilities
             ("Troian", 595, ItemRarity.Green),
             ("Manalis", 605, ItemRarity.Green),
             ("Distance", 625, ItemRarity.Green),
-			
+
 			// 7.x Dawntrail
             ("Riversbreath", 650, ItemRarity.Green),
             ("Zormor", 660, ItemRarity.Green),
@@ -411,6 +411,11 @@ namespace LlamaUtilities.LlamaUtilities
                     if (HuntsSettings.Instance.EwHunts)
                     {
                         huntTypes.AddRange(HuntHelper.EwHunts);
+                    }
+
+                    if (HuntsSettings.Instance.DtHunts)
+                    {
+                        huntTypes.AddRange(HuntHelper.DtHunts);
                     }
 
 
