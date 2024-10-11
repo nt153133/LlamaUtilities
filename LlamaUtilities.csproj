@@ -1,225 +1,58 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{086C0E04-B7B9-460F-8599-0DC6A35CB385}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LlamaUtilities</RootNamespace>
-    <AssemblyName>LlamaUtilities</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <LangVersion>default</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="GreyMagic">
-      <HintPath>..\..\GreyMagic.dll</HintPath>
-    </Reference>
-    <Reference Include="PresentationCore" />
-    <Reference Include="RebornBuddy">
-      <HintPath>..\..\..\Reborn - Arelia\RebornBuddy.exe</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="LlamaUtilities\FCWorkshop.cs" />
-    <Compile Include="LlamaUtilities\PandaRacer.cs" />
-    <Compile Include="LlamaUtilities\Retainers.cs" />
-    <Compile Include="LlamaUtilities\Settings\DeliveriesSettings.cs" />
-    <Compile Include="LlamaUtilities\Settings\RaceSettings.cs" />
-    <Compile Include="LlamaUtilities\Settings\HuntsSettings.cs" />
-    <Compile Include="LlamaUtilities\Settings\ReduceSettings.cs" />
-    <Compile Include="LlamaUtilities\Settings\RetainerSettings.cs" />
-    <Compile Include="LlamaUtilities\Tasks\BotTask.cs" />
-    <Compile Include="LlamaUtilities\Tasks\TaskType.cs" />
-    <Compile Include="LlamaUtilities\Utilities.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="LlamaUtilities\Utilities.Designer.cs">
-      <DependentUpon>Utilities.cs</DependentUpon>
-    </Compile>
-    <Compile Include="LlamaUtilities\UtilitiesBase.cs" />
-    <Compile Include="OrderbotTags\AffixMateria.cs" />
-    <Compile Include="OrderbotTags\AnimaBuyShopExchangeItem.cs" />
-    <Compile Include="OrderbotTags\AnimusBooks.cs" />
-    <Compile Include="OrderbotTags\AutoEquip.cs" />
-    <Compile Include="OrderbotTags\AutoInventoryEquip.cs" />
-    <Compile Include="OrderbotTags\AutoLisbethEquip.cs" />
-    <Compile Include="OrderbotTags\AWGrowthTrade.cs" />
-    <Compile Include="OrderbotTags\BasicTreasureFight.cs" />
-    <Compile Include="OrderbotTags\BuyBluTotem.cs" />
-    <Compile Include="OrderbotTags\BuyGCItem.cs" />
-    <Compile Include="OrderbotTags\BuyInclusionShopItem.cs" />
-    <Compile Include="OrderbotTags\BuyScripItem.cs" />
-    <Compile Include="OrderbotTags\BuyShopExchangeCurrency.cs" />
-    <Compile Include="OrderbotTags\BuyShopExchangeItem.cs" />
-    <Compile Include="OrderbotTags\BuyWhiteScriptItem.cs" />
-    <Compile Include="OrderbotTags\ChangeClass.cs" />
-    <Compile Include="OrderbotTags\CloseHowTos.cs" />
-    <Compile Include="OrderbotTags\DungeonCounter.cs" />
-    <Compile Include="OrderbotTags\EquipOtherWeapon.cs" />
-    <Compile Include="OrderbotTags\EquipZodiac.cs" />
-    <Compile Include="OrderbotTags\HandleDutyEndedLoot.cs" />
-    <Compile Include="OrderbotTags\InfuseSphereScroll.cs" />
-    <Compile Include="OrderbotTags\LeaveParty.cs" />
-    <Compile Include="OrderbotTags\LlamaJump.cs" />
-    <Compile Include="OrderbotTags\LLTurnInGuildLeveTag.cs" />
-    <Compile Include="OrderbotTags\LeaveGuildhest.cs" />
-    <Compile Include="OrderbotTags\LoadPandaProfile.cs" />
-    <Compile Include="OrderbotTags\PointMenu.cs" />
-    <Compile Include="OrderbotTags\RetainerJobs.cs" />
-    <Compile Include="OrderbotTags\SplendorousOrder.cs" />
-    <Compile Include="OrderbotTags\StartFate.cs" />
-    <Compile Include="OrderbotTags\StatusText.cs" />
-    <Compile Include="OrderbotTags\SummonMinion.cs" />
-    <Compile Include="OrderbotTags\TurnInLeve.cs" />
-    <Compile Include="OrderbotTags\TurnInSplendorous.cs" />
-    <Compile Include="OrderbotTags\UseMedicine.cs" />
-    <Compile Include="OrderbotTags\EnterSoloDuty.cs" />
-    <Compile Include="OrderbotTags\EquipAnima.cs" />
-    <Compile Include="OrderbotTags\EquipCurrentGearset.cs" />
-    <Compile Include="OrderbotTags\EquipWeapon.cs" />
-    <Compile Include="OrderbotTags\Fate.cs" />
-    <Compile Include="OrderbotTags\GatherTag.cs" />
-    <Compile Include="OrderbotTags\GCExpertTurnin.cs" />
-    <Compile Include="OrderbotTags\GCRankUp.cs" />
-    <Compile Include="OrderbotTags\GearSetEquipAll.cs" />
-    <Compile Include="OrderbotTags\GetTo.cs" />
-    <Compile Include="OrderbotTags\InitiateLeve.cs" />
-    <Compile Include="OrderbotTags\InviteToParty.cs" />
-    <Compile Include="OrderbotTags\JoinDuty.cs" />
-    <Compile Include="OrderbotTags\JoinSupportDuty.cs" />
-    <Compile Include="OrderbotTags\LeaveDuty.cs" />
-    <Compile Include="OrderbotTags\LisbethCheck.cs" />
-    <Compile Include="OrderbotTags\LisbethOrderBot.cs" />
-    <Compile Include="OrderbotTags\LLChangeZone.cs" />
-    <Compile Include="OrderbotTags\LLClimbHill.cs" />
-    <Compile Include="OrderbotTags\LLCommandMission.cs" />
-    <Compile Include="OrderbotTags\LLFCDepositItem.cs" />
-    <Compile Include="OrderbotTags\LLReduce.cs" />
-    <Compile Include="OrderbotTags\LLDesynth.cs" />
-    <Compile Include="OrderbotTags\LLDiscardItem.cs" />
-    <Compile Include="OrderbotTags\LLGcExpeditionResult.cs" />
-    <Compile Include="OrderbotTags\LLGoHome.cs" />
-    <Compile Include="OrderbotTags\LLGoToBarracks.cs" />
-    <Compile Include="OrderbotTags\LLGoToHousing.cs" />
-    <Compile Include="OrderbotTags\LLHandOver.cs" />
-    <Compile Include="OrderbotTags\LLoadProfile.cs" />
-    <Compile Include="OrderbotTags\LLOpenChest.cs" />
-    <Compile Include="OrderbotTags\LLProfileBehavior.cs" />
-    <Compile Include="OrderbotTags\LLQualityLower.cs" />
-    <Compile Include="OrderbotTags\LLSellItem.cs" />
-    <Compile Include="OrderbotTags\LLSendChat.cs" />
-    <Compile Include="OrderbotTags\LLSmallTalk.cs" />
-    <Compile Include="OrderbotTags\LLStopBot.cs" />
-    <Compile Include="OrderbotTags\LLToast.cs" />
-    <Compile Include="OrderbotTags\LLTransport.cs" />
-    <Compile Include="OrderbotTags\LLTravel.cs" />
-    <Compile Include="OrderbotTags\LLTurnIn.cs" />
-    <Compile Include="OrderbotTags\LLTurnInCollectables.cs" />
-    <Compile Include="OrderbotTags\LLUseObject.cs" />
-    <Compile Include="OrderbotTags\LLUseSpell.cs" />
-    <Compile Include="OrderbotTags\LoadAchievements.cs" />
-    <Compile Include="OrderbotTags\LoadDungeonAssist.cs" />
-    <Compile Include="OrderbotTags\LastProfile.cs" />
-    <Compile Include="OrderbotTags\LoadServerProfile.cs" />
-    <Compile Include="OrderbotTags\LowerCollectable.cs" />
-    <Compile Include="OrderbotTags\NameChocobo.cs" />
-    <Compile Include="OrderbotTags\OpenCoffers.cs" />
-    <Compile Include="OrderbotTags\PassOnLoot.cs" />
-    <Compile Include="OrderbotTags\PickUpAnimaQuest.cs" />
-    <Compile Include="OrderbotTags\PickupGuildLeve.cs" />
-    <Compile Include="OrderbotTags\PickupBattleLeve.cs" />
-    <Compile Include="OrderbotTags\PickUpMandervilleQuest.cs" />
-    <Compile Include="OrderbotTags\RandomMoveTo.cs" />
-    <Compile Include="OrderbotTags\RemoveMateria.cs" />
-    <Compile Include="OrderbotTags\RetainerHire.cs" />
-    <Compile Include="OrderbotTags\RetainerItemDump.cs" />
-    <Compile Include="OrderbotTags\SayHello.cs" />
-    <Compile Include="OrderbotTags\SetBluSpells.cs" />
-    <Compile Include="OrderbotTags\ClimbSpiral.cs" />
-    <Compile Include="OrderbotTags\Snipe.cs" />
-    <Compile Include="OrderbotTags\SpearfishWithAutoHook.cs" />
-    <Compile Include="OrderbotTags\StopBusy.cs" />
-    <Compile Include="OrderbotTags\UnlockTTCard.cs" />
-    <Compile Include="OrderbotTags\UseInventoryItem.cs" />
-    <Compile Include="OrderbotTags\UseShortcut.cs" />
-    <Compile Include="OrderbotTags\UseTransportConvo.cs" />
-    <Compile Include="OrderbotTags\UseUnlockables.cs" />
-    <Compile Include="OrderbotTags\VoteMVP.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="LlamaUtilities\Utilities.resx" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Quest Behaviors\__LlamaLibrary\LlamaLibrary.csproj">
-      <Project>{196ee308-0205-4cc4-b449-51064f7e9960}</Project>
-      <Name>LlamaLibrary</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <!-- One of: BotBases, Plugins, Profiles, Quest Behaviors, Routines -->
-    <AddonType>BotBases</AddonType>
-    <!-- $(TargetName) auto-populated by Project Properties > Application > Assembly Name -->
-    <AddonName>$(TargetName)</AddonName>
-    <RebornDir>$(RebornbuddyDir)</RebornDir>
-    <RootDir>$(SolutionDir)</RootDir>
-    <IsInRebornDir>$(RootDir.StartsWith($(RebornDir), System.StringComparison.OrdinalIgnoreCase))</IsInRebornDir>
-  </PropertyGroup>
-  <Target Name="CopySolutionItems" AfterTargets="AfterBuild;AfterRebuild">
-    <!-- Copy selected solution items to project build output directory (e.g., README.md, LICENSE.md) -->
-    <!-- Special project items should instead use Properties > Copy to Output Directory: Copy Always -->
-    <!-- RebornBuddy requires at least one uncompiled C# file set to Copy Always (e.g., Loader.cs) -->
-    <CreateItem Include="$(SolutionDir)\*.md">
-      <Output TaskParameter="Include" ItemName="SolutionItems" />
-    </CreateItem>
-    <Message Importance="High" Text="Copying solution items to build output..." />
-    <Copy SourceFiles="@(SolutionItems)" DestinationFiles="@(SolutionItems->'$(OutDir)\%(RecursiveDir)%(Filename)%(Extension)')" />
-  </Target>
-  <Target Name="DeployToRebornBuddy" AfterTargets="CopySolutionItems" Condition="'$(RebornDir)' != '' And !$(IsInRebornDir)">
-    <!-- For development convenience of pre-compiled add-ons, auto-copy build output to RebornBuddy if RebornbuddyDir env var set -->
-    <Error Condition="!Exists('$(RebornDir)')" Text="RebornbuddyDir set but directory doesn't exist! RebornbuddyDir='$(RebornDir)'" />
-    <CreateItem Include="$(TargetDir)\**\*" Exclude="$(TargetDir)\**\*.tmp">
-      <Output TaskParameter="Include" ItemName="BuildOutput" />
-    </CreateItem>
-    <Message Importance="High" Text="Copying build output to '$(RebornDir)\$(AddonType)\$(AddonName)'" />
-    <Copy SourceFiles="@(BuildOutput)" DestinationFiles="@(BuildOutput->'$(RebornDir)\$(AddonType)\$(AddonName)\%(RecursiveDir)%(Filename)%(Extension)')" />
-  </Target>
-  <Target Name="CleanIfInRebornBuddy" AfterTargets="CopySolutionItems" Condition="'$(RebornDir)' == '' Or $(IsInRebornDir)">
-    <!-- RebornBuddy does its own compilation and fails due to bin\obj folders, but manual VS builds are useful for finding compile-time errors -->
-    <!-- If solution is under RebornDir, clean build artifacts so RebornBuddy can do its own thing -->
-    <Message Importance="High" Text="Solution within RebornBuddy directory; cleaning build artifacts to avoid RB compile errors..." />
-    <CallTarget Targets="Clean" />
-  </Target>
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{086C0E04-B7B9-460F-8599-0DC6A35CB385}</ProjectGuid>
+        <OutputType>Library</OutputType>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <RootNamespace>LlamaUtilities</RootNamespace>
+        <AssemblyName>LlamaUtilities</AssemblyName>
+
+        <LangVersion>default</LangVersion>
+        <UseWindowsForms>true</UseWindowsForms>
+        <UseWPF>true</UseWPF>
+        <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+        <TargetFramework>net8.0-windows</TargetFramework>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include="PresentationCore"/>
+        <Reference Include="System"/>
+        <Reference Include="System.Core"/>
+        <Reference Include="System.Data"/>
+        <Reference Include="System.Drawing"/>
+        <Reference Include="System.Windows.Forms"/>
+        <Reference Include="System.Xml"/>
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="LlamaLibrary" Version="24.1009.626.18" />
+      <PackageReference Include="RebornBuddy.Assemblies" Version="1.0.600" />
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="OrderbotTags\LLUseItem.cs" />
+      <Compile Remove="OrderbotTags\LLTalkTo.cs" />
+      <Compile Remove="OrderbotTags\LLSimpleDuty.cs" />
+      <Compile Remove="OrderbotTags\LLPickUpQuest.cs" />
+      <Compile Remove="OrderbotTags\LLExtendedDutyTag.cs" />
+      <Compile Remove="OrderbotTags\LLEmoteNpc.cs" />
+    </ItemGroup>
+  
 </Project>

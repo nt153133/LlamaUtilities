@@ -65,9 +65,20 @@ namespace LlamaUtilities.LlamaUtilities
         private void btnRefresh_Click(object sender, EventArgs e)
         {
             bindingSourceInventory.Clear();
-            foreach (var bagSlot in _selectedFilter.Where(i => i.Item.MateriaSlots > 0 && i.HasMateria()))
+            foreach (var bagSlot in _selectedFilter)
             {
-                bindingSourceInventory.Add(bagSlot);
+                try
+                {
+                    if (bagSlot.Item.MateriaSlots > 0 && bagSlot.HasMateria())
+                    {
+                        bindingSourceInventory.Add(bagSlot);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Information(bagSlot.ToString());
+                    Log.Exception(ex);
+                }
             }
 
             itemCb.DisplayMember = "Name";
