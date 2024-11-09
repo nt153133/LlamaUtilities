@@ -54,6 +54,15 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task DoGCExpertTurnin()
         {
+
+            if (DutyManager.InInstance)
+            {
+                Log.Information($"Currently in an instance, exiting");
+
+                _isDone = true;
+                return;
+            }
+
             if (WorldManager.ZoneId == 534 || WorldManager.ZoneId == 535 || WorldManager.ZoneId == 536)
             {
                 uint[] npcIds = { 2007528,2006963,2007530 };
