@@ -45,6 +45,7 @@ namespace LlamaUtilities.OrderbotTags
         protected bool isDoneOverride;
         public Vector3 Position = Vector3.Zero;
         private QuestResult _questdata;
+        private bool selectedReward = false;
 
         private string _questGiver;
 
@@ -156,6 +157,7 @@ namespace LlamaUtilities.OrderbotTags
 
         protected override void OnResetCachedDone()
         {
+            selectedReward = false;
             _doneTalking = false;
             _dialogwasopen = false;
             _doneEmote = false;
@@ -248,8 +250,12 @@ namespace LlamaUtilities.OrderbotTags
                     _usedSlots.Clear();
                     Request.HandOver();
                 })),
-                new Decorator(r => JournalResult.IsOpen && JournalResult.ButtonClickable, new Action(r => JournalResult.Complete())),
-                new Decorator(r => JournalResult.IsOpen && hasrewards, new Action(r => JournalResult.SelectSlot(RewardSlot))),
+                new Decorator(r => JournalResult.IsOpen && JournalResult.ButtonClickable && (!hasrewards || selectedReward), new Action(r => JournalResult.Complete())),
+                new Decorator(r => JournalResult.IsOpen && hasrewards, new Action(r =>
+                {
+                    selectedReward = true;
+                    JournalResult.SelectSlot(RewardSlot);
+                })),
 
                 //new Decorator(r => !Talk.DialogOpen && dialogwasopen && !SelectIconString.IsOpen, new Action(r => { DoneTalking = true; return RunStatus.Success; })),
                 new Decorator(r => SelectIconString.IsOpen, new Action(r =>
