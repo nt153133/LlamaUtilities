@@ -43,7 +43,7 @@
         <Reference Include="System.Xml"/>
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="LlamaLibrary" Version="24.1009.626.18" />
+      <PackageReference Include="LlamaLibrary" Version="24.1121.2234.29" />
       <PackageReference Include="RebornBuddy.Assemblies" Version="1.0.600" />
     </ItemGroup>
     <ItemGroup>
