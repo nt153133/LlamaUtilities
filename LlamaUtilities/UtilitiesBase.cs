@@ -542,9 +542,10 @@ namespace LlamaUtilities.LlamaUtilities
                 if (!MateriaAttach.Instance.IsOpen)
                 {
                     Log.Information($"Opening meld window");
-                    bagSlot.OpenMeldInterface();
+                    await MateriaAttach.Instance.OpenMateriaAttachDialog(bagSlot);
                     await Coroutine.Wait(5000, () => MateriaAttach.Instance.IsOpen);
 
+                    /*
                     if (!MateriaAttach.Instance.IsOpen)
                     {
                         Log.Information($"Can't open meld window");
@@ -555,12 +556,13 @@ namespace LlamaUtilities.LlamaUtilities
                     await Coroutine.Sleep(1000);
                     MateriaAttach.Instance.ClickMateria(0);
                     await Coroutine.Wait(7000, () => AgentMeld.Instance.Ready);
-                    await Coroutine.Wait(5000, () => MateriaAttachDialog.Instance.IsOpen);
+                    await Coroutine.Wait(5000, () => MateriaAttachDialog.Instance.IsOpen);*/
                 }
 
                 if (!MateriaAttachDialog.Instance.IsOpen)
                 {
                     Log.Information($"Opening dialog attach");
+                    /*
                     MateriaAttach.Instance.ClickItem(0);
                     await Coroutine.Sleep(1000);
                     MateriaAttach.Instance.ClickMateria(0);
@@ -572,6 +574,9 @@ namespace LlamaUtilities.LlamaUtilities
                         Log.Information($"Can't open meld dialog");
                         return false;
                     }
+                    */
+
+                    await MateriaAttach.Instance.OpenMateriaAttachDialog(bagSlot);
                 }
 
                 Log.Information("Wait Ready");
