@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using ff14bot.Enums;
 using ff14bot.Helpers;
@@ -19,43 +20,105 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         {
         }
 
-        [Description("Job To use")]
-        [DefaultValue(ClassJobType.Carpenter)]
-        [DisplayName(" Job To use")]
-        public DohClasses CraftingClass
+        private bool _doNitowikwe;
+        [Description("Nitowikwe is the custom delivery NPC located in Shaaloani.")]
+        [Category("Dawntrail")]
+        [DisplayName("Nitowikwe"),Display(Order = 1)]
+        public bool DoNitowikweDeliveries
         {
-            get => _job;
+            get => _doNitowikwe;
             set
             {
-                if (_job != value)
-                {
-                    _job = value;
-                    Save();
-                }
-            }
-        }
-
-        private bool _doZhloe;
-        [Description("Zhloe Aliapoh")]
-        [DisplayName("Zhloe Aliapoh")]
-        public bool DoZhloeDeliveries
-        {
-            get => _doZhloe;
-            set
-            {
-                if (value == _doZhloe)
+                if (value == _doNitowikwe)
                 {
                     return;
                 }
 
-                _doZhloe = value;
+                _doNitowikwe = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _doAnden;
+        [Description("Anden is the custom delivery NPC located in Il Mheg.")]
+        [Category("Endwalker")]
+        [DisplayName("Anden"),Display(Order = 2)]
+        public bool DoAndenDeliveries
+        {
+            get => _doAnden;
+            set
+            {
+                if (value == _doAnden)
+                {
+                    return;
+                }
+
+                _doAnden = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _doAmeliance;
+        [Description("Ameliance is the custom delivery NPC located in Old Sharlayan.")]
+        [Category("Endwalker")]
+        [DisplayName("Ameliance"),Display(Order = 2)]
+        public bool DoAmelianceeliveries
+        {
+            get => _doAmeliance;
+            set
+            {
+                if (value == _doAmeliance)
+                {
+                    return;
+                }
+
+                _doAmeliance = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _doMargrat;
+        [Description("Margrat is the custom delivery NPC located in Labyrinthos.")]
+        [Category("Endwalker")]
+        [DisplayName("Margrat"),Display(Order = 2)]
+        public bool DoMargratDeliveries
+        {
+            get => _doMargrat;
+            set
+            {
+                if (value == _doMargrat)
+                {
+                    return;
+                }
+
+                _doMargrat = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _doKaishirr;
+        [Description("Kai-shirr is the custom delivery NPC located in Eulmore.")]
+        [Category("Shadowbringers")]
+        [DisplayName("Kai-shirr"),Display(Order = 4)]
+        public bool DoKaishirrDeliveries
+        {
+            get => _doKaishirr;
+            set
+            {
+                if (value == _doKaishirr)
+                {
+                    return;
+                }
+
+                _doKaishirr = value;
                 OnPropertyChanged();
             }
         }
 
         private bool _doMnaago;
-        [Description("Mnaago")]
-        [DisplayName("Mnaago")]
+        [Description("Mnaago is the custom delivery NPC located in Rhalgr's Reach.")]
+        [Category("Stormblood")]
+        [DisplayName("Mnaago"),Display(Order = 3)]
         public bool DoMnaagoDeliveries
         {
             get => _doMnaago;
@@ -72,8 +135,9 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doKurenai;
-        [Description("Kurenai")]
-        [DisplayName("Kurenai")]
+        [Description("Kurenai is the custom delivery NPC located in The Ruby Sea.")]
+        [Category("Stormblood")]
+        [DisplayName("Kurenai"),Display(Order = 3)]
         public bool DoKurenaiDeliveries
         {
             get => _doKurenai;
@@ -90,8 +154,9 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doAdkiragh;
-        [Description("Adkiragh")]
-        [DisplayName("Adkiragh")]
+        [Description("Adkiragh is the custom delivery NPC located in Idyllshire.")]
+        [Category("Stormblood")]
+        [DisplayName("Adkiragh"),Display(Order = 3)]
         public bool DoAdkiraghDeliveries
         {
             get => _doAdkiragh;
@@ -107,27 +172,29 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             }
         }
 
-        private bool _doKaishirr;
-        [Description("Kai-shirr")]
-        [DisplayName("Kai-shirr")]
-        public bool DoKaishirrDeliveries
+        private bool _doZhloe;
+        [Description("Zhloe Aliapoh is the custom delivery NPC located in Idyllshire.")]
+        [Category("Heavensward")]
+        [DisplayName("Zhloe Aliapoh"),Display(Order = 5)]
+        public bool DoZhloeDeliveries
         {
-            get => _doKaishirr;
+            get => _doZhloe;
             set
             {
-                if (value == _doKaishirr)
+                if (value == _doZhloe)
                 {
                     return;
                 }
 
-                _doKaishirr = value;
+                _doZhloe = value;
                 OnPropertyChanged();
             }
         }
 
         private bool _doEhlltou;
-        [Description("Ehll Tou")]
-        [DisplayName("Ehll Tou")]
+        [Description("Ehll Tou is the custom delivery NPC located in The Firmament.")]
+        [Category("Heavensward")]
+        [DisplayName("Ehll Tou"),Display(Order = 5)]
         public bool DoEhlltouDeliveries
         {
             get => _doEhlltou;
@@ -144,8 +211,9 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doCharlemend;
-        [Description("Charlemend")]
-        [DisplayName("Charlemend")]
+        [Description("Charlemend is the custom delivery NPC located in The Firmament.")]
+        [Category("Heavensward")]
+        [DisplayName("Charlemend"),Display(Order = 5)]
         public bool DoCharlemendDeliveries
         {
             get => _doCharlemend;
@@ -161,58 +229,22 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             }
         }
 
-        private bool _doAmeliance;
-        [Description("Ameliance")]
-        [DisplayName("Ameliance")]
-        public bool DoAmelianceeliveries
+        [Description("Job To use")]
+        [DefaultValue(ClassJobType.Carpenter)]
+        [DisplayName("Job To use")]
+        [Category("Misc"),Display(Order = 6)]
+        public DohClasses CraftingClass
         {
-            get => _doAmeliance;
+            get => _job;
             set
             {
-                if (value == _doAmeliance)
+                if (_job != value)
                 {
-                    return;
+                    _job = value;
+                    Save();
                 }
-
-                _doAmeliance = value;
-                OnPropertyChanged();
             }
         }
 
-        private bool _doAnden;
-        [Description("Anden")]
-        [DisplayName("Anden")]
-        public bool DoAndenDeliveries
-        {
-            get => _doAnden;
-            set
-            {
-                if (value == _doAnden)
-                {
-                    return;
-                }
-
-                _doAnden = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private bool _doMargrat;
-        [Description("Margrat")]
-        [DisplayName("Margrat")]
-        public bool DoMargratDeliveries
-        {
-            get => _doMargrat;
-            set
-            {
-                if (value == _doMargrat)
-                {
-                    return;
-                }
-
-                _doMargrat = value;
-                OnPropertyChanged();
-            }
-        }
     }
 }
