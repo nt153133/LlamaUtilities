@@ -118,7 +118,7 @@ namespace LlamaUtilities.OrderbotTags
 
                     for (var i = 0; i < count; i++)
                     {
-                        if (CurrencyHelper.GetAmountOfCurrency(currency) + item.Reward > 2000)
+                        if (CurrencyHelper.GetAmountOfCurrency(currency) + item.Reward > 4000)
                         {
                             break;
                         }
