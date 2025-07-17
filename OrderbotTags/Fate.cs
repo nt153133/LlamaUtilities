@@ -49,6 +49,11 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("while")]
         public string WhileCondition { get; set; }
 
+        [XmlAttribute("UseGetTo")]
+        [XmlAttribute("UseGetto")]
+        [DefaultValue(false)]
+        public bool UseGetTo { get; set; }
+
         [XmlAttribute("UseFlight")]
         [XmlAttribute("useflight")]
         [DefaultValue(true)]
@@ -191,10 +196,19 @@ namespace LlamaUtilities.OrderbotTags
 
                                                           return false;
                                                       })),
-                                        new Decorator(ret => currentstep == 1 && Vector3.Distance(Core.Player.Location, Position) > (currentfate.Radius - 10),
-                                                      UseFlight ? new ActionRunCoroutine(obj => Lisbeth.TravelToZones(WorldManager.ZoneId, Position)) : new ActionRunCoroutine(obj => Navigation.FlightorMove(currentfate))
-
-                                                      // CommonBehaviors.MoveAndStop(ret => Position, Distance, stopInRange: true, destinationName: "Moving to Fates.")
+                                        new Decorator(
+                                                      ret => currentstep == 1 && Vector3.Distance(Core.Player.Location, Position) > (currentfate.Radius - 10),
+                                                      new PrioritySelector(
+                                                                           new Decorator(
+                                                                                         ret => UseGetTo,
+                                                                                         new ActionRunCoroutine(obj => Navigation.GetTo(WorldManager.ZoneId, currentfate.Location))
+                                                                                        ),
+                                                                           new Decorator(
+                                                                                         ret => UseFlight,
+                                                                                         new ActionRunCoroutine(obj => Lisbeth.TravelToZones(WorldManager.ZoneId, Position))
+                                                                                        ),
+                                                                           new ActionRunCoroutine(obj => Navigation.FlightorMove(currentfate))
+                                                                          )
                                                      ),
                                         new Decorator(r => currentfate != null && FateManager.WithinFate && currentfate.Icon == FateIconType.KillHandIn && currentfate.TimeLeft.Minutes <= 8,
                                                       new Sequence(new ActionRunCoroutine(async r =>
