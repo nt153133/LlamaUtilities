@@ -31,7 +31,7 @@ namespace LlamaUtilities.OrderbotTags
         private static string Yes => YesText[LlamaLibrary.Helpers.Translator.Language];
 
         private readonly Npc _jeffroy = new(1053611, 1269, new Vector3(-77.958374f, 5f, -15.396423f)); // Jeffroy
-        private readonly Npc _passagetothePhantomVillage = new(2014671, 1185, new Vector3(206.21507f, -17.964502f, 56.969345f)); // Passage to the Phantom Village
+        private readonly Npc _passageToThePhantomVillage = new(2014671, 1185, new Vector3(206.21507f, -17.964502f, 56.969345f)); // Passage to the Phantom Village
 
         private static readonly Dictionary<ff14bot.Enums.Language, string> OccultCrescentText = new()
         {
@@ -93,7 +93,7 @@ namespace LlamaUtilities.OrderbotTags
                 if (WorldManager.ZoneId != PhantomVillageZoneId)
                 {
                     Log.Information("Traveling to Phantom Village.");
-                    await LlamaLibrary.Helpers.Navigation.UseNpcTransition(_passagetothePhantomVillage.Location.ZoneId, _passagetothePhantomVillage.Location.Coordinates, _passagetothePhantomVillage.NpcId, 0);
+                    await LlamaLibrary.Helpers.Navigation.UseNpcTransition(_passageToThePhantomVillage.Location.ZoneId, _passageToThePhantomVillage.Location.Coordinates, _passageToThePhantomVillage.NpcId, 0);
                 }
 
                 if (!await LlamaLibrary.Helpers.Navigation.GetToInteractNpcSelectString(_jeffroy))
