@@ -26,7 +26,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private const uint SouthHornZoneId = 1252;
         private const uint PhantomVillageZoneId = 1269;
-        internal const uint UnfamiliarTerritoryQuestId = 70847;
+        private const uint UnfamiliarTerritoryQuestId = 70847;
         private static string OccultCrescent => OccultCrescentText[LlamaLibrary.Helpers.Translator.Language];
         private static string Yes => YesText[LlamaLibrary.Helpers.Translator.Language];
 
