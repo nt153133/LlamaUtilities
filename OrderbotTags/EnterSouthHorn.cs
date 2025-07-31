@@ -22,15 +22,16 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool IsDone => _isDone;
 
-        public static readonly LlamaLibrary.Logging.LLogger Log = new("Occult Crescent", Colors.DeepPink);
+        private static readonly LlamaLibrary.Logging.LLogger Log = new("Occult Crescent", Colors.DeepPink);
 
-        public static uint SouthHornZoneId = 1252;
-        public static uint PhantomVillageZoneId = 1269;
-        public static string OccultCrescent => OccultCrescentText[LlamaLibrary.Helpers.Translator.Language];
-        public static string Yes => YesText[LlamaLibrary.Helpers.Translator.Language];
+        private const uint SouthHornZoneId = 1252;
+        private const uint PhantomVillageZoneId = 1269;
+        internal const uint UnfamiliarTerritoryQuestId = 70847;
+        private static string OccultCrescent => OccultCrescentText[LlamaLibrary.Helpers.Translator.Language];
+        private static string Yes => YesText[LlamaLibrary.Helpers.Translator.Language];
 
-       public static Npc jeffroy = new(1053611, 1269, new Vector3(-77.958374f, 5f, -15.396423f)); // Jeffroy
-       public static Npc PassagetothePhantomVillage = new(2014671, 1185, new Vector3(206.21507f, -17.964502f, 56.969345f)); // Passage to the Phantom Village
+        private readonly Npc _jeffroy = new(1053611, 1269, new Vector3(-77.958374f, 5f, -15.396423f)); // Jeffroy
+        private readonly Npc _passagetothePhantomVillage = new(2014671, 1185, new Vector3(206.21507f, -17.964502f, 56.969345f)); // Passage to the Phantom Village
 
         private static readonly Dictionary<ff14bot.Enums.Language, string> OccultCrescentText = new()
         {
@@ -50,7 +51,9 @@ namespace LlamaUtilities.OrderbotTags
             { ff14bot.Enums.Language.Chn, "Yes" }
         };
 
-        public EnterSouthHorn() : base() { }
+        public EnterSouthHorn() : base()
+        {
+        }
 
         protected override void OnStart()
         {
@@ -78,18 +81,24 @@ namespace LlamaUtilities.OrderbotTags
                 return;
             }
 
+            if (!QuestLogManager.IsQuestCompleted(UnfamiliarTerritoryQuestId))
+            {
+                Log.Error($"You must have completed the quest {DataManager.GetLocalizedQuestName((int)UnfamiliarTerritoryQuestId)} to access South Horn.");
+                _isDone = true;
+                return;
+            }
+
             while (WorldManager.ZoneId != SouthHornZoneId)
             {
-
                 if (WorldManager.ZoneId != PhantomVillageZoneId)
                 {
                     Log.Information("Traveling to Phantom Village.");
-                    await LlamaLibrary.Helpers.Navigation.UseNpcTransition(PassagetothePhantomVillage.Location.ZoneId, PassagetothePhantomVillage.Location.Coordinates, PassagetothePhantomVillage.NpcId,0);
+                    await LlamaLibrary.Helpers.Navigation.UseNpcTransition(_passagetothePhantomVillage.Location.ZoneId, _passagetothePhantomVillage.Location.Coordinates, _passagetothePhantomVillage.NpcId, 0);
                 }
 
-                if (!await LlamaLibrary.Helpers.Navigation.GetToInteractNpcSelectString(jeffroy))
+                if (!await LlamaLibrary.Helpers.Navigation.GetToInteractNpcSelectString(_jeffroy))
                 {
-                    Log.Error($"Failed to get to {DataManager.GetLocalizedNPCName((int)jeffroy.NpcId)}");
+                    Log.Error($"Failed to get to {DataManager.GetLocalizedNPCName((int)_jeffroy.NpcId)}");
                     return;
                 }
 
