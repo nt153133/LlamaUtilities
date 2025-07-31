@@ -19,6 +19,7 @@ using ff14bot.Objects;
 using ff14bot.Pathing;
 using ff14bot.RemoteWindows;
 using ff14bot.Settings;
+using LlamaLibrary.Extensions;
 using LlamaLibrary.Helpers;
 using TreeSharp;
 using Action = TreeSharp.Action;
@@ -87,6 +88,8 @@ namespace LlamaUtilities.OrderbotTags
 
         private readonly BattleCharacter npc;
         private readonly FatebotSettings fatebotInstance = FatebotSettings.Instance;
+        private const uint SouthHornZoneId = 1252;
+        private const uint ExpeditionBaseCamp = 4944;
 
         //private int timeout = 100;
         private uint lastFateId = 0;
@@ -196,20 +199,12 @@ namespace LlamaUtilities.OrderbotTags
 
                                                           return false;
                                                       })),
-                                        new Decorator(
-                                                      ret => currentstep == 1 && Vector3.Distance(Core.Player.Location, Position) > (currentfate.Radius - 10),
-                                                      new PrioritySelector(
-                                                                           new Decorator(
-                                                                                         ret => UseGetTo,
-                                                                                         new ActionRunCoroutine(obj => Navigation.GetTo(WorldManager.ZoneId, currentfate.Location))
-                                                                                        ),
-                                                                           new Decorator(
-                                                                                         ret => UseFlight,
-                                                                                         new ActionRunCoroutine(obj => Lisbeth.TravelToZones(WorldManager.ZoneId, Position))
-                                                                                        ),
-                                                                           new ActionRunCoroutine(obj => Navigation.FlightorMove(currentfate))
-                                                                          )
-                                                     ),
+                                        new Decorator(ret => currentstep == 1 && Vector3.Distance(Core.Player.Location, Position) > (currentfate.Radius - 10),
+                                                      new PrioritySelector(new Decorator(ret => UseGetTo,
+                                                                                         new ActionRunCoroutine(obj => Navigation.GetTo(WorldManager.ZoneId, currentfate.Location))),
+                                                                           new Decorator(ret => UseFlight,
+                                                                                         new ActionRunCoroutine(obj => Lisbeth.TravelToZones(WorldManager.ZoneId, Position))),
+                                                                           new ActionRunCoroutine(obj => Navigation.FlightorMove(currentfate)))),
                                         new Decorator(r => currentfate != null && FateManager.WithinFate && currentfate.Icon == FateIconType.KillHandIn && currentfate.TimeLeft.Minutes <= 8,
                                                       new Sequence(new ActionRunCoroutine(async r =>
                                                                    {
@@ -718,7 +713,7 @@ namespace LlamaUtilities.OrderbotTags
                 }
                 else if (fatebotInstance.BlackListedFates.Contains(f.Name) || BlacklistIds.Contains((int)f.Id))
                 {
-                    //Log.Information($"Skipping FATE {f.Name}. FATE is blacklisted");
+                    Log.Information($"Skipping FATE {f.Name}. FATE is blacklisted");
                 }
                 else
                 {
@@ -731,6 +726,21 @@ namespace LlamaUtilities.OrderbotTags
             return ReturnList;
         }
 
+        public async Task<bool> ReturnToExpeditionBaseCamp()
+        {
+            // If we're in South Horn return to Base Camp while no FATEs are available.
+            if (WorldManager.ZoneId != SouthHornZoneId || WorldManager.SubZoneId == ExpeditionBaseCamp)
+            {
+                return false;
+            }
+
+            Log.Information("Returning to Base Camp");
+            ActionManager.DoAction(41343, Core.Me);
+            await Coroutine.Wait(10000, () => WorldManager.SubZoneId == ExpeditionBaseCamp);
+
+            return true;
+        }
+
         public async Task<bool> GetFates()
         {
             if (SharedFate)
@@ -741,14 +751,28 @@ namespace LlamaUtilities.OrderbotTags
             if (FateIds.Length > 0)
             {
                 currentfate = IsFateActive(FateIds);
-                if (currentfate == null)
+
+                if (currentfate != null && MinProgress > 0 && currentfate.Progress <= MinProgress)
                 {
-                    return false;
+                    await ReturnToExpeditionBaseCamp();
+
+                    Log.Information($"Waiting for {currentfate.Name}'s progress to reach {MinProgress}%");
+                    Log.Information($"Current Progress: {currentfate.Progress}%");
+                    await Coroutine.Wait(-1, () => currentfate.Progress >= MinProgress || currentfate == null);
                 }
-                else
+
+                if (currentfate != null && currentfate.Progress >= MinProgress)
                 {
                     Log.Information($"Adding Focused FATE: {currentfate.Name}. Distance is {Core.Me.Distance(currentfate.Location)}.");
                     return true;
+                }
+
+                if (currentfate == null)
+                {
+                    await ReturnToExpeditionBaseCamp();
+
+                    Log.Information($"No FATEs active. Waiting for more FATEs.");
+                    return false;
                 }
             }
 
@@ -763,7 +787,7 @@ namespace LlamaUtilities.OrderbotTags
         // check all fates and return the FateData with the given Ids or null
         public FateData IsFateActive(int[] ids)
         {
-            var _fate = FateManager.ActiveFates.Where(fate => ids.Contains((int)fate.Id) && fate.Progress >= MinProgress).Take(1);
+            var _fate = FateManager.ActiveFates.Where(fate => ids.Contains((int)fate.Id)).Take(1);
             var fateArray = _fate as FateData[] ?? _fate.ToArray();
 
             return fateArray.Length > 0 ? fateArray[0] : null;
