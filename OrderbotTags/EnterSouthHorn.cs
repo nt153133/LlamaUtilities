@@ -1,11 +1,14 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using Buddy.Coroutines;
 using Clio.Utilities;
 using Clio.XmlEngine;
+using ff14bot;
 using ff14bot.Behavior;
 using ff14bot.Managers;
+using ff14bot.Objects;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Helpers;
 using LlamaLibrary.Helpers.NPC;
@@ -24,9 +27,9 @@ namespace LlamaUtilities.OrderbotTags
 
         private static readonly LlamaLibrary.Logging.LLogger Log = new("Occult Crescent", Colors.DeepPink);
 
-        private const uint SouthHornZoneId = 1252;
-        private const uint PhantomVillageZoneId = 1269;
-        private const uint UnfamiliarTerritoryQuestId = 70847;
+        private const uint SouthHorn = 1252;
+        private const uint PhantomVillage = 1269;
+        private const uint UnfamiliarTerritory = 70847;
         private static string OccultCrescent => OccultCrescentText[LlamaLibrary.Helpers.Translator.Language];
         private static string Yes => YesText[LlamaLibrary.Helpers.Translator.Language];
 
@@ -39,7 +42,7 @@ namespace LlamaUtilities.OrderbotTags
             { ff14bot.Enums.Language.Jap, "に突入する" },
             { ff14bot.Enums.Language.Fre, "Explorer l" },
             { ff14bot.Enums.Language.Ger, "betreten" },
-            { ff14bot.Enums.Language.Chn, "Journey to the Occult Crescent: south horn." }
+            { ff14bot.Enums.Language.Chn, "进入" }
         };
 
         private static readonly Dictionary<ff14bot.Enums.Language, string> YesText = new()
@@ -48,7 +51,7 @@ namespace LlamaUtilities.OrderbotTags
             { ff14bot.Enums.Language.Jap, "はい" },
             { ff14bot.Enums.Language.Fre, "Oui" },
             { ff14bot.Enums.Language.Ger, "Ja" },
-            { ff14bot.Enums.Language.Chn, "Yes" }
+            { ff14bot.Enums.Language.Chn, "是" }
         };
 
         public EnterSouthHorn() : base()
@@ -81,61 +84,83 @@ namespace LlamaUtilities.OrderbotTags
                 return;
             }
 
-            if (!QuestLogManager.IsQuestCompleted(UnfamiliarTerritoryQuestId))
+            if (!QuestLogManager.IsQuestCompleted(UnfamiliarTerritory))
             {
-                Log.Error($"You must have completed the quest {DataManager.GetLocalizedQuestName((int)UnfamiliarTerritoryQuestId)} to access South Horn.");
+                Log.Error($"You must have completed the quest {DataManager.GetLocalizedQuestName((int)UnfamiliarTerritory)} to access South Horn.");
                 _isDone = true;
                 return;
             }
 
-            while (WorldManager.ZoneId != SouthHornZoneId)
+            while (WorldManager.ZoneId != SouthHorn)
             {
-                if (WorldManager.ZoneId != PhantomVillageZoneId)
-                {
-                    Log.Information("Traveling to Phantom Village.");
-                    await LlamaLibrary.Helpers.Navigation.UseNpcTransition(_passageToThePhantomVillage.Location.ZoneId, _passageToThePhantomVillage.Location.Coordinates, _passageToThePhantomVillage.NpcId, 0);
-                }
 
-                if (!await LlamaLibrary.Helpers.Navigation.GetToInteractNpcSelectString(_jeffroy))
+                if (PartyManager.IsInParty && PartyManager.CrossRealm)
                 {
-                    Log.Error($"Failed to get to {DataManager.GetLocalizedNPCName((int)_jeffroy.NpcId)}");
+                    // In a CrossRealm party we can't currently detect who is the leader, so we can't queue automatically.
+                    Log.Error("We're in a cross-realm party. Cannot queue for South Horn.");
+                    _isDone = true;
                     return;
                 }
-
-                if (ff14bot.RemoteWindows.SelectString.IsOpen)
+                if (PartyManager.IsInParty && !PartyManager.IsPartyLeader)
                 {
-                    Log.Information($"Selecting {OccultCrescent}");
-                    ff14bot.RemoteWindows.SelectString.ClickLineContains(OccultCrescent);
-                    await Coroutine.Wait(5000, () => !SelectString.IsOpen);
-                    await Coroutine.Wait(5000, () => SelectString.IsOpen);
+                    Log.Information("We're in a party and not party leader. Waiting for party leader to queue us.");
+                    await AcceptQueue();
                 }
-
-                if (ff14bot.RemoteWindows.SelectString.IsOpen)
+                else
                 {
-                    Log.Information($"Clicking {Yes}");
-                    ff14bot.RemoteWindows.SelectString.ClickLineContains(Yes);
-                    await Coroutine.Wait(5000, () => ContentsFinderConfirm.IsOpen);
-                }
-
-                if (ff14bot.RemoteWindows.ContentsFinderConfirm.IsOpen)
-                {
-                    Log.Information("Commencing Duty.");
-                    ff14bot.RemoteWindows.ContentsFinderConfirm.Commence();
-                    await Coroutine.Wait(10000, () => CommonBehaviors.IsLoading);
-                    if (CommonBehaviors.IsLoading)
+                    if (WorldManager.ZoneId != PhantomVillage)
                     {
-                        await Coroutine.Wait(-1, () => !CommonBehaviors.IsLoading);
-                        await Coroutine.Wait(-1, () => WorldManager.ZoneId == 1252);
+                        Log.Information("Traveling to Phantom Village.");
+                        await LlamaLibrary.Helpers.Navigation.UseNpcTransition(_passageToThePhantomVillage.Location.ZoneId, _passageToThePhantomVillage.Location.Coordinates, _passageToThePhantomVillage.NpcId, 0);
                     }
-                }
 
-                if (WorldManager.ZoneId == SouthHornZoneId)
-                {
-                    Log.Information($"We are now in {WorldManager.CurrentZoneName}.");
+                    if (!await LlamaLibrary.Helpers.Navigation.GetToInteractNpcSelectString(_jeffroy))
+                    {
+                        Log.Error($"Failed to get to {DataManager.GetLocalizedNPCName((int)_jeffroy.NpcId)}");
+                        return;
+                    }
+
+                    if (ff14bot.RemoteWindows.SelectString.IsOpen)
+                    {
+                        Log.Information($"Selecting {OccultCrescent}");
+                        ff14bot.RemoteWindows.SelectString.ClickLineContains(OccultCrescent);
+                        await Coroutine.Wait(5000, () => !SelectString.IsOpen);
+                        await Coroutine.Wait(5000, () => SelectString.IsOpen);
+                    }
+
+                    if (ff14bot.RemoteWindows.SelectString.IsOpen)
+                    {
+                        Log.Information($"Clicking {Yes}");
+                        ff14bot.RemoteWindows.SelectString.ClickLineContains(Yes);
+                    }
+
+                    await AcceptQueue();
                 }
             }
 
             _isDone = true;
+        }
+
+        private async Task AcceptQueue()
+        {
+            await Coroutine.Wait(-1, () => ContentsFinderConfirm.IsOpen);
+
+            if (ff14bot.RemoteWindows.ContentsFinderConfirm.IsOpen)
+            {
+                Log.Information("Commencing Duty.");
+                ff14bot.RemoteWindows.ContentsFinderConfirm.Commence();
+                await Coroutine.Wait(10000, () => CommonBehaviors.IsLoading);
+                if (CommonBehaviors.IsLoading)
+                {
+                    await Coroutine.Wait(-1, () => !CommonBehaviors.IsLoading);
+                    await Coroutine.Wait(-1, () => WorldManager.ZoneId == SouthHorn);
+                }
+            }
+
+            if (WorldManager.ZoneId == SouthHorn)
+            {
+                Log.Information($"We are now in {WorldManager.CurrentZoneName}.");
+            }
         }
     }
 }
