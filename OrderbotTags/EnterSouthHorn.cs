@@ -94,13 +94,6 @@ namespace LlamaUtilities.OrderbotTags
             while (WorldManager.ZoneId != SouthHorn)
             {
 
-                if (PartyManager.IsInParty && PartyManager.CrossRealm)
-                {
-                    // In a CrossRealm party we can't currently detect who is the leader, so we can't queue automatically.
-                    Log.Error("We're in a cross-realm party. Cannot queue for South Horn.");
-                    _isDone = true;
-                    return;
-                }
                 if (PartyManager.IsInParty && !PartyManager.IsPartyLeader)
                 {
                     Log.Information("We're in a party and not party leader. Waiting for party leader to queue us.");
