@@ -2,7 +2,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using ff14bot.Enums;
-using ff14bot.Helpers;
 using LlamaLibrary.Helpers;
 using LlamaLibrary.JsonObjects;
 
