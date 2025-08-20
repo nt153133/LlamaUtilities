@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Buddy.Coroutines;
@@ -19,6 +19,10 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("ItemId")]
         [DefaultValue(new int[0])]
         private int[] ItemIds { get; set; }
+
+        [XmlAttribute("Armory")]
+        [DefaultValue(false)]
+        public bool IncludeArmory { get; set; }
 
         private bool _isDone;
 
@@ -54,7 +58,10 @@ namespace LlamaUtilities.OrderbotTags
                 return;
             }
 
-            var slots = InventoryManager.FilledSlots.Where(x => ItemIds.Contains((int)x.RawItemId)).ToList();
+            // Use FilledInventoryAndArmory if Armory is true, otherwise just FilledSlots
+            var slots = (IncludeArmory ? InventoryManager.FilledInventoryAndArmory : InventoryManager.FilledSlots)
+                .Where(x => ItemIds.Contains((int)x.RawItemId))
+                .ToList();
 
             if (!slots.Any())
             {
