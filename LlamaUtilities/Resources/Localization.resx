@@ -1,0 +1,345 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Windows.Forms" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="String1" xml:space="preserve">
+    <value>test</value>
+  </data>
+  
+  <!-- UtilitiesBase Class -->
+  <data name="UtilitiesBase_Name" xml:space="preserve">
+    <value>Llama Utilities</value>
+  </data>
+  
+  <!-- FCWorkshop Class -->
+  <data name="FCWorkshop_Name" xml:space="preserve">
+    <value>FCWorkshop</value>
+  </data>
+  <data name="FCWorkshop_TryingToOpenWindow" xml:space="preserve">
+    <value>Trying to open FC Workshop window.</value>
+  </data>
+  <data name="FCWorkshop_FailedToOpenWindow" xml:space="preserve">
+    <value>Failed to open FC Workshop window.</value>
+  </data>
+  
+  <!-- Retainers Class -->
+  <data name="Retainers_NoSummoningBell" xml:space="preserve">
+    <value>No summoning bell near by</value>
+  </data>
+  
+  <!-- DeliveriesSettings Class -->
+  <data name="DeliveriesSettings_NitowikweDescription" xml:space="preserve">
+    <value>Nitowikwe is the custom delivery NPC located in Shaaloani.</value>
+  </data>
+  <data name="DeliveriesSettings_MargratDescription" xml:space="preserve">
+    <value>Margrat is the custom delivery NPC located in Labyrinthos.</value>
+  </data>
+  
+  <!-- HuntsSettings Class -->
+  <data name="HuntsSettings_ARRHuntsDescription" xml:space="preserve">
+    <value>Complete ARR Daily Hunts</value>
+  </data>
+  <data name="HuntsSettings_ClanHuntsDescription" xml:space="preserve">
+    <value>Complete Clan Mark Daily Hunts</value>
+  </data>
+  <data name="HuntsSettings_VeteranClanHuntsDescription" xml:space="preserve">
+    <value>Complete Veteran Clan Mark Daily Hunts</value>
+  </data>
+  
+  <!-- RaceSettings Class -->
+  <data name="RaceSettings_RaceChoiceDescription" xml:space="preserve">
+    <value>Which racing course would you like to run?</value>
+  </data>
+  <data name="RaceSettings_LoopDescription" xml:space="preserve">
+    <value>Continually run races until the bot is stopped.</value>
+  </data>
+  <data name="RaceSettings_UseAbility1Description" xml:space="preserve">
+    <value>Should we use the ability in hotbar slot 1?</value>
+  </data>
+  <data name="RaceSettings_UseAbility2Description" xml:space="preserve">
+    <value>Should we use the ability in hotbar slot 2?</value>
+  </data>
+  <data name="RaceSettings_GoLeftDescription" xml:space="preserve">
+    <value>Continually press left while sprinting.</value>
+  </data>
+  <data name="RaceSettings_CureStaminaDescription" xml:space="preserve">
+    <value>What stamina should we use Choco Cure at?</value>
+  </data>
+  
+  <!-- ReduceSettings Class -->
+  <data name="ReduceSettings_IncludeArmoryDescription" xml:space="preserve">
+    <value>Include Armory for desynth</value>
+  </data>
+  <data name="ReduceSettings_IncludeArmoryJsonProperty" xml:space="preserve">
+    <value>IncludeArmory</value>
+  </data>
+  <data name="ReduceSettings_IncludeArmoryCategory" xml:space="preserve">
+    <value>Desynth</value>
+  </data>
+  <data name="ReduceSettings_IncludeFishDescription" xml:space="preserve">
+    <value>Include ALL fish for desynth</value>
+  </data>
+  <data name="ReduceSettings_IncludeFishJsonProperty" xml:space="preserve">
+    <value>IncludeFish</value>
+  </data>
+  <data name="ReduceSettings_IncludeFishCategory" xml:space="preserve">
+    <value>Desynth</value>
+  </data>
+  <data name="ReduceSettings_StayRunningDescription" xml:space="preserve">
+    <value>Stay constantly running</value>
+  </data>
+  <data name="ReduceSettings_StayRunningJsonProperty" xml:space="preserve">
+    <value>StayRunning</value>
+  </data>
+  <data name="ReduceSettings_StayRunningCategory" xml:space="preserve">
+    <value>Extra</value>
+  </data>
+  <data name="ReduceSettings_OpenCoffersDescription" xml:space="preserve">
+    <value>Open Coffers</value>
+  </data>
+  <data name="ReduceSettings_OpenCoffersJsonProperty" xml:space="preserve">
+    <value>OpenCoffers</value>
+  </data>
+  
+  <!-- RetainerSettings Class -->
+  <data name="RetainerSettings_DepositFromPlayerDescription" xml:space="preserve">
+    <value>Entrust items to retainer if the have the same item?</value>
+  </data>
+  <data name="RetainerSettings_DepositFromSaddleBagsDescription" xml:space="preserve">
+    <value>Entrust same items from saddle bags</value>
+  </data>
+  <data name="RetainerSettings_DebugLoggingDescription" xml:space="preserve">
+    <value>Print verbose debug info</value>
+  </data>
+  <data name="RetainerSettings_GetGilDescription" xml:space="preserve">
+    <value>Withdrawal Gil from each retainer</value>
+  </data>
+  <data name="RetainerSettings_ReassignVenturesDescription" xml:space="preserve">
+    <value>Reassign Ventures</value>
+  </data>
+  <data name="RetainerSettings_DontOrganizeRetainersDescription" xml:space="preserve">
+    <value>Don't try and merge duplicate item stacks between retainers</value>
+  </data>
+  <data name="RetainerSettings_LoopDescription" xml:space="preserve">
+    <value>Loop to continue ventures</value>
+  </data>
+  
+  <!-- Utilities Form UI -->
+  <data name="Utilities_FormTitle" xml:space="preserve">
+    <value>Utilities</value>
+  </data>
+  <data name="Utilities_TabRetainers" xml:space="preserve">
+    <value>Retainers</value>
+  </data>
+  <data name="Utilities_BtnRetainers" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Utilities_TabDailyHunts" xml:space="preserve">
+    <value>Daily Hunts</value>
+  </data>
+  <data name="Utilities_BtnHuntStart" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Utilities_TabMateria" xml:space="preserve">
+    <value>Materia</value>
+  </data>
+  <data name="Utilities_TabRemove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Utilities_InventoryFilter" xml:space="preserve">
+    <value>Inventory Filter</value>
+  </data>
+  <data name="Utilities_RemoveMateria" xml:space="preserve">
+    <value>Remove Materia</value>
+  </data>
+  <data name="Utilities_BtnRemoveAllMateria" xml:space="preserve">
+    <value>Remove All Materia</value>
+  </data>
+  <data name="Utilities_BtnRefresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Utilities_TabAffix" xml:space="preserve">
+    <value>Affix</value>
+  </data>
+  <data name="Utilities_BtnAffix" xml:space="preserve">
+    <value>Affix</value>
+  </data>
+  <data name="Utilities_TabInventory" xml:space="preserve">
+    <value>Inventory</value>
+  </data>
+  <data name="Utilities_LblDesynth" xml:space="preserve">
+    <value>&lt;- Desynth all trust gear and possibly fish</value>
+  </data>
+  <data name="Utilities_BtnDesynth" xml:space="preserve">
+    <value>Desynth</value>
+  </data>
+  <data name="Utilities_BtnOpenAllCoffers" xml:space="preserve">
+    <value>Open All Coffers</value>
+  </data>
+  <data name="Utilities_BtnExtractMateria" xml:space="preserve">
+    <value>Extract Materia</value>
+  </data>
+  <data name="Utilities_BtnReduceAll" xml:space="preserve">
+    <value>Reduce All</value>
+  </data>
+  <data name="Utilities_TabCustomDeliveries" xml:space="preserve">
+    <value>Custom Deliveries</value>
+  </data>
+  <data name="Utilities_BtnCustomDeliveries" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Utilities_TabGcTurnin" xml:space="preserve">
+    <value>Gc Turnin</value>
+  </data>
+  <data name="Utilities_BtnGcTurnin" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Utilities_TabHousing" xml:space="preserve">
+    <value>Housing</value>
+  </data>
+  <data name="Utilities_BtnHousing" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Utilities_TabFCWorkshop" xml:space="preserve">
+    <value>FCWorkshop</value>
+  </data>
+  <data name="Utilities_BtnFCWorkshop" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Utilities_TabChocoRacer" xml:space="preserve">
+    <value>ChocoRacer</value>
+  </data>
+  <data name="Utilities_LblChocoRacerInfo" xml:space="preserve">
+    <value>This Bot only supports Choco Cure II, Cure III, Dash II and Super Sprint.</value>
+  </data>
+  <data name="Utilities_LblChocoExp" xml:space="preserve">
+    <value>Choco Exp:</value>
+  </data>
+  <data name="Utilities_LblRank" xml:space="preserve">
+    <value>Rank:</value>
+  </data>
+  <data name="Utilities_BtnGoToBreeder" xml:space="preserve">
+    <value>GoTo Breeder</value>
+  </data>
+  <data name="Utilities_BtnGoToRaceCounter" xml:space="preserve">
+    <value>GoTo Race Counter</value>
+  </data>
+  <data name="Utilities_BtnRaceStart" xml:space="preserve">
+    <value>Start</value>
+  </data>
+</root>

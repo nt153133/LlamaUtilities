@@ -2,6 +2,7 @@
 using System.IO;
 using ff14bot.Helpers;
 using LlamaLibrary.Helpers;
+using LlamaUtilities.LlamaUtilities.Localization;
 
 namespace LlamaUtilities.LlamaUtilities.Settings
 {
@@ -27,7 +28,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             TranquilPaths = 1000020,
             TranquilPaths_NoReward = 1000024,
         }
-        [Description("Which racing course would you like to run?")]
+        [LocalizedDescriptionAttribute("RaceSettings_RaceChoiceDescription")]
         [DefaultValue(RaceToRun.Random)]
         public RaceToRun RaceChoice
         {
@@ -43,7 +44,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _runLoop;
-        [Description("Continually run races until the bot is stopped.")]
+        [LocalizedDescriptionAttribute("RaceSettings_LoopDescription")]
         [DefaultValue(true)]
         public bool Loop
         {
@@ -59,7 +60,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _useAbility1;
-        [Description("Should we use the ability in hotbar slot 1?")]
+        [LocalizedDescriptionAttribute("RaceSettings_UseAbility1Description")]
         [DefaultValue(true)]
         public bool UseAbility1
         {
@@ -75,7 +76,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _useAbility2;
-        [Description("Should we use the ability in hotbar slot 2?")]
+        [LocalizedDescriptionAttribute("RaceSettings_UseAbility2Description")]
         [DefaultValue(true)]
         public bool UseAbility2
         {
@@ -91,7 +92,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _goLeft;
-        [Description("Continually press left while sprinting.")]
+        [LocalizedDescriptionAttribute("RaceSettings_GoLeftDescription")]
         [DefaultValue(false)]
         public bool GoLeft
         {
@@ -107,7 +108,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private int _cureStamina;
-        [Description("What stamina should we use Choco Cure at?")]
+        [LocalizedDescriptionAttribute("RaceSettings_CureStaminaDescription")]
         [DefaultValue(90)]
         public int CureStamina
         {

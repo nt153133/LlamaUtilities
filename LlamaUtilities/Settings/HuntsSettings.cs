@@ -2,6 +2,7 @@
 using System.IO;
 using ff14bot.Helpers;
 using LlamaLibrary.Helpers;
+using LlamaUtilities.LlamaUtilities.Localization;
 
 namespace LlamaUtilities.LlamaUtilities.Settings
 {
@@ -27,7 +28,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         {
         }
 
-        [Description("Complete ARR Daily Hunts")]
+        [LocalizedDescriptionAttribute("HuntsSettings_ARRHuntsDescription")]
         [DefaultValue(false)]
         public bool ARRHunts
         {
@@ -42,7 +43,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             }
         }
 
-        [Description("Complete Clan Mark Daily Hunts")]
+        [LocalizedDescriptionAttribute("HuntsSettings_ClanHuntsDescription")]
         [DefaultValue(false)]
         public bool ClanHunts
         {
@@ -57,7 +58,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             }
         }
 
-        [Description("Complete Veteran Clan Mark Daily Hunts")]
+        [LocalizedDescriptionAttribute("HuntsSettings_VeteranClanHuntsDescription")]
         [DefaultValue(false)]
         public bool VerteranClanHunts
         {

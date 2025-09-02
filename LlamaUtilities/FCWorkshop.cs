@@ -21,7 +21,7 @@ namespace LlamaUtilities.LlamaUtilities
         public static List<Item> itemList = new List<Item>();
         private static readonly uint[] npcids = new uint[] { 2005236, 2005238, 2005240, 2007821, 2011588 };
 
-        public const string Name = "FCWorkshop";
+        public static string Name => Resources.Localization.FCWorkshop_Name;
         private static readonly LLogger Log = new LLogger(Name, Colors.White);
 
         public static async Task<bool> HandInItems()
@@ -34,18 +34,18 @@ namespace LlamaUtilities.LlamaUtilities
 
             if (!SubmarinePartsMenu.Instance.IsOpen)
             {
-                Log.Verbose("Trying to open FC Workshop window.");
+                Log.Verbose(Resources.Localization.FCWorkshop_TryingToOpenWindow);
 
                 if (!await OpenFCCraftingStation())
                 {
-                    Log.Error("Failed to open FC Workshop window.");
+                    Log.Error(Resources.Localization.FCWorkshop_FailedToOpenWindow);
                     return false;
                 }
             }
 
             if (!SubmarinePartsMenu.Instance.IsOpen)
             {
-                Log.Error("Failed to open FC Workshop window.");
+                Log.Error(Resources.Localization.FCWorkshop_FailedToOpenWindow);
                 return false;
             }
 

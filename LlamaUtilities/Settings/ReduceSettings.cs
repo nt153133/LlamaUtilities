@@ -3,6 +3,7 @@ using System.Configuration;
 using System.IO;
 using ff14bot.Helpers;
 using Newtonsoft.Json;
+using LlamaUtilities.LlamaUtilities.Localization;
 
 namespace LlamaUtilities.LlamaUtilities.Settings
 {
@@ -37,7 +38,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         [Setting]
-        [Description("Include Armory for desynth")]
+        [LocalizedDescriptionAttribute("ReduceSettings_IncludeArmoryDescription")]
         [DefaultValue(false)]
         [JsonProperty("IncludeArmory")]
         [Category("Desynth")]
@@ -52,7 +53,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         [Setting]
-        [Description("Include ALL fish for desynth")]
+        [LocalizedDescriptionAttribute("ReduceSettings_IncludeFishDescription")]
         [DefaultValue(false)]
         [JsonProperty("IncludeFish")]
         [Category("Desynth")]
@@ -67,7 +68,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         [Setting]
-        [Description("Stay constantly running")]
+        [LocalizedDescriptionAttribute("ReduceSettings_StayRunningDescription")]
         [DefaultValue(false)]
         [JsonProperty("StayRunning")]
         [Category("Extra")]
@@ -83,7 +84,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         [Setting]
-        [Description("Open Coffers")]
+        [LocalizedDescriptionAttribute("ReduceSettings_OpenCoffersDescription")]
         [DefaultValue(false)]
         [JsonProperty("OpenCoffers")]
         [Browsable(false)]

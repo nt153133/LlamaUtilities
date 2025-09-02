@@ -31,7 +31,7 @@ namespace LlamaUtilities.LlamaUtilities
 {
     public class UtilitiesBase : BotBase
     {
-        public static readonly string _name = "Llama Utilities";
+        public static string _name => Resources.Localization.UtilitiesBase_Name;
         private static readonly LLogger Log = new LLogger(_name, Colors.Pink);
         public static BotTask BotTask = new BotTask();
 
