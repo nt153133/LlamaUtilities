@@ -22,7 +22,7 @@
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
         <value>[base64 mime encoded serialized .NET Framework object]</value>
     </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Windows.Forms" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
@@ -96,9 +96,9 @@
           <xsd:element name="resheader">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
               </xsd:sequence>
-              <xsd:attribute name="name" use="required" />
+              <xsd:attribute name="name" type="xsd:string" use="required" />
             </xsd:complexType>
           </xsd:element>
         </xsd:choice>
@@ -120,13 +120,9 @@
   <data name="String1" xml:space="preserve">
     <value>test</value>
   </data>
-  
-  <!-- UtilitiesBase Class -->
   <data name="UtilitiesBase_Name" xml:space="preserve">
     <value>Llama Utilities</value>
   </data>
-  
-  <!-- FCWorkshop Class -->
   <data name="FCWorkshop_Name" xml:space="preserve">
     <value>FCWorkshop</value>
   </data>
@@ -136,21 +132,15 @@
   <data name="FCWorkshop_FailedToOpenWindow" xml:space="preserve">
     <value>Failed to open FC Workshop window.</value>
   </data>
-  
-  <!-- Retainers Class -->
   <data name="Retainers_NoSummoningBell" xml:space="preserve">
     <value>No summoning bell near by</value>
   </data>
-  
-  <!-- DeliveriesSettings Class -->
   <data name="DeliveriesSettings_NitowikweDescription" xml:space="preserve">
     <value>Nitowikwe is the custom delivery NPC located in Shaaloani.</value>
   </data>
   <data name="DeliveriesSettings_MargratDescription" xml:space="preserve">
     <value>Margrat is the custom delivery NPC located in Labyrinthos.</value>
   </data>
-  
-  <!-- HuntsSettings Class -->
   <data name="HuntsSettings_ARRHuntsDescription" xml:space="preserve">
     <value>Complete ARR Daily Hunts</value>
   </data>
@@ -160,8 +150,6 @@
   <data name="HuntsSettings_VeteranClanHuntsDescription" xml:space="preserve">
     <value>Complete Veteran Clan Mark Daily Hunts</value>
   </data>
-  
-  <!-- RaceSettings Class -->
   <data name="RaceSettings_RaceChoiceDescription" xml:space="preserve">
     <value>Which racing course would you like to run?</value>
   </data>
@@ -180,8 +168,6 @@
   <data name="RaceSettings_CureStaminaDescription" xml:space="preserve">
     <value>What stamina should we use Choco Cure at?</value>
   </data>
-  
-  <!-- ReduceSettings Class -->
   <data name="ReduceSettings_IncludeArmoryDescription" xml:space="preserve">
     <value>Include Armory for desynth</value>
   </data>
@@ -215,8 +201,6 @@
   <data name="ReduceSettings_OpenCoffersJsonProperty" xml:space="preserve">
     <value>OpenCoffers</value>
   </data>
-  
-  <!-- RetainerSettings Class -->
   <data name="RetainerSettings_DepositFromPlayerDescription" xml:space="preserve">
     <value>Entrust items to retainer if the have the same item?</value>
   </data>
@@ -238,21 +222,16 @@
   <data name="RetainerSettings_LoopDescription" xml:space="preserve">
     <value>Loop to continue ventures</value>
   </data>
-  
-  <!-- Utilities Form UI -->
   <data name="Utilities_FormTitle" xml:space="preserve">
     <value>Utilities</value>
   </data>
   <data name="Utilities_TabRetainers" xml:space="preserve">
     <value>Retainers</value>
   </data>
-  <data name="Utilities_BtnRetainers" xml:space="preserve">
-    <value>Start</value>
-  </data>
   <data name="Utilities_TabDailyHunts" xml:space="preserve">
     <value>Daily Hunts</value>
   </data>
-  <data name="Utilities_BtnHuntStart" xml:space="preserve">
+  <data name="Utilities_BtnStart" xml:space="preserve">
     <value>Start</value>
   </data>
   <data name="Utilities_TabMateria" xml:space="preserve">
@@ -300,26 +279,14 @@
   <data name="Utilities_TabCustomDeliveries" xml:space="preserve">
     <value>Custom Deliveries</value>
   </data>
-  <data name="Utilities_BtnCustomDeliveries" xml:space="preserve">
-    <value>Start</value>
-  </data>
   <data name="Utilities_TabGcTurnin" xml:space="preserve">
     <value>Gc Turnin</value>
-  </data>
-  <data name="Utilities_BtnGcTurnin" xml:space="preserve">
-    <value>Start</value>
   </data>
   <data name="Utilities_TabHousing" xml:space="preserve">
     <value>Housing</value>
   </data>
-  <data name="Utilities_BtnHousing" xml:space="preserve">
-    <value>Start</value>
-  </data>
   <data name="Utilities_TabFCWorkshop" xml:space="preserve">
     <value>FCWorkshop</value>
-  </data>
-  <data name="Utilities_BtnFCWorkshop" xml:space="preserve">
-    <value>Start</value>
   </data>
   <data name="Utilities_TabChocoRacer" xml:space="preserve">
     <value>ChocoRacer</value>
@@ -338,8 +305,5 @@
   </data>
   <data name="Utilities_BtnGoToRaceCounter" xml:space="preserve">
     <value>GoTo Race Counter</value>
-  </data>
-  <data name="Utilities_BtnRaceStart" xml:space="preserve">
-    <value>Start</value>
   </data>
 </root>

@@ -22,7 +22,7 @@
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
         <value>[base64 mime encoded serialized .NET Framework object]</value>
     </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Windows.Forms" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
@@ -84,20 +84,21 @@
           <xsd:element name="data">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
               </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string" />
-              <xsd:attribute name="type" type="xsd:string" />
-              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
               <xsd:attribute ref="xml:space" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="resheader">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
               </xsd:sequence>
-              <xsd:attribute name="name" use="required" />
+              <xsd:attribute name="name" type="xsd:string" use="required" />
             </xsd:complexType>
           </xsd:element>
         </xsd:choice>
@@ -120,13 +121,9 @@
   <data name="String1" type="System.Resources.ResXNullRef, System.Windows.Forms">
     <value />
   </data>
-  
-  <!-- UtilitiesBase Class -->
   <data name="UtilitiesBase_Name" xml:space="preserve">
     <value>Llama终极工具箱</value>
   </data>
-  
-  <!-- FCWorkshop Class -->
   <data name="FCWorkshop_Name" xml:space="preserve">
     <value>部队工坊</value>
   </data>
@@ -136,21 +133,15 @@
   <data name="FCWorkshop_FailedToOpenWindow" xml:space="preserve">
     <value>无法打开部队工坊窗口.</value>
   </data>
-  
-  <!-- Retainers Class -->
   <data name="Retainers_NoSummoningBell" xml:space="preserve">
     <value>附近没有召唤钟</value>
   </data>
-  
-  <!-- DeliveriesSettings Class -->
   <data name="DeliveriesSettings_NitowikweDescription" xml:space="preserve">
     <value>Nitowikwe 是位于 Shaaloani 的老主顾交货 NPC.</value>
   </data>
   <data name="DeliveriesSettings_MargratDescription" xml:space="preserve">
     <value>马格拉特是位于迷宫中的老主顾送货 NPC.</value>
   </data>
-  
-  <!-- HuntsSettings Class -->
   <data name="HuntsSettings_ARRHuntsDescription" xml:space="preserve">
     <value>完成 ARR 每日狩猎</value>
   </data>
@@ -160,8 +151,6 @@
   <data name="HuntsSettings_VeteranClanHuntsDescription" xml:space="preserve">
     <value>完成老部族印记日常狩猎</value>
   </data>
-  
-  <!-- RaceSettings Class -->
   <data name="RaceSettings_RaceChoiceDescription" xml:space="preserve">
     <value>您想跑哪条赛道?</value>
   </data>
@@ -180,8 +169,6 @@
   <data name="RaceSettings_CureStaminaDescription" xml:space="preserve">
     <value>我们应该在什么体力下使用巧克力治愈剂?</value>
   </data>
-  
-  <!-- ReduceSettings Class -->
   <data name="ReduceSettings_IncludeArmoryDescription" xml:space="preserve">
     <value>包括用于分解装备</value>
   </data>
@@ -215,8 +202,6 @@
   <data name="ReduceSettings_OpenCoffersJsonProperty" xml:space="preserve">
     <value>打开箱子</value>
   </data>
-  
-  <!-- RetainerSettings Class -->
   <data name="RetainerSettings_DepositFromPlayerDescription" xml:space="preserve">
     <value>如果拥有相同物品，则将物品给同一个雇员?</value>
   </data>
@@ -238,21 +223,16 @@
   <data name="RetainerSettings_LoopDescription" xml:space="preserve">
     <value>循环收雇员</value>
   </data>
-  
-  <!-- Utilities Form UI -->
   <data name="Utilities_FormTitle" xml:space="preserve">
     <value>LLB终极工具箱</value>
   </data>
   <data name="Utilities_TabRetainers" xml:space="preserve">
     <value>收雇员</value>
   </data>
-  <data name="Utilities_BtnRetainers" xml:space="preserve">
-    <value>开始</value>
-  </data>
   <data name="Utilities_TabDailyHunts" xml:space="preserve">
     <value>每日狩猎板</value>
   </data>
-  <data name="Utilities_BtnHuntStart" xml:space="preserve">
+  <data name="Utilities_BtnStart" xml:space="preserve">
     <value>开始</value>
   </data>
   <data name="Utilities_TabMateria" xml:space="preserve">
@@ -276,9 +256,6 @@
   <data name="Utilities_TabAffix" xml:space="preserve">
     <value>嵌入魔晶石</value>
   </data>
-  <data name="Utilities_BtnAffix" xml:space="preserve">
-    <value>Affix</value>
-  </data>
   <data name="Utilities_TabInventory" xml:space="preserve">
     <value>库存</value>
   </data>
@@ -300,26 +277,14 @@
   <data name="Utilities_TabCustomDeliveries" xml:space="preserve">
     <value>老主顾</value>
   </data>
-  <data name="Utilities_BtnCustomDeliveries" xml:space="preserve">
-    <value>Start</value>
-  </data>
   <data name="Utilities_TabGcTurnin" xml:space="preserve">
     <value>军队交军票</value>
-  </data>
-  <data name="Utilities_BtnGcTurnin" xml:space="preserve">
-    <value>开始</value>
   </data>
   <data name="Utilities_TabHousing" xml:space="preserve">
     <value>房子扫描</value>
   </data>
-  <data name="Utilities_BtnHousing" xml:space="preserve">
-    <value>开始</value>
-  </data>
   <data name="Utilities_TabFCWorkshop" xml:space="preserve">
     <value>部队工坊</value>
-  </data>
-  <data name="Utilities_BtnFCWorkshop" xml:space="preserve">
-    <value>开始</value>
   </data>
   <data name="Utilities_TabChocoRacer" xml:space="preserve">
     <value>赛鸟</value>
@@ -327,19 +292,10 @@
   <data name="Utilities_LblChocoRacerInfo" xml:space="preserve">
     <value>腾龙提醒：该机器人仅支持巧克力治愈 II、治愈 III、冲刺 II 和超级冲刺。</value>
   </data>
-  <data name="Utilities_LblChocoExp" xml:space="preserve">
-    <value>Choco Exp:</value>
-  </data>
-  <data name="Utilities_LblRank" xml:space="preserve">
-    <value>Rank:</value>
-  </data>
   <data name="Utilities_BtnGoToBreeder" xml:space="preserve">
     <value>GoTo 饲养员</value>
   </data>
   <data name="Utilities_BtnGoToRaceCounter" xml:space="preserve">
     <value>GoTo 比赛计数器</value>
-  </data>
-  <data name="Utilities_BtnRaceStart" xml:space="preserve">
-    <value>开始</value>
   </data>
 </root>

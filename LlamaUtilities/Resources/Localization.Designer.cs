@@ -367,29 +367,11 @@ namespace LlamaUtilities.LlamaUtilities.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
-        /// </summary>
-        public static string String2 {
-            get {
-                return ResourceManager.GetString("String2", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Affix.
         /// </summary>
         public static string Utilities_BtnAffix {
             get {
                 return ResourceManager.GetString("Utilities_BtnAffix", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Start.
-        /// </summary>
-        public static string Utilities_BtnCustomDeliveries {
-            get {
-                return ResourceManager.GetString("Utilities_BtnCustomDeliveries", resourceCulture);
             }
         }
         
@@ -412,24 +394,6 @@ namespace LlamaUtilities.LlamaUtilities.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Start.
-        /// </summary>
-        public static string Utilities_BtnFCWorkshop {
-            get {
-                return ResourceManager.GetString("Utilities_BtnFCWorkshop", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Start.
-        /// </summary>
-        public static string Utilities_BtnGcTurnin {
-            get {
-                return ResourceManager.GetString("Utilities_BtnGcTurnin", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to GoTo Breeder.
         /// </summary>
         public static string Utilities_BtnGoToBreeder {
@@ -448,38 +412,11 @@ namespace LlamaUtilities.LlamaUtilities.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Start.
-        /// </summary>
-        public static string Utilities_BtnHousing {
-            get {
-                return ResourceManager.GetString("Utilities_BtnHousing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Start.
-        /// </summary>
-        public static string Utilities_BtnHuntStart {
-            get {
-                return ResourceManager.GetString("Utilities_BtnHuntStart", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Open All Coffers.
         /// </summary>
         public static string Utilities_BtnOpenAllCoffers {
             get {
                 return ResourceManager.GetString("Utilities_BtnOpenAllCoffers", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Start.
-        /// </summary>
-        public static string Utilities_BtnRaceStart {
-            get {
-                return ResourceManager.GetString("Utilities_BtnRaceStart", resourceCulture);
             }
         }
         
@@ -513,9 +450,9 @@ namespace LlamaUtilities.LlamaUtilities.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Start.
         /// </summary>
-        public static string Utilities_BtnRetainers {
+        public static string Utilities_BtnStart {
             get {
-                return ResourceManager.GetString("Utilities_BtnRetainers", resourceCulture);
+                return ResourceManager.GetString("Utilities_BtnStart", resourceCulture);
             }
         }
         
