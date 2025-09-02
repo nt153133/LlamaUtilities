@@ -54,5 +54,21 @@
       <Compile Remove="OrderbotTags\LLExtendedDutyTag.cs" />
       <Compile Remove="OrderbotTags\LLEmoteNpc.cs" />
     </ItemGroup>
+    <ItemGroup>
+      <Compile Update="LlamaUtilities\Resources\Localization.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>Localization.resx</DependentUpon>
+      </Compile>
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Update="LlamaUtilities\Resources\Localization.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>Localization.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Update="LlamaUtilities\Resources\Localization.zh-CN.resx">
+        <Generator></Generator>
+      </EmbeddedResource>
+    </ItemGroup>
   
 </Project>

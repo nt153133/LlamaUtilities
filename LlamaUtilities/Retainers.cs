@@ -26,7 +26,7 @@ namespace LlamaUtilities.LlamaUtilities
 
             if (bell == false)
             {
-                Log.Error("No summoning bell near by");
+                Log.Error(Resources.Localization.Retainers_NoSummoningBell);
                 TreeRoot.Stop("Done playing with retainers");
                 return;
             }

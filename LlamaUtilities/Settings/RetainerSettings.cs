@@ -3,6 +3,7 @@ using System.IO;
 using ff14bot.Enums;
 using ff14bot.Helpers;
 using LlamaLibrary.Enums;
+using LlamaUtilities.LlamaUtilities.Localization;
 
 namespace LlamaUtilities.LlamaUtilities.Settings
 {
@@ -35,7 +36,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
 
         public static RetainerSettings Instance => _settings ?? (_settings = new RetainerSettings());
 
-        [Description("Entrust items to retainer if the have the same item?")]
+        [LocalizedDescriptionAttribute("RetainerSettings_DepositFromPlayerDescription")]
         [DefaultValue(true)] //shift +x
         public bool DepositFromPlayer
         {
@@ -50,7 +51,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             }
         }
 
-        [Description("Entrust same items from saddle bags")]
+        [LocalizedDescriptionAttribute("RetainerSettings_DepositFromSaddleBagsDescription")]
         [DefaultValue(false)] //shift +x
         public bool DepositFromSaddleBags
         {
@@ -65,7 +66,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             }
         }
 
-        [Description("Print verbose debug info")]
+        [LocalizedDescriptionAttribute("RetainerSettings_DebugLoggingDescription")]
         [DefaultValue(false)] //shift +x
         public bool DebugLogging
         {
@@ -80,7 +81,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             }
         }
 
-        [Description("Withdrawal Gil from each retainer")]
+        [LocalizedDescriptionAttribute("RetainerSettings_GetGilDescription")]
         [DefaultValue(true)] //shift +x
         public bool GetGil
         {
@@ -95,7 +96,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             }
         }
 
-        [Description("Reassign Ventures")]
+        [LocalizedDescriptionAttribute("RetainerSettings_ReassignVenturesDescription")]
         [DefaultValue(true)] //shift +x
         public bool ReassignVentures
         {
@@ -110,7 +111,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             }
         }
 
-        [Description("Don't try and merge duplicate item stacks between retainers")]
+        [LocalizedDescriptionAttribute("RetainerSettings_DontOrganizeRetainersDescription")]
         [DefaultValue(false)] //shift +x
         [Browsable(false)]
         public bool DontOrganizeRetainers
@@ -126,7 +127,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
             }
         }
 
-        [Description("Loop to continue ventures")]
+        [LocalizedDescriptionAttribute("RetainerSettings_LoopDescription")]
         [DefaultValue(true)] //shift +x
         public bool Loop
         {

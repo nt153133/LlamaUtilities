@@ -4,6 +4,7 @@ using System.IO;
 using ff14bot.Enums;
 using LlamaLibrary.Helpers;
 using LlamaLibrary.JsonObjects;
+using LlamaUtilities.LlamaUtilities.Localization;
 
 namespace LlamaUtilities.LlamaUtilities.Settings
 {
@@ -20,7 +21,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doNitowikwe;
-        [Description("Nitowikwe is the custom delivery NPC located in Shaaloani.")]
+        [LocalizedDescriptionAttribute("DeliveriesSettings_NitowikweDescription")]
         [Category("Dawntrail")]
         [DisplayName("Nitowikwe"),Display(Order = 1)]
         public bool DoNitowikweDeliveries
@@ -77,7 +78,7 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         }
 
         private bool _doMargrat;
-        [Description("Margrat is the custom delivery NPC located in Labyrinthos.")]
+        [LocalizedDescriptionAttribute("DeliveriesSettings_MargratDescription")]
         [Category("Endwalker")]
         [DisplayName("Margrat"),Display(Order = 2)]
         public bool DoMargratDeliveries

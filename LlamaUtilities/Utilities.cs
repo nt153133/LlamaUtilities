@@ -151,6 +151,44 @@ namespace LlamaUtilities.LlamaUtilities
             //ability1Label.Text = $"Hereditary: {RaceChocoboManager.AbilityHereditary}";
             //ability2Label.Text = $"Aquired: {RaceChocoboManager.AbilityLearned}";
 
+
+            //Ideally this would be done using the localization property, but the stupid winform designer keeps crashing
+            tabRetainers.Text = Resources.Localization.Utilities_TabRetainers;
+            btnRetainers.Text = Resources.Localization.Utilities_BtnStart;
+            tabPage1.Text = Resources.Localization.Utilities_TabDailyHunts;
+            btnHuntStart.Text = Resources.Localization.Utilities_BtnStart;
+            tabMateria.Text = Resources.Localization.Utilities_TabMateria;
+            tabPageRemove.Text = Resources.Localization.Utilities_TabRemove;
+            groupBoxRemoveFilter.Text = Resources.Localization.Utilities_InventoryFilter;
+            groupBox1.Text = Resources.Localization.Utilities_RemoveMateria;
+            btnRemoveMateria.Text = Resources.Localization.Utilities_BtnRemoveAllMateria;
+            btnRefresh.Text = Resources.Localization.Utilities_BtnRefresh;
+            tabAffix.Text = Resources.Localization.Utilities_TabAffix;
+            button3.Text = Resources.Localization.Utilities_BtnRefresh;
+            tabInventory.Text = Resources.Localization.Utilities_TabInventory;
+            lblDesynth.Text = Resources.Localization.Utilities_LblDesynth;
+            btnDesynth.Text = Resources.Localization.Utilities_BtnDesynth;
+            btnCoffers.Text = Resources.Localization.Utilities_BtnOpenAllCoffers;
+            btnExtract.Text = Resources.Localization.Utilities_BtnExtractMateria;
+            btnReduce.Text = Resources.Localization.Utilities_BtnReduceAll;
+            tabCustom.Text = Resources.Localization.Utilities_TabCustomDeliveries;
+            btnCustomDeliveries.Text = Resources.Localization.Utilities_BtnStart;
+            tabGC.Text = Resources.Localization.Utilities_TabGcTurnin;
+            btnGcTurin.Text = Resources.Localization.Utilities_BtnStart;
+            tabHousing.Text = Resources.Localization.Utilities_TabHousing;
+            btnHousing.Text = Resources.Localization.Utilities_BtnStart;
+            tabFC.Text = Resources.Localization.Utilities_TabFCWorkshop;
+            btnFCWorkshop.Text = Resources.Localization.Utilities_BtnStart;
+            tabPage2.Text = Resources.Localization.Utilities_TabChocoRacer;
+            label2.Text = Resources.Localization.Utilities_LblChocoRacerInfo;
+            expLabel.Text = Resources.Localization.Utilities_LblChocoExp;
+            breederButton.Text = Resources.Localization.Utilities_BtnGoToBreeder;
+            counterButton.Text = Resources.Localization.Utilities_BtnGoToRaceCounter;
+            raceStart.Text = Resources.Localization.Utilities_BtnStart;
+
+
+
+
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
             itemCb.SelectionChangeCommitted += new System.EventHandler(itemCb_SelectionChangeCommitted);
             filterCb.SelectionChangeCommitted += new System.EventHandler(filterCb_SelectionChangeCommitted);
