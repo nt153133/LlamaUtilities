@@ -18,7 +18,7 @@ using ff14bot.Objects;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Helpers;
 using LlamaLibrary.Helpers.NPC;
-using LlamaLibrary.Managers;
+using LlamaLibrary.LlamaManagers;
 using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 
@@ -270,19 +270,19 @@ namespace LlamaUtilities.OrderbotTags
             {
                 if (fireBooksCompleted < RelicBookManager.MaxCountByType((uint)ItemId, RelicBookType.Fire))
                 {
-                    selection = LlamaLibrary.Managers.RelicBookManager.BooksofFire;
+                    selection = LlamaLibrary.LlamaManagers.RelicBookManager.BooksofFire;
                 }
                 else if (fallBooksCompleted < RelicBookManager.MaxCountByType((uint)ItemId, RelicBookType.Fall))
                 {
-                    selection = LlamaLibrary.Managers.RelicBookManager.BooksofFall;
+                    selection = LlamaLibrary.LlamaManagers.RelicBookManager.BooksofFall;
                 }
                 else if (windBooksCompleted < RelicBookManager.MaxCountByType((uint)ItemId, RelicBookType.Wind))
                 {
-                    selection = LlamaLibrary.Managers.RelicBookManager.BooksofWind;
+                    selection = LlamaLibrary.LlamaManagers.RelicBookManager.BooksofWind;
                 }
                 else if (earthBooksCompleted < RelicBookManager.MaxCountByType((uint)ItemId, RelicBookType.Earth))
                 {
-                    selection = LlamaLibrary.Managers.RelicBookManager.BooksofEarth;
+                    selection = LlamaLibrary.LlamaManagers.RelicBookManager.BooksofEarth;
                 }
             }
 

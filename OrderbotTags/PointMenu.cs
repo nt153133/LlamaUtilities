@@ -11,7 +11,7 @@ using ff14bot.Objects;
 using ff14bot.Pathing;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Helpers.NPC;
-using LlamaLibrary.Managers;
+using LlamaLibrary.LlamaManagers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

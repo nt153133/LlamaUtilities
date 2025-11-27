@@ -18,7 +18,7 @@ using LlamaUtilities.LlamaUtilities.Settings;
 using LlamaLibrary.Helpers;
 using LlamaLibrary.Helpers.NPC;
 using LlamaLibrary.Logging;
-using LlamaLibrary.Managers;
+using LlamaLibrary.LlamaManagers;
 
 namespace LlamaUtilities.LlamaUtilities
 {

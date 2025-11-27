@@ -9,7 +9,7 @@ using ff14bot.Managers;
 using LlamaLibrary.Extensions;
 using LlamaLibrary.JsonObjects;
 using LlamaLibrary.Logging;
-using LlamaLibrary.Managers;
+using LlamaLibrary.LlamaManagers;
 using LlamaUtilities.LlamaUtilities.Settings;
 using LlamaUtilities.LlamaUtilities.Tasks;
 using Newtonsoft.Json;
