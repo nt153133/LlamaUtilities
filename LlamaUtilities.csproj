@@ -43,8 +43,8 @@
         <Reference Include="System.Xml"/>
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="LlamaLibrary" Version="25.109.1730.45" />
-      <PackageReference Include="RebornBuddy.Assemblies" Version="1.0.600" />
+      <PackageReference Include="LlamaLibrary" Version="25.1216.851.5" />
+      <PackageReference Include="RebornBuddy.ReferenceAssemblies" Version="1.0.789" />
     </ItemGroup>
     <ItemGroup>
       <Compile Remove="OrderbotTags\LLUseItem.cs" />
@@ -70,5 +70,5 @@
         <Generator></Generator>
       </EmbeddedResource>
     </ItemGroup>
-  
+
 </Project>
