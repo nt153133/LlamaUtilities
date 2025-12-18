@@ -39,26 +39,29 @@ namespace LlamaUtilities.OrderbotTags
 
         protected override Composite CreateBehavior()
         {
-            return RepairBehavior;
+            return AutoEquipBehavior;
         }
 
-        public Composite RepairBehavior =>
+        public Composite AutoEquipBehavior =>
             new PrioritySelector(
                 new PrioritySelector(
                     new Decorator(
                         r => RecommendEquip.Instance.IsOpen,
                         new Sequence(
-                            new Action(r => Log.Verbose($"{RecommendEquip.Instance.WindowName} Window open")),
+                            new Action(r => Log.Information($"{RecommendEquip.Instance.WindowName} Window open")),
+                            new Action(r => Log.Information($"Pressing confirm")),
                             new Action(r => RecommendEquip.Instance.Confirm()),
                             new Sleep(1000),
                             new Action(r => _isOpening = false),
                             new Action(r => _isDone = true),
+                            new Action(r => Log.Information($"Updating gearset")),
                             new Decorator(r => UpdateGearSet, new Action(async r => await LlamaLibrary.ScriptConditions.Helpers.UpdateGearSet()))
                         )
                     ),
                     new Decorator(
                         r => !RecommendEquip.Instance.IsOpen && !IsDone && !_isOpening,
                         new Sequence(
+                            new Action(r => Log.Information($"Opening window")),
                             new Action(r => AgentRecommendEquip.Instance.Toggle()),
                             new Action(r => _isOpening = true)
                         )
