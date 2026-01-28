@@ -190,11 +190,13 @@ namespace LlamaUtilities.OrderbotTags
                                          System.Windows.Media.Color.FromRgb(13, 106, 175),
                                          new System.Windows.Media.FontFamily("Gautami"));
             Log.Information(message);
+            /*
             if (!await LlamaLibrary.Helpers.Lisbeth.IsProductKeyValid())
             {
                 Log.Error("Lisbeth key is not valid, unable to automatically purchase weapon.");
                 return;
             }
+            */
 
             if (InventoryManager.GetBagByInventoryBagId(InventoryBagId.Armory_MainHand).FreeSlots < 1)
             {
