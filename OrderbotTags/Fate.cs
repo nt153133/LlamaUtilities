@@ -59,6 +59,10 @@ namespace LlamaUtilities.OrderbotTags
         [DefaultValue(true)]
         public bool UseFlight { get; set; }
 
+        [XmlAttribute("UseV2")]
+        [DefaultValue(false)]
+        public bool UseV2 { get; set; }
+
         [XmlAttribute("FateIDs")]
         [XmlAttribute("FateIds")]
         [XmlAttribute("FateID")]
@@ -113,6 +117,8 @@ namespace LlamaUtilities.OrderbotTags
         private string fateName = "";
         private string fateStatus = "";
         private ITargetingProvider tempProvider;
+        private int forelornMaiden = 6737;
+        private int theForlorn = 6738;
 
         //-------
         public static int currentstep = 0; //currentstep 1 we are in a fate / currentstep 0 we are not in a fate
@@ -196,20 +202,14 @@ namespace LlamaUtilities.OrderbotTags
 
                                                           return false;
                                                       })),
-                                        new Decorator(
-                                                      ret => currentstep == 1 && Vector3.Distance(Core.Player.Location, Position) > (currentfate.Radius - 10),
-                                                      new PrioritySelector(
-                                                                           new Decorator(
-                                                                                         ret => UseGetTo,
-                                                                                         new ActionRunCoroutine(obj => Navigation.GetTo(WorldManager.ZoneId, currentfate.Location))
-                                                                                        ),
-                                                                           new Decorator(
-                                                                                         ret => UseFlight,
-                                                                                         new ActionRunCoroutine(obj => Lisbeth.TravelToZones(WorldManager.ZoneId, Position))
-                                                                                        ),
-                                                                           new ActionRunCoroutine(obj => Navigation.FlightorMove(currentfate))
-                                                                          )
-                                                     ),
+                                        new Decorator(ret => currentstep == 1 && Vector3.Distance(Core.Player.Location, Position) > (currentfate.Radius - 10),
+                                                      new PrioritySelector(new Decorator(ret => UseV2,
+                                                                                         new ActionRunCoroutine(obj => FlyToFateAndLand(() => currentfate))),
+                                                                           new Decorator(ret => UseGetTo,
+                                                                                         new ActionRunCoroutine(obj => Navigation.GetTo(WorldManager.ZoneId, currentfate.Location))),
+                                                                           new Decorator(ret => UseFlight,
+                                                                                         new ActionRunCoroutine(obj => Lisbeth.TravelToZones(WorldManager.ZoneId, Position))),
+                                                                           new ActionRunCoroutine(obj => Navigation.FlightorMove(currentfate)))),
                                         new Decorator(r => currentfate != null && FateManager.WithinFate && currentfate.Icon == FateIconType.KillHandIn && currentfate.TimeLeft.Minutes <= 8,
                                                       new Sequence(new ActionRunCoroutine(async r =>
                                                                    {
@@ -279,6 +279,35 @@ namespace LlamaUtilities.OrderbotTags
         }
 
         // End of B Tree
+
+        private async Task<bool> FlyToFateAndLand(Func<FateData> getCurrentFate)
+        {
+            var fate = getCurrentFate();
+
+            if (fate == null || !fate.IsValid)
+                return false;
+
+            var result = await CommonTasks.FlyToAndLandAsync(fate.Location.Add(0f, 15, 0f),
+                                                             abortCondition: () =>
+                                                             {
+                                                                 var f = getCurrentFate();
+                                                                 return f == null || !f.IsValid || ShouldStop();
+                                                             },
+                                                             destinationName: $"FlyToFateAndLand:{fate.Name}");
+
+            var finalFate = getCurrentFate();
+
+            if (!result && finalFate != null && finalFate.IsValid)
+            {
+                Blacklist.Add(finalFate.Id,
+                              BlacklistFlags.Node,
+                              TimeSpan.FromMinutes(20),
+                              $"Could not fly to fate {finalFate.Name}");
+                Poi.Clear("Could not fly to fate");
+            }
+
+            return result;
+        }
 
         private async Task<bool> FlyTo(Vector3 destination, bool land = false, bool dismount = false, bool ignoreIndoors = true, float minHeight = 0f)
         {
@@ -676,17 +705,28 @@ namespace LlamaUtilities.OrderbotTags
 
         public GameObject GetFateTargets()
         {
-            var _target = GameObjectManager.GameObjects.Where(unit => (unit as BattleCharacter) != null && unit.CanAttack && unit.IsTargetable && unit.IsVisible
-                                                                      && (unit as BattleCharacter).FateId != 0 && !(unit as BattleCharacter).IsDead).OrderBy(unit => unit.Distance(Core.Player.Location)).Take(1);
+            var target = GameObjectManager.GameObjects
+                .Select(unit => new { unit, bc = unit as BattleCharacter })
+                .Where(x =>
+                           x.bc != null &&
+                           x.unit.CanAttack &&
+                           x.unit.IsTargetable &&
+                           x.unit.IsVisible &&
+                           x.unit.InLineOfSight() &&
+                           x.bc.FateId != 0 &&
+                           !x.bc.IsDead)
+                .OrderByDescending(x => x.bc.NpcId == forelornMaiden || x.bc.NpcId == theForlorn)
+                .ThenBy(x => x.unit.Distance(Core.Player.Location))
+                .Select(x => x.unit)
+                .FirstOrDefault();
+
             Log.Information("Analyzing Fate Targets.");
-            var targetArray = _target as GameObject[] ?? _target.ToArray();
 
-            return targetArray.Length > 0 ? targetArray[0] : null;
+            return target;
         }
-
         public GameObject GetNormalTargets()
         {
-            var _target = GameObjectManager.GameObjects.Where(unit => (unit as BattleCharacter) != null && unit.CanAttack && unit.IsTargetable && unit.IsVisible
+            var _target = GameObjectManager.GameObjects.Where(unit => (unit as BattleCharacter) != null && unit.CanAttack && unit.IsTargetable && unit.IsVisible && unit.InLineOfSight()
                                                                       && (unit as BattleCharacter).FateId == 0 && !(unit as BattleCharacter).IsDead).OrderBy(unit => unit.Distance(Core.Player.Location)).Take(3);
             var targetArray = _target as GameObject[] ?? _target.ToArray();
             if (targetArray.Length > 0 && targetArray[0].MaxHealth > Core.Me.CurrentHealth * 3)
@@ -902,7 +942,7 @@ namespace LlamaUtilities.OrderbotTags
         /// <remarks> Nesox, 2013-06-29. </remarks>
         private bool IsValidUnit(bool incombat, BattleCharacter unit)
         {
-            if (!unit.IsValid || unit.IsDead || !unit.IsVisible || unit.CurrentHealthPercent <= 0)
+            if (!unit.IsValid || !unit.InLineOfSight() || unit.IsDead || !unit.IsVisible || unit.CurrentHealthPercent <= 0)
             {
                 return false;
             }
@@ -950,6 +990,12 @@ namespace LlamaUtilities.OrderbotTags
             if (_aggroedBattleCharacters.Contains(unit))
             {
                 weight += 100;
+            }
+
+            // Forlorn Maiden
+            if (unit.NpcId == 6737 || unit.NpcId == 6738)
+            {
+                weight += 1000f;
             }
 
             //Units that are targeting the player, focus on low health ones so that we can reduce the incoming damage
