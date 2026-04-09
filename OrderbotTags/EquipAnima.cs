@@ -9,6 +9,7 @@ using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Extensions;
+using LlamaLibrary.Helpers;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -70,6 +71,8 @@ namespace LlamaUtilities.OrderbotTags
             }
             else
             {
+                await GeneralFunctions.StopBusy(false, true, false);
+
                 while (!AnimaRelicWeapons[Core.Me.CurrentJob].Contains(mainhand.RawItemId))
                 {
                     if (Core.Me.InCombat)

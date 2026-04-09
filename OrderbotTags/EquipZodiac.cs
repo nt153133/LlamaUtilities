@@ -9,6 +9,7 @@ using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Extensions;
+using LlamaLibrary.Helpers;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -69,6 +70,8 @@ namespace LlamaUtilities.OrderbotTags
             {
                 while (!ZodiacRelicWeapons[Core.Me.CurrentJob].Contains(mainhand.RawItemId))
                 {
+                    await GeneralFunctions.StopBusy(false, true, false);
+
                     if (Core.Me.InCombat)
                     {
                         Log.Information("We are in combat and can't switch weapons.");
