@@ -287,24 +287,33 @@ namespace LlamaUtilities.OrderbotTags
             if (fate == null || !fate.IsValid)
                 return false;
 
-            var result = await CommonTasks.FlyToAndLandAsync(fate.Location.Add(0f, 15, 0f),
+            // 🛑 NEW: Wait until out of combat
+            while (Core.Me.InCombat && !Core.Me.IsDead)
+            {
+                Log.Information("Waiting to leave combat before flying...");
+
+                // Set POI to attackers while waiting (see section 2)
+                var attackers = GameObjectManager.Attackers
+                    .Where(a => a.IsValid && !a.IsDead)
+                    .OrderBy(a => a.Distance());
+
+                var target = attackers.FirstOrDefault();
+                if (target != null)
+                {
+                    Poi.Current = new Poi(target, PoiType.Kill);
+                }
+
+                await Coroutine.Sleep(500);
+            }
+
+            var result = await CommonTasks.FlyToAndLandAsync(
+                                                             fate.Location.Add(0f, 15, 0f),
                                                              abortCondition: () =>
                                                              {
                                                                  var f = getCurrentFate();
                                                                  return f == null || !f.IsValid || ShouldStop();
                                                              },
                                                              destinationName: $"FlyToFateAndLand:{fate.Name}");
-
-            var finalFate = getCurrentFate();
-
-            if (!result && finalFate != null && finalFate.IsValid)
-            {
-                Blacklist.Add(finalFate.Id,
-                              BlacklistFlags.Node,
-                              TimeSpan.FromMinutes(20),
-                              $"Could not fly to fate {finalFate.Name}");
-                Poi.Clear("Could not fly to fate");
-            }
 
             return result;
         }
@@ -712,7 +721,6 @@ namespace LlamaUtilities.OrderbotTags
                            x.unit.CanAttack &&
                            x.unit.IsTargetable &&
                            x.unit.IsVisible &&
-                           x.unit.InLineOfSight() &&
                            x.bc.FateId != 0 &&
                            !x.bc.IsDead)
                 .OrderByDescending(x => x.bc.NpcId == forelornMaiden || x.bc.NpcId == theForlorn)
@@ -726,7 +734,7 @@ namespace LlamaUtilities.OrderbotTags
         }
         public GameObject GetNormalTargets()
         {
-            var _target = GameObjectManager.GameObjects.Where(unit => (unit as BattleCharacter) != null && unit.CanAttack && unit.IsTargetable && unit.IsVisible && unit.InLineOfSight()
+            var _target = GameObjectManager.GameObjects.Where(unit => (unit as BattleCharacter) != null && unit.CanAttack && unit.IsTargetable && unit.IsVisible
                                                                       && (unit as BattleCharacter).FateId == 0 && !(unit as BattleCharacter).IsDead).OrderBy(unit => unit.Distance(Core.Player.Location)).Take(3);
             var targetArray = _target as GameObject[] ?? _target.ToArray();
             if (targetArray.Length > 0 && targetArray[0].MaxHealth > Core.Me.CurrentHealth * 3)
@@ -995,7 +1003,7 @@ namespace LlamaUtilities.OrderbotTags
             // Forlorn Maiden
             if (unit.NpcId == 6737 || unit.NpcId == 6738)
             {
-                weight += 1000f;
+                weight += 100000;
             }
 
             //Units that are targeting the player, focus on low health ones so that we can reduce the incoming damage
