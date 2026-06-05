@@ -23,6 +23,7 @@ namespace LlamaUtilities.OrderbotTags
                     ret => TreeRoot.IsRunning,
                     new Action(r =>
                     {
+                        Log.Information("Stopping bot due to StopBot tag");
                         TreeRoot.Stop();
                         _done = true;
                     })
