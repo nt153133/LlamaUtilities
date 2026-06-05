@@ -20,6 +20,25 @@ namespace LlamaUtilities.LlamaUtilities.Settings
         {
         }
 
+        private bool _doTiisolJa;
+        [Description("Tiisol Ja is the custom delivery NPC located in Tuliyollal.")]
+        [Category("Dawntrail")]
+        [DisplayName("TiisolJa"),Display(Order = 2)]
+        public bool DoTiisolJa
+        {
+            get => _doTiisolJa;
+            set
+            {
+                if (value == _doTiisolJa)
+                {
+                    return;
+                }
+
+                _doTiisolJa = value;
+                OnPropertyChanged();
+            }
+        }
+
         private bool _doNitowikwe;
         [LocalizedDescriptionAttribute("DeliveriesSettings_NitowikweDescription")]
         [Category("Dawntrail")]
