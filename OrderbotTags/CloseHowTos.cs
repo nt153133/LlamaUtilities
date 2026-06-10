@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
 using ff14bot.Managers;
@@ -16,7 +17,18 @@ namespace LlamaUtilities.OrderbotTags
 
         public override bool IsDone => _isDone;
 
-        public CloseHowTos() : base() { }
+        private static readonly string[] TutorialWindows =
+        {
+            "HowToNotice",
+            "HowTo",
+            "PlayGuide",
+            "JobHudNotice",
+            "ContentsTutorial"
+        };
+
+        public CloseHowTos() : base()
+        {
+        }
 
         protected override void OnStart()
         {
@@ -38,62 +50,12 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task CloseWindows()
         {
-            if (RaptureAtkUnitManager.GetWindowByName("HowToNotice") != null)
+            bool hasTutorialWindow = TutorialWindows
+                .Any(window => RaptureAtkUnitManager.GetWindowByName(window) != null);
+
+            if (hasTutorialWindow)
             {
-                do
-                {
-                    var windowbyname = RaptureAtkUnitManager.GetWindowByName("HowToNotice");
-
-                    if (windowbyname != null)
-                    {
-                        windowbyname.SendAction(1, 3, 0);
-                    }
-
-                    await Coroutine.Wait(5000, () => RaptureAtkUnitManager.GetWindowByName("HowTo") != null);
-
-                    windowbyname = RaptureAtkUnitManager.GetWindowByName("HowTo");
-
-                    if (windowbyname != null)
-                    {
-                        windowbyname.SendAction(1, 3uL, 0xFFFFFFFFuL);
-                    }
-
-                    await Coroutine.Sleep(500);
-                } while (RaptureAtkUnitManager.GetWindowByName("HowToNotice") != null);
-            }
-
-            if (RaptureAtkUnitManager.GetWindowByName("HowTo") != null)
-            {
-                RaptureAtkUnitManager.GetWindowByName("HowTo").SendAction(1, 3uL, 0xFFFFFFFFuL);
-            }
-
-            if (RaptureAtkUnitManager.GetWindowByName("PlayGuide") != null)
-            {
-                RaptureAtkUnitManager.GetWindowByName("PlayGuide").SendAction(1, 3uL, 0xFFFFFFFFuL);
-            }
-
-            if (RaptureAtkUnitManager.GetWindowByName("JobHudNotice") != null)
-            {
-                do
-                {
-                    var windowbyname = RaptureAtkUnitManager.GetWindowByName("JobHudNotice");
-
-                    if (windowbyname != null)
-                    {
-                        windowbyname.SendAction(1, 3, 0);
-                    }
-
-                    await Coroutine.Wait(5000, () => RaptureAtkUnitManager.GetWindowByName("Guide") != null);
-
-                    windowbyname = RaptureAtkUnitManager.GetWindowByName("Guide");
-
-                    if (windowbyname != null)
-                    {
-                        windowbyname.SendAction(1, 3uL, 0xFFFFFFFFuL);
-                    }
-
-                    await Coroutine.Sleep(500);
-                } while (RaptureAtkUnitManager.GetWindowByName("HowToNotice") != null);
+                await LlamaLibrary.Helpers.GeneralFunctions.CloseHowTos();
             }
 
             if (JournalAccept.IsOpen)
