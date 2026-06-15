@@ -422,7 +422,7 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             var ticks = 0;
-            if (await CommonTasks.CanLand() == CanLandResult.Yes)
+            if (CommonTasks.CanLand() == CanLandResult.Yes)
             {
                 while (ticks < 100 && await CommonTasks.Land())
                 {
