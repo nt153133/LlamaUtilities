@@ -206,10 +206,10 @@ namespace LlamaUtilities.OrderbotTags
                                                       new PrioritySelector(new Decorator(ret => UseV2,
                                                                                          new ActionRunCoroutine(obj => FlyToFateAndLand(() => currentfate))),
                                                                            new Decorator(ret => UseGetTo,
-                                                                                         new ActionRunCoroutine(obj => FlyToFateAndLand(() => currentfate))),
+                                                                                         new ActionRunCoroutine(obj => Navigation.GetTo(WorldManager.ZoneId, currentfate.Location))),
                                                                            new Decorator(ret => UseFlight,
-                                                                                         new ActionRunCoroutine(obj => FlyToFateAndLand(() => currentfate))),
-                                                                           new ActionRunCoroutine(obj => FlyToFateAndLand(() => currentfate)))),
+                                                                                         new ActionRunCoroutine(obj => Lisbeth.TravelToZones(WorldManager.ZoneId, Position))),
+                                                                           new ActionRunCoroutine(obj => Navigation.FlightorMove(currentfate)))),
                                         new Decorator(r => currentfate != null && FateManager.WithinFate && currentfate.Icon == FateIconType.KillHandIn && currentfate.TimeLeft.Minutes <= 8,
                                                       new Sequence(new ActionRunCoroutine(async r =>
                                                                    {
