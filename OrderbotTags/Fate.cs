@@ -197,7 +197,8 @@ namespace LlamaUtilities.OrderbotTags
                                                       new PrioritySelector(
                                                                            new Decorator(ret => UseFlight && AetherCurrentManager.FinishedZones.Contains(WorldManager.ZoneId),
                                                                                          new ActionRunCoroutine(obj => FlyToFateAndLand(() => currentfate))),
-                                                                           new ActionRunCoroutine(obj => Navigation.FlightorMove(currentfate)))),
+                                                                           // Using GetTo rather than Navigation.FlightorMove as FlightorMove won't take advantage of Aetherytes
+                                                                           new ActionRunCoroutine(obj => Navigation.GetTo(WorldManager.ZoneId, currentfate.Location)))),
                                         new Decorator(r => currentfate != null && FateManager.WithinFate && currentfate.Icon == FateIconType.KillHandIn && currentfate.TimeLeft.Minutes <= 8,
                                                       new Sequence(new ActionRunCoroutine(async r =>
                                                                    {
