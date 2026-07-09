@@ -43,13 +43,12 @@
         <Reference Include="System.Xml"/>
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="LlamaLibrary" Version="25.1216.851.5" />
-      <PackageReference Include="RebornBuddy.ReferenceAssemblies" Version="1.0.789" />
+      <PackageReference Include="LlamaLibrary" Version="26.709.1607.57" />
+      <PackageReference Include="RebornBuddy.ReferenceAssemblies" Version="1.0.883" />
     </ItemGroup>
     <ItemGroup>
       <Compile Remove="OrderbotTags\LLUseItem.cs" />
       <Compile Remove="OrderbotTags\LLTalkTo.cs" />
-      <Compile Remove="OrderbotTags\LLSimpleDuty.cs" />
       <Compile Remove="OrderbotTags\LLPickUpQuest.cs" />
       <Compile Remove="OrderbotTags\LLExtendedDutyTag.cs" />
       <Compile Remove="OrderbotTags\LLEmoteNpc.cs" />

@@ -5,6 +5,7 @@ using Clio.XmlEngine;
 using ff14bot.Behavior;
 using ff14bot.Managers;
 using LlamaLibrary.Helpers;
+using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 using static LlamaLibrary.Helpers.GeneralFunctions;
 
@@ -45,6 +46,11 @@ namespace LlamaUtilities.OrderbotTags
             {
                 await Coroutine.Yield();
                 return;
+            }
+
+            if (Class2JobHotbar.Instance.IsOpen)
+            {
+                Class2JobHotbar.Instance.Transfer();
             }
 
             await CommonTasks.StopAndDismount();
