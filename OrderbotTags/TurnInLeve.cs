@@ -114,7 +114,6 @@ namespace LlamaUtilities.OrderbotTags
                         //Log.Information("SelectYesNo is open");
                         SelectYesno.Yes();
                         await Coroutine.Wait(2000, () => SelectString.IsOpen || Talk.DialogOpen);
-
                     }
 
                     if (Talk.DialogOpen)
@@ -129,12 +128,22 @@ namespace LlamaUtilities.OrderbotTags
                         }
                     }
 
+                    if (JournalDetail.Instance.IsOpen)
+                    {
+                        JournalDetail.Instance.Close();
+                    }
+
                     if (SelectString.IsOpen)
                     {
-                        //Log.Information("SelectString open, exiting");
-                        return;
+                        SelectString.ClickSlot(4);
                     }
+
                 }
+            }
+
+            if (Conversation.IsOpen)
+            {
+                Conversation.SelectQuit();
             }
 
             await GeneralFunctions.StopBusy();

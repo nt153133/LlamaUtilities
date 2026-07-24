@@ -6,13 +6,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using Buddy.Coroutines;
+using Clio.Utilities;
 using Clio.XmlEngine;
 using ff14bot;
 using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.RemoteWindows;
 using LlamaLibrary.Extensions;
-using LlamaLibrary.JsonObjects.Lisbeth;
+using LlamaLibrary.Helpers.NPC;
+using LlamaLibrary.RemoteWindows;
 using TreeSharp;
 using FontFamily = System.Drawing.FontFamily;
 
@@ -31,11 +33,52 @@ namespace LlamaUtilities.OrderbotTags
 
         internal static int SquareMapleShield = 2219;
 
+        private sealed class PurchaseLocation
+        {
+            public Npc Vendor { get; }
+            public string[] MenuPath { get; }
+
+            public PurchaseLocation(Npc vendor, params string[] menuPath)
+            {
+                Vendor = vendor;
+                MenuPath = menuPath;
+            }
+        }
+
+        private static readonly Npc Faezghim = new Npc(1001205, 129, new Vector3(-236.44193f, 16.2f, 39.911392f));
+        private static readonly Npc Syneyhil = new Npc(1003254, 129, new Vector3(-246.66823f, 16.2f, 40.76276f));
+        private static readonly Npc Itto = new Npc(1018990, 628, new Vector3(39.97506f, 4.000001f, 51.724182f));
+        private static readonly Npc ShaiTistt = new Npc(1027991, 819, new Vector3(-124.95716f, -1.0881592f, 97.74429f));
+
+        private static readonly HashSet<int> DiscipleOfWarWeapons = new HashSet<int>
+        {
+            1601, 1680, 1749, 1819, 1889, 7952, 10400, 10462, SquareMapleShield
+        };
+
+        private static readonly HashSet<int> DiscipleOfMagicWeapons = new HashSet<int>
+        {
+            1995, 2055, 2142, 10524
+        };
+
+        private static readonly HashSet<int> HandTools = new HashSet<int>
+        {
+            2314, 2340, 2366, 2391, 2416, 2442, 2467, 2493
+        };
+
+        private static readonly HashSet<int> LandTools = new HashSet<int>
+        {
+            2519, 2545, 2571
+        };
+
         public override bool HighPriority => true;
 
         [XmlAttribute("UpdateGearSet")]
         [DefaultValue(false)]
         public bool UpdateGearSet { get; set; } = false;
+
+        [XmlAttribute("RequiredItemLevel")]
+        [DefaultValue(-1)]
+        public int RequiredItemLevel { get; set; } = -1;
 
         public EquipOtherWeapon() : base()
         {
@@ -137,7 +180,7 @@ namespace LlamaUtilities.OrderbotTags
                 // Gatherers
                 new KeyValuePair<ClassJobType, int>(ClassJobType.Miner, 2519), // Weathered Pickaxe
                 new KeyValuePair<ClassJobType, int>(ClassJobType.Botanist, 2545), // Weathered Hatchet
-                new KeyValuePair<ClassJobType, int>(ClassJobType.Botanist, 2571), // Weathered Fishing Rod
+                new KeyValuePair<ClassJobType, int>(ClassJobType.Fisher, 2571), // Weathered Fishing Rod
             };
 
             var gearSets = GearsetManager.GearSets.Where(i => i.InUse);
@@ -154,14 +197,52 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             var categoryFound = Enum.TryParse(Job, true, out ItemUiCategory category);
-            var item = InventoryManager.FilledInventoryAndArmory
-                .Where(i => i.Item.EquipmentCatagory == category && InventoryManager.GetBagByInventoryBagId(ff14bot.Enums.InventoryBagId.EquippedItems)[ff14bot.Enums.EquipmentSlot.MainHand].RawItemId != i.RawItemId)
-                .OrderByDescending(i => i.Item.ItemLevel).FirstOrDefault();
+            var equippedWeapon = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.MainHand];
+            var equippedWeaponId = equippedWeapon.RawItemId;
+            var matchingWeapons = InventoryManager.FilledInventoryAndArmory
+                .Where(i => i.Item.EquipmentCatagory == category && equippedWeaponId != i.RawItemId);
+
+            var item = RequiredItemLevel >= 0
+                ? matchingWeapons.OrderBy(i => Math.Abs((int)i.Item.ItemLevel - RequiredItemLevel)).ThenBy(i => i.Item.ItemLevel).FirstOrDefault()
+                : matchingWeapons.OrderByDescending(i => i.Item.ItemLevel).FirstOrDefault();
+
+            var mappedItem = weapon == 0 ? null : DataManager.GetItem((uint)weapon);
+            var mappedItemIsCloser = RequiredItemLevel >= 0 && mappedItem != null &&
+                                     (item == null || Math.Abs((int)mappedItem.ItemLevel - RequiredItemLevel) < Math.Abs((int)item.Item.ItemLevel - RequiredItemLevel));
             var EquipSlot = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.MainHand];
 
-            if (categoryFound && item != null)
+            if (RequiredItemLevel >= 0 && equippedWeapon.IsFilled)
+            {
+                var equippedDistance = Math.Abs((int)equippedWeapon.Item.ItemLevel - RequiredItemLevel);
+                var ownedDistance = item == null
+                    ? int.MaxValue
+                    : Math.Abs((int)item.Item.ItemLevel - RequiredItemLevel);
+                var mappedDistance = mappedItem == null
+                    ? int.MaxValue
+                    : Math.Abs((int)mappedItem.ItemLevel - RequiredItemLevel);
+
+                if (equippedDistance <= ownedDistance && equippedDistance <= mappedDistance)
+                {
+                    Log.Information($"Already equipped with {equippedWeapon.EnglishName} (item level {equippedWeapon.Item.ItemLevel}), " +
+                                    $"which is closest to requested item level {RequiredItemLevel}. No main-hand change is needed.");
+
+                    if (Core.Me.CurrentJob == ClassJobType.Paladin)
+                    {
+                        await EnsurePaladinShield();
+                    }
+
+                    _isDone = true;
+                    return;
+                }
+            }
+
+            if (categoryFound && item != null && !mappedItemIsCloser)
             {
                 Log.Information($"Found Item Category: {category}");
+                if (RequiredItemLevel >= 0)
+                {
+                    Log.Information($"Using owned {item.Item.CurrentLocaleName} (item level {item.Item.ItemLevel}); it is closest to requested item level {RequiredItemLevel}.");
+                }
                 Log.Information($"Equipping {DataManager.GetItem(item.RawItemId).CurrentLocaleName}");
                 if (item != null)
                 {
@@ -174,7 +255,15 @@ namespace LlamaUtilities.OrderbotTags
             }
             else
             {
-                Log.Information($"No other weapons found, buying new one.");
+                if (mappedItemIsCloser && item != null)
+                {
+                    Log.Information($"Mapped {mappedItem.CurrentLocaleName} (item level {mappedItem.ItemLevel}) is closer to requested item level {RequiredItemLevel} than owned {item.Item.CurrentLocaleName} (item level {item.Item.ItemLevel}).");
+                }
+                else
+                {
+                    Log.Information("No suitable other weapon was found; buying the mapped weapon.");
+                }
+
                 await BuyNewWeapon(weapon);
             }
 
@@ -183,53 +272,53 @@ namespace LlamaUtilities.OrderbotTags
 
         internal async Task BuyNewWeapon(int weapon)
         {
-            var message = $"Couldn't find other weapon for {Core.Me.CurrentJob}. Attempting to purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName} with Lisbeth";
-            Core.OverlayManager.AddToast(() => $"" + message,
-                                         TimeSpan.FromMilliseconds(10000),
-                                         System.Windows.Media.Color.FromRgb((byte)13, (byte)106, (byte)175),
-                                         System.Windows.Media.Color.FromRgb(13, 106, 175),
-                                         new System.Windows.Media.FontFamily("Gautami"));
-            Log.Information(message);
-            /*
-            if (!await LlamaLibrary.Helpers.Lisbeth.IsProductKeyValid())
+            if (weapon == 0)
             {
-                Log.Error("Lisbeth key is not valid, unable to automatically purchase weapon.");
-                return;
-            }
-            */
-
-            if (InventoryManager.GetBagByInventoryBagId(InventoryBagId.Armory_MainHand).FreeSlots < 1)
-            {
-                Log.Error("You have no free slots in your MainHand armory so we can't equip a new weapon.");
+                Log.Error($"No purchase weapon is configured for {Core.Me.CurrentJob}.");
                 return;
             }
 
-            if (InventoryManager.GetBagByInventoryBagId(InventoryBagId.Armory_OffHand).FreeSlots < 1)
-            {
-                Log.Error("You have no free slots in your OffHand armory so we can't equip a new weapon.");
-                return;
-            }
-
-            var order = new LlamaLibrary.JsonObjects.Lisbeth.Order()
-            {
-                Amount = 1,
-                AmountMode = LlamaLibrary.JsonObjects.Lisbeth.AmountMode.Restock,
-                Item = (uint)weapon,
-                Type = LlamaLibrary.JsonObjects.Lisbeth.SourceType.Purchase
-            };
-
-            if (!await LlamaLibrary.Helpers.Lisbeth.ExecuteOrders(LlamaLibrary.Extensions.OtherExtensions.GetOrderJson(new List<LlamaLibrary.JsonObjects.Lisbeth.Order>() { order })))
-            {
-                Log.Error($"Could not purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName}");
-            }
-
-            var item = InventoryManager.FilledInventoryAndArmory.Where(i => i.RawItemId == weapon).OrderByDescending(i => i.Item.ItemLevel).FirstOrDefault();
+            var item = FindOwnedItem((uint)weapon, EquipmentSlot.MainHand);
             var EquipSlot = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.MainHand];
+
+            if (item == null)
+            {
+                var message = $"Couldn't find another weapon for {Core.Me.CurrentJob}. Attempting to purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName} with RebornBuddy";
+                Core.OverlayManager.AddToast(() => $"" + message,
+                                             TimeSpan.FromMilliseconds(10000),
+                                             System.Windows.Media.Color.FromRgb((byte)13, (byte)106, (byte)175),
+                                             System.Windows.Media.Color.FromRgb(13, 106, 175),
+                                             new System.Windows.Media.FontFamily("Gautami"));
+                Log.Information(message);
+
+                if (InventoryManager.GetBagByInventoryBagId(InventoryBagId.Armory_MainHand).FreeSlots < 1)
+                {
+                    Log.Error("You have no free slots in your MainHand armory so we can't equip a new weapon.");
+                    return;
+                }
+
+                if (!await PurchaseWeapon((uint)weapon))
+                {
+                    Log.Error($"Could not purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName}");
+                    return;
+                }
+
+                item = FindOwnedItem((uint)weapon, EquipmentSlot.MainHand);
+            }
+            else
+            {
+                Log.Information($"Already own {item.EnglishName}; skipping the purchase.");
+            }
 
             Log.Information($"Found Item {item}");
             if (item != null)
             {
-                item.Move(EquipSlot);
+                if (item.BagId != InventoryBagId.EquippedItems || item.Slot != EquipSlot.Slot)
+                {
+                    item.Move(EquipSlot);
+                    await Coroutine.Sleep(250);
+                }
+
                 if (UpdateGearSet)
                 {
                     await LlamaLibrary.ScriptConditions.Helpers.UpdateGearSet();
@@ -238,35 +327,232 @@ namespace LlamaUtilities.OrderbotTags
 
             if (Core.Me.CurrentJob == ClassJobType.Paladin)
             {
-                weapon = SquareMapleShield;
+                await EnsurePaladinShield();
+            }
+        }
 
-                Log.Information($"Couldn't find item category for {Core.Me.CurrentJob}. Attempting to purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName} with Lisbeth");
+        private async Task EnsurePaladinShield()
+        {
+            var shieldId = (uint)SquareMapleShield;
+            var equipSlot = InventoryManager
+                .GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.OffHand];
+            var item = FindOwnedItem(shieldId, EquipmentSlot.OffHand);
 
-                order = new LlamaLibrary.JsonObjects.Lisbeth.Order()
+            if (item == null)
+            {
+                Log.Information($"Attempting to purchase {DataManager.GetItem(shieldId).CurrentLocaleName} with RebornBuddy");
+
+                if (InventoryManager.GetBagByInventoryBagId(InventoryBagId.Armory_OffHand).FreeSlots < 1)
                 {
-                    Amount = 1,
-                    AmountMode = LlamaLibrary.JsonObjects.Lisbeth.AmountMode.Restock,
-                    Item = (uint)weapon,
-                    Type = LlamaLibrary.JsonObjects.Lisbeth.SourceType.Purchase
-                };
-
-                if (!await LlamaLibrary.Helpers.Lisbeth.ExecuteOrders(LlamaLibrary.Extensions.OtherExtensions.GetOrderJson(new List<LlamaLibrary.JsonObjects.Lisbeth.Order>() { order })))
-                {
-                    Log.Error($"Could not purchase {DataManager.GetItem((uint)weapon).CurrentLocaleName}");
+                    Log.Error("You have no free slots in your OffHand armory so we can't equip a new shield.");
+                    return;
                 }
 
-                item = InventoryManager.FilledInventoryAndArmory.Where(i => i.RawItemId == weapon).OrderByDescending(i => i.Item.ItemLevel).FirstOrDefault();
-                EquipSlot = InventoryManager.GetBagByInventoryBagId(InventoryBagId.EquippedItems)[EquipmentSlot.OffHand];
-
-                Log.Information($"Found Item {item}");
-                if (item != null)
+                if (!await PurchaseWeapon(shieldId))
                 {
-                    item.Move(EquipSlot);
-                    if (UpdateGearSet)
-                    {
-                        await LlamaLibrary.ScriptConditions.Helpers.UpdateGearSet();
-                    }
+                    Log.Error($"Could not purchase {DataManager.GetItem(shieldId).CurrentLocaleName}");
+                    return;
                 }
+
+                item = FindOwnedItem(shieldId, EquipmentSlot.OffHand);
+            }
+            else
+            {
+                Log.Information($"Already own {item.EnglishName}; skipping the purchase.");
+            }
+
+            Log.Information($"Found Item {item}");
+            if (item == null)
+            {
+                return;
+            }
+
+            if (item.BagId != InventoryBagId.EquippedItems || item.Slot != equipSlot.Slot)
+            {
+                item.Move(equipSlot);
+                await Coroutine.Sleep(250);
+            }
+
+            if (UpdateGearSet)
+            {
+                await LlamaLibrary.ScriptConditions.Helpers.UpdateGearSet();
+            }
+        }
+
+        private static BagSlot FindOwnedItem(uint itemId, EquipmentSlot preferredEquipmentSlot)
+        {
+            var equippedSlot = InventoryManager
+                .GetBagByInventoryBagId(InventoryBagId.EquippedItems)[preferredEquipmentSlot];
+
+            if (equippedSlot.IsFilled && equippedSlot.RawItemId == itemId)
+            {
+                return equippedSlot;
+            }
+
+            return InventoryManager.FilledInventoryAndArmory
+                .FirstOrDefault(slot => slot.RawItemId == itemId);
+        }
+
+        private static PurchaseLocation GetPurchaseLocation(int itemId)
+        {
+            if (DiscipleOfWarWeapons.Contains(itemId))
+            {
+                var levelRange = itemId == 10400 || itemId == 10462 ? "30-39" : "1-9";
+                return new PurchaseLocation(Faezghim, "Purchase Disciple of War Arms", $"Purchase Weapons (Lv. {levelRange})");
+            }
+
+            if (DiscipleOfMagicWeapons.Contains(itemId))
+            {
+                var levelRange = itemId == 10524 ? "30-39" : "1-9";
+                return new PurchaseLocation(Faezghim, "Purchase Disciple of Magic Arms", $"Purchase Weapons (Lv. {levelRange})");
+            }
+
+            if (HandTools.Contains(itemId))
+            {
+                return new PurchaseLocation(Syneyhil, "Purchase Disciple of the Hand Tools", "Purchase Tools (Lv. 1-9)");
+            }
+
+            if (LandTools.Contains(itemId))
+            {
+                return new PurchaseLocation(Syneyhil, "Purchase Disciple of the Land Tools", "Purchase Tools (Lv. 1-9)");
+            }
+
+            if (itemId == 18046)
+            {
+                return new PurchaseLocation(Itto, "Purchase Weapons (Lv. 60)");
+            }
+
+            if (itemId == 18203)
+            {
+                return new PurchaseLocation(Itto, "Purchase Weapons (Lv. 62)");
+            }
+
+            if (itemId == 34091)
+            {
+                return new PurchaseLocation(ShaiTistt, "Purchase Weapons (Lv. 80)");
+            }
+
+            if (itemId == 25643 || itemId == 25644 || itemId == 35760 || itemId == 35778)
+            {
+                return new PurchaseLocation(ShaiTistt, "Purchase Weapons (Lv. 70)");
+            }
+
+            return null;
+        }
+
+        private async Task<bool> PurchaseWeapon(uint itemId)
+        {
+            var location = GetPurchaseLocation((int)itemId);
+            if (location == null)
+            {
+                Log.Error($"No RebornBuddy vendor is configured for item {itemId}.");
+                return false;
+            }
+
+            // A previous purchase (notably Paladin main hand followed by shield) can
+            // return to a parent merchant menu. Always begin from a clean state.
+            if (Shop.Open || Conversation.IsOpen)
+            {
+                await CloseVendorWindows();
+            }
+
+            var countBefore = InventoryManager.FilledInventoryAndArmory.Count(slot => slot.RawItemId == itemId);
+
+            if (!await LlamaLibrary.Helpers.Navigation.GetToInteractNpcSelectString(location.Vendor))
+            {
+                Log.Error($"Could not reach or interact with {location.Vendor.Name}.");
+                return false;
+            }
+
+            foreach (var menuEntry in location.MenuPath)
+            {
+                if (!await Coroutine.Wait(5000, () => Conversation.IsOpen))
+                {
+                    Log.Error($"The shop menu did not open at {location.Vendor.Name}.");
+                    await CloseVendorWindows();
+                    return false;
+                }
+
+                var previousMenu = string.Join("\n", Conversation.GetConversationList);
+                if (!Conversation.SelectLineContains(menuEntry))
+                {
+                    Log.Error($"Could not find shop option '{menuEntry}' at {location.Vendor.Name}. Available options: {string.Join(" | ", Conversation.GetConversationList)}");
+                    await CloseVendorWindows();
+                    return false;
+                }
+
+                await Coroutine.Wait(5000, () => Shop.Open || !Conversation.IsOpen || string.Join("\n", Conversation.GetConversationList) != previousMenu);
+                await Coroutine.Wait(5000, () => Shop.Open || Conversation.IsOpen);
+            }
+
+            if (!await Coroutine.Wait(5000, () => Shop.Open))
+            {
+                Log.Error($"The requested shop did not open at {location.Vendor.Name}.");
+                await CloseVendorWindows();
+                return false;
+            }
+
+            if (!Shop.Items.Any(shopItem => shopItem.ItemId == itemId))
+            {
+                Log.Error($"{location.Vendor.Name}'s selected shop does not sell {DataManager.GetItem(itemId).CurrentLocaleName}.");
+                await CloseVendorWindows();
+                return false;
+            }
+
+            Log.Information($"Purchasing {DataManager.GetItem(itemId).CurrentLocaleName} from {location.Vendor.Name}.");
+            Shop.Purchase(itemId, 1);
+
+            if (!await Coroutine.Wait(5000, () => SelectYesno.IsOpen))
+            {
+                Log.Error("The purchase confirmation window did not open.");
+                await CloseVendorWindows();
+                return false;
+            }
+
+            SelectYesno.Yes();
+            await Coroutine.Wait(5000, () => !SelectYesno.IsOpen);
+            await Coroutine.Wait(5000, () => InventoryManager.FilledInventoryAndArmory.Count(slot => slot.RawItemId == itemId) > countBefore);
+            await Coroutine.Sleep(500);
+            await CloseVendorWindows();
+
+            return InventoryManager.FilledInventoryAndArmory.Count(slot => slot.RawItemId == itemId) > countBefore;
+        }
+
+        private async Task CloseVendorWindows()
+        {
+            // Closing a shop returns to its parent SelectString menu. Walk back through
+            // every parent menu by selecting the final Cancel/Exit entry. Require the
+            // windows to remain closed briefly so transitions cannot fool the cleanup.
+            for (var attempt = 0; attempt < 8; attempt++)
+            {
+                if (Shop.Open)
+                {
+                    Shop.Close();
+                    await Coroutine.Wait(3000, () => !Shop.Open);
+                    await Coroutine.Sleep(350);
+                    continue;
+                }
+
+                if (Conversation.IsOpen)
+                {
+                    var previousMenu = string.Join("\n", Conversation.GetConversationList);
+                    Conversation.SelectQuit();
+
+                    await Coroutine.Wait(3000, () => !Conversation.IsOpen || string.Join("\n", Conversation.GetConversationList) != previousMenu);
+                    await Coroutine.Sleep(350);
+                    continue;
+                }
+
+                await Coroutine.Sleep(500);
+                if (!Shop.Open && !Conversation.IsOpen)
+                {
+                    return;
+                }
+            }
+
+            if (Shop.Open || Conversation.IsOpen)
+            {
+                Log.Warning($"Could not completely close the vendor windows. Shop open: {Shop.Open}; remaining options: {string.Join(" | ", Conversation.GetConversationList)}");
             }
         }
 
