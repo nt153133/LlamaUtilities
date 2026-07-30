@@ -59,6 +59,10 @@ namespace LlamaUtilities.OrderbotTags
         [DefaultValue(3.24f)]
         public float UseDistance { get; set; }
 
+        [XmlAttribute("IgnoreVerticalDistance")]
+        [DefaultValue(false)]
+        public bool IgnoreVerticalDistance { get; set; }
+
         [XmlElement("HotSpots")]
         public IndexedList<HotSpot> Hotspots { get; set; }
 
@@ -121,6 +125,11 @@ namespace LlamaUtilities.OrderbotTags
         private Composite CustomLogic => new Decorator(
                         r => (r as GameObject) != null,
                         new PrioritySelector(
+                            new Decorator(
+                                r => IgnoreVerticalDistance &&
+                                     ((GameObject)r).Location.Distance2D(Core.Me.Location) <= UseDistance,
+                                CreateUseSpell()
+                            ),
                             CommonBehaviors.MoveAndStop(ret => ((GameObject)ret).Location, UseDistance, true),
                             CreateUseSpell()
                          )
