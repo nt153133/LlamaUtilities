@@ -140,6 +140,11 @@ namespace LlamaUtilities.OrderbotTags
         public static int currentstep = 0; //currentstep 1 we are in a fate / currentstep 0 we are not in a fate
 
         private static readonly Stopwatch ClusterTimer = Stopwatch.StartNew();
+
+        // After a FATE retires, combat can linger briefly even though its enemies are already
+        // retreating. Keep defensive cleanup local to the handoff point; following a retreating
+        // attacker here makes the combat routine run indefinitely away from the completed FATE.
+        private const float PostFateCombatLeash = 20f;
         protected Func<bool> condition;
 
         public LLFate() : base()
@@ -320,29 +325,65 @@ namespace LlamaUtilities.OrderbotTags
             var selectedFateName = fate.Name;
             var selectedFateLocation = fate.Location;
 
-            // 🛑 NEW: Wait until out of combat
+            // Flight cannot begin while combat is still active. Anchor this wait so a retreating
+            // enemy from the previous FATE cannot drag the combat routine across the zone while
+            // LLFate is waiting to mount for the newly selected event.
+            var combatWaitAnchor = Core.Player.Location;
+            var combatWaitAnnounced = false;
+            var combatWaitMovementCleared = false;
             while (Core.Me.InCombat && !Core.Me.IsDead)
             {
-                if (ShouldStop())
+                if (ShouldStop() ||
+                    WorldManager.ZoneId != llFateZoneId ||
+                    !IsUsableFate(FateManager.GetFateById(selectedFateId), selectedFateId, false))
                 {
                     Navigator.Stop();
+                    MovementManager.MoveStop();
                     return false;
                 }
 
-                Log.Information("Waiting to leave combat before flying...");
+                if (!combatWaitAnnounced)
+                {
+                    Log.Information("Waiting to leave combat before flying...");
+                    combatWaitAnnounced = true;
+                }
 
-                // Set POI to attackers while waiting (see section 2)
-                var attackers = GameObjectManager.Attackers
-                    .Where(a => a.IsValid && !a.IsDead)
-                    .OrderBy(a => a.Distance());
-
-                var target = attackers.FirstOrDefault();
+                var target = GameObjectManager.Attackers
+                    .Where(a => a.IsValid &&
+                                !a.IsDead &&
+                                Vector3.Distance(a.Location, combatWaitAnchor) <= PostFateCombatLeash)
+                    .OrderBy(a => a.Distance())
+                    .FirstOrDefault();
                 if (target != null)
                 {
-                    Poi.Current = new Poi(target, PoiType.Kill);
+                    var existingTarget = Poi.Current?.BattleCharacter;
+                    if (Poi.Current?.Type != PoiType.Kill || existingTarget?.ObjectId != target.ObjectId)
+                    {
+                        Poi.Current = new Poi(target, PoiType.Kill);
+                    }
+
+                    combatWaitMovementCleared = false;
+                }
+                else if (!combatWaitMovementCleared)
+                {
+                    // POI and current target are separate combat inputs in RebornBuddy. Clear both,
+                    // then release every ground-movement owner so the routine cannot keep chasing a
+                    // target that has crossed the post-FATE leash.
+                    Poi.Clear("No nearby attacker during post-FATE combat wait");
+                    Core.Player.ClearTarget();
+                    Navigator.Stop();
+                    MovementManager.MoveStop();
+                    combatWaitMovementCleared = true;
                 }
 
                 await Coroutine.Sleep(500);
+            }
+
+            if (combatWaitAnnounced)
+            {
+                Poi.Clear("Post-FATE combat wait completed");
+                Navigator.Stop();
+                MovementManager.MoveStop();
             }
 
             var result = await CommonTasks.FlyToAndLandAsync(
