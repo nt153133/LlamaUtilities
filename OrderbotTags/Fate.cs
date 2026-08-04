@@ -65,6 +65,8 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("BlacklistId")]
         [XmlAttribute("BlacklistIDs")]
         [XmlAttribute("BlacklistIds")]
+        [XmlAttribute("Blacklist")]
+        [XmlAttribute("blacklist")]
         [DefaultValue(new int[0])]
         public int[] BlacklistIds { get; set; }
 
@@ -80,6 +82,22 @@ namespace LlamaUtilities.OrderbotTags
         [DefaultValue(false)]
         public bool SharedFate { get; set; }
 
+        /// <summary>
+        /// Gets or sets whether LLFate should kill nearby non-FATE enemies while waiting for an eligible FATE.
+        /// Hunting is opt-in so existing profiles remain focused exclusively on their configured FATE objectives.
+        /// </summary>
+        [XmlAttribute("HuntBetweenFates")]
+        [DefaultValue(false)]
+        public bool HuntBetweenFates { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum distance, in yalms, at which LLFate may select an idle-hunting target.
+        /// The bound prevents downtime hunting from pulling the character far enough away to delay a new FATE.
+        /// </summary>
+        [XmlAttribute("HuntRadius")]
+        [DefaultValue(50f)]
+        public float HuntRadius { get; set; } = 50f;
+
         private readonly BattleCharacter npc;
         private readonly FatebotSettings fatebotInstance = FatebotSettings.Instance;
 
@@ -87,16 +105,22 @@ namespace LlamaUtilities.OrderbotTags
         private uint lastFateId = 0;
 
         private DateTime saveNow = DateTime.Now;
-        private readonly bool hunting = false;
         public override bool IsDone => _done;
 
         //some Statistics
         private FateData currentfate;
         private FateData fateImIn;
 
-        private readonly int fatesDone;
+        private int fatesDone;
         private int mobsHunted;
         private int died;
+        private bool wasDead;
+        private bool sessionSummaryReported;
+        private uint huntedTargetObjectId;
+        private uint llFateZoneId;
+        private bool zoneSafetyTriggered;
+        private bool participatedInTrackedFate;
+        private readonly HashSet<uint> rejectedFateIds = new HashSet<uint>();
 
         //----------------------
         public bool IsCompleted = false;
@@ -105,6 +129,7 @@ namespace LlamaUtilities.OrderbotTags
         public static Vector3 Position = new Vector3(0f, 0f, 0f);
 
         private uint fateid = 0;
+        private float fateRadius;
         private string fateName = "";
         private string fateStatus = "";
         private ITargetingProvider tempProvider;
@@ -115,6 +140,11 @@ namespace LlamaUtilities.OrderbotTags
         public static int currentstep = 0; //currentstep 1 we are in a fate / currentstep 0 we are not in a fate
 
         private static readonly Stopwatch ClusterTimer = Stopwatch.StartNew();
+
+        // After a FATE retires, combat can linger briefly even though its enemies are already
+        // retreating. Keep defensive cleanup local to the handoff point; following a retreating
+        // attacker here makes the combat routine run indefinitely away from the completed FATE.
+        private const float PostFateCombatLeash = 20f;
         protected Func<bool> condition;
 
         public LLFate() : base()
@@ -123,7 +153,8 @@ namespace LlamaUtilities.OrderbotTags
 
         private bool ShouldStop()
         {
-            return GetCondition() != null && !GetCondition()();
+            var compiledCondition = GetCondition();
+            return compiledCondition != null && !compiledCondition();
         }
 
         private Func<bool> GetCondition()
@@ -151,17 +182,21 @@ namespace LlamaUtilities.OrderbotTags
         [Obsolete]
         protected override Composite CreateBehavior()
         {
-            return new PrioritySelector(new Decorator(ret => ShouldStop(),
-                                                      new Action(r => OnDoneWhile())),
-                                        new Decorator(ret => DateTime.Now > saveNow + TimeSpan.FromSeconds(_timeout) && currentstep == 0,
-                                                      new Action(r => OnTimeout())),
-
-                                        // This one will run always kind of a pulse one
+            return new PrioritySelector(
+                                        // Session tracking must run before the stop condition. Reward-based while
+                                        // conditions commonly turn false on the same pulse that the FATE completes.
                                         new Sequence(new Action(r => CountDeath()),
+                                                     new Action(r => UpdateHuntStatistics()),
+                                                     new Action(r => EnforceZoneBoundary()),
                                                      new Action(r => IsFateStillActive()),
+                                                     new Action(r => ValidateTrackedFate()),
                                                      new Action(r => UpdateFateData()),
                                                      new ActionAlwaysFail() //always fail that the rest of the tree is traveresd
                                                     ),
+                                        new Decorator(ret => ShouldStop(),
+                                                      new Action(r => OnDoneWhile())),
+                                        new Decorator(ret => DateTime.Now > saveNow + TimeSpan.FromSeconds(_timeout) && currentstep == 0,
+                                                      new Action(r => OnTimeout())),
 
                                         // Start fighting Fate Mobs but only when we are in close range to the fate position.
                                         new Decorator(r => currentfate != null && FateManager.WithinFate && Core.Me.ElementalLevel > 0 && currentfate.MaxLevel < Core.Me.ElementalLevel,
@@ -175,13 +210,8 @@ namespace LlamaUtilities.OrderbotTags
 
                                                           return false;
                                                       })),
-                                        new Decorator(r => currentfate != null && FateManager.WithinFate,
-                                                      new ActionRunCoroutine(r =>
-                                                      {
-                                                          Log.Information($"In fate {Core.Me.ElementalLevel} > 0 && {currentfate.MaxLevel} < {Core.Me.ElementalLevel}.");
-
-                                                          return Task.FromResult(false);
-                                                      })),
+                                        // State-only diagnostics do not belong in this per-pulse path: log only
+                                        // the level-sync action below so ordinary FATE participation stays quiet.
                                         new Decorator(r => currentfate != null && FateManager.WithinFate && currentfate.MaxLevel < Core.Player.ClassLevel && !Core.Me.IsLevelSynced,
                                                       new ActionRunCoroutine(async r =>
                                                       {
@@ -193,12 +223,16 @@ namespace LlamaUtilities.OrderbotTags
 
                                                           return false;
                                                       })),
-                                        new Decorator(ret => currentstep == 1 && Vector3.Distance(Core.Player.Location, Position) > (currentfate.Radius - 10),
+                                        new Decorator(ret => !ShouldStop() && currentstep == 1 && Vector3.Distance(Core.Player.Location, Position) > (fateRadius - 10),
                                                       new PrioritySelector(
                                                                            new Decorator(ret => UseFlight && AetherCurrentManager.FinishedZones.Contains(WorldManager.ZoneId),
                                                                                          new ActionRunCoroutine(obj => FlyToFateAndLand(() => currentfate))),
-                                                                           // Using GetTo rather than Navigation.FlightorMove as FlightorMove won't take advantage of Aetherytes
-                                                                           new ActionRunCoroutine(obj => Navigation.GetTo(WorldManager.ZoneId, currentfate.Location)))),
+                                                                           // LLFate is already bounded to its starting zone, so ground travel must
+                                                                           // remain pulse-driven to recheck While instead of entering GetTo's
+                                                                           // uninterruptible navigation-graph coroutine.
+                                                                           new Decorator(ret => WorldManager.ZoneId == llFateZoneId &&
+                                                                                                IsUsableFate(FateManager.GetFateById(fateid), fateid, false),
+                                                                                         new ActionRunCoroutine(obj => GroundMoveToFate())))),
                                         new Decorator(r => currentfate != null && FateManager.WithinFate && currentfate.Icon == FateIconType.KillHandIn && currentfate.TimeLeft.Minutes <= 8,
                                                       new Sequence(new ActionRunCoroutine(async r =>
                                                                    {
@@ -255,6 +289,15 @@ namespace LlamaUtilities.OrderbotTags
                                                       new Sequence(new ActionRunCoroutine(async r =>
                                                       {
                                                           await GetFates();
+                                                          // Reward inventory can update while an awaited FATE scan yields.
+                                                          // Recheck before committing movement to the newly selected event.
+                                                          if (ShouldStop())
+                                                          {
+                                                              currentfate = null;
+                                                              Navigator.Stop();
+                                                              return;
+                                                          }
+
                                                           if (currentfate != null)
                                                           {
                                                               GoFate();
@@ -273,38 +316,133 @@ namespace LlamaUtilities.OrderbotTags
         {
             var fate = getCurrentFate();
 
-            if (fate == null || !fate.IsValid)
+            if (!IsUsableFate(fate, fateid, false))
                 return false;
 
-            // 🛑 NEW: Wait until out of combat
+            // FateData is a live wrapper over a reusable client slot. Cache the validated target
+            // before yielding so a slot refresh cannot redirect an in-progress flight elsewhere.
+            var selectedFateId = fate.Id;
+            var selectedFateName = fate.Name;
+            var selectedFateLocation = fate.Location;
+
+            // Flight cannot begin while combat is still active. Anchor this wait so a retreating
+            // enemy from the previous FATE cannot drag the combat routine across the zone while
+            // LLFate is waiting to mount for the newly selected event.
+            var combatWaitAnchor = Core.Player.Location;
+            var combatWaitAnnounced = false;
+            var combatWaitMovementCleared = false;
             while (Core.Me.InCombat && !Core.Me.IsDead)
             {
-                Log.Information("Waiting to leave combat before flying...");
+                if (ShouldStop() ||
+                    WorldManager.ZoneId != llFateZoneId ||
+                    !IsUsableFate(FateManager.GetFateById(selectedFateId), selectedFateId, false))
+                {
+                    Navigator.Stop();
+                    MovementManager.MoveStop();
+                    return false;
+                }
 
-                // Set POI to attackers while waiting (see section 2)
-                var attackers = GameObjectManager.Attackers
-                    .Where(a => a.IsValid && !a.IsDead)
-                    .OrderBy(a => a.Distance());
+                if (!combatWaitAnnounced)
+                {
+                    Log.Information("Waiting to leave combat before flying...");
+                    combatWaitAnnounced = true;
+                }
 
-                var target = attackers.FirstOrDefault();
+                var target = GameObjectManager.Attackers
+                    .Where(a => a.IsValid &&
+                                !a.IsDead &&
+                                Vector3.Distance(a.Location, combatWaitAnchor) <= PostFateCombatLeash)
+                    .OrderBy(a => a.Distance())
+                    .FirstOrDefault();
                 if (target != null)
                 {
-                    Poi.Current = new Poi(target, PoiType.Kill);
+                    var existingTarget = Poi.Current?.BattleCharacter;
+                    if (Poi.Current?.Type != PoiType.Kill || existingTarget?.ObjectId != target.ObjectId)
+                    {
+                        Poi.Current = new Poi(target, PoiType.Kill);
+                    }
+
+                    combatWaitMovementCleared = false;
+                }
+                else if (!combatWaitMovementCleared)
+                {
+                    // POI and current target are separate combat inputs in RebornBuddy. Clear both,
+                    // then release every ground-movement owner so the routine cannot keep chasing a
+                    // target that has crossed the post-FATE leash.
+                    Poi.Clear("No nearby attacker during post-FATE combat wait");
+                    Core.Player.ClearTarget();
+                    Navigator.Stop();
+                    MovementManager.MoveStop();
+                    combatWaitMovementCleared = true;
                 }
 
                 await Coroutine.Sleep(500);
             }
 
+            if (combatWaitAnnounced)
+            {
+                Poi.Clear("Post-FATE combat wait completed");
+                Navigator.Stop();
+                MovementManager.MoveStop();
+            }
+
             var result = await CommonTasks.FlyToAndLandAsync(
-                                                             fate.Location.Add(0f, 15, 0f),
+                                                             selectedFateLocation.Add(0f, 15, 0f),
                                                              abortCondition: () =>
                                                              {
-                                                                 var f = getCurrentFate();
-                                                                 return f == null || !f.IsValid || ShouldStop();
+                                                                 var f = FateManager.GetFateById(selectedFateId);
+                                                                 return WorldManager.ZoneId != llFateZoneId ||
+                                                                        !IsUsableFate(f, selectedFateId, false) ||
+                                                                        ShouldStop();
                                                              },
-                                                             destinationName: $"FlyToFateAndLand:{fate.Name}");
+                                                             destinationName: $"FlyToFateAndLand:{selectedFateName}");
 
             return result;
+        }
+
+        /// <summary>
+        /// Moves toward the selected FATE without monopolizing the behavior tree for the entire
+        /// route. The profile's While condition is evaluated after every yield so an inventory
+        /// reward immediately cancels travel instead of being noticed only at the destination.
+        /// </summary>
+        /// <returns><c>true</c> when the FATE perimeter is reached; otherwise <c>false</c>.</returns>
+        private async Task<bool> GroundMoveToFate()
+        {
+            var selectedFateId = fateid;
+            while (!ShouldStop() && WorldManager.ZoneId == llFateZoneId && !Core.Me.IsDead)
+            {
+                var fate = FateManager.GetFateById(selectedFateId);
+                if (!IsUsableFate(fate, selectedFateId, false))
+                {
+                    break;
+                }
+
+                Position = fate.Location;
+                fateRadius = fate.Radius;
+                if (Vector3.Distance(Core.Player.Location, Position) <= fateRadius - 10)
+                {
+                    Navigator.Stop();
+                    return true;
+                }
+
+                // Preserve GetTo's practical mount behavior while retaining control of the loop.
+                // Summoning can yield, so While is checked again before issuing movement.
+                if (!Core.Me.IsMounted && !Core.Me.InCombat &&
+                    Core.Me.Distance(Position) > CharacterSettings.Instance.MountDistance)
+                {
+                    await CommonTasks.SummonFlyingMount();
+                    if (ShouldStop())
+                    {
+                        break;
+                    }
+                }
+
+                Navigator.MoveTo(Position);
+                await Coroutine.Yield();
+            }
+
+            Navigator.Stop();
+            return false;
         }
 
         private async Task<bool> FlyTo(Vector3 destination, bool land = false, bool dismount = false, bool ignoreIndoors = true, float minHeight = 0f)
@@ -501,8 +639,11 @@ namespace LlamaUtilities.OrderbotTags
                             y += bc.Location.Y;
                             z += bc.Location.Z;
                         });
-                    currentMove = new Vector3(x / total, y / total, z / total);
-                    Navigator.MoveTo(currentMove);
+                    if (total > 0)
+                    {
+                        currentMove = new Vector3(x / total, y / total, z / total);
+                        Navigator.MoveTo(currentMove);
+                    }
 
                     ClusterTimer.Restart();
                 }
@@ -517,34 +658,75 @@ namespace LlamaUtilities.OrderbotTags
 
         private void GoFate()
         {
+            // Selection and movement occur on different pulses. Never arm a destination after a
+            // delayed reward has already satisfied the profile's completion condition.
+            if (ShouldStop())
+            {
+                currentfate = null;
+                Navigator.Stop();
+                return;
+            }
+
             if (currentfate != null)
             {
+                participatedInTrackedFate = false;
+                var idleHuntTarget = Poi.Current?.BattleCharacter;
+                if (huntedTargetObjectId != 0 && idleHuntTarget?.ObjectId == huntedTargetObjectId)
+                {
+                    // A newly eligible FATE always outranks optional downtime hunting.
+                    Poi.Clear("Stopping idle hunt for an eligible FATE.");
+                    huntedTargetObjectId = 0;
+                }
+
                 Log.Information($"Fate Details: {currentfate}");
                 Position = currentfate.Location;
+                fateRadius = currentfate.Radius;
                 fateid = currentfate.Id;
+                fateName = currentfate.Name;
                 currentstep = 1;
             }
         }
 
         private void GoHunting()
         {
-            if (currentfate == null)
+            if (!HuntBetweenFates || currentfate != null || Core.Me.InCombat)
             {
-                if (hunting)
-                {
-                    Log.Information("Let's pass some time with hunting!");
-                    var target = GetNormalTargets();
-                    if (target != null)
-                    {
-                        Poi.Current = new Poi(target, PoiType.Kill);
-                        mobsHunted++;
-                    }
+                return;
+            }
 
-                    if (Poi.Current != null)
-                    {
-                        Poi.Current.BattleCharacter.Target();
-                    }
-                }
+            var existingTarget = Poi.Current?.BattleCharacter;
+            if (Poi.Current?.Type == PoiType.Kill && existingTarget != null && existingTarget.IsValid && !existingTarget.IsDead)
+            {
+                return;
+            }
+
+            var target = GetNormalTargets();
+            if (target != null)
+            {
+                huntedTargetObjectId = target.ObjectId;
+                Poi.Current = new Poi(target, PoiType.Kill);
+                Log.Information($"No eligible FATE is active; hunting nearby {target.Name} while waiting.");
+            }
+        }
+
+        private void UpdateHuntStatistics()
+        {
+            if (huntedTargetObjectId == 0)
+            {
+                return;
+            }
+
+            var target = GameObjectManager.GetObjectByObjectId(huntedTargetObjectId) as BattleCharacter;
+            if (target != null && target.IsValid && target.IsDead)
+            {
+                mobsHunted++;
+                Log.Information($"Completed idle hunt. Session hunt total: {mobsHunted}.");
+                huntedTargetObjectId = 0;
+            }
+            else if (target == null && !Core.Me.InCombat)
+            {
+                // A missing object is not enough to claim a kill: it may have phased or left object range.
+                huntedTargetObjectId = 0;
             }
         }
 
@@ -563,44 +745,173 @@ namespace LlamaUtilities.OrderbotTags
                     Position = item.Location;
                     fateName = item.Name;
                     fateStatus = item.Status.ToString();
+                    // RB commonly removes the FateData wrapper before exposing COMPLETE. Record
+                    // that the player entered this exact event so its disappearance can still be
+                    // included in the session report instead of silently losing the count.
+                    if (FateManager.WithinFate && Core.Me.Distance(item.Location) <= item.Radius)
+                    {
+                        participatedInTrackedFate = true;
+                    }
                 }
             }
         }
 
         private void IsFateStillActive()
         {
-            if (currentstep > 0)
+            if (currentstep <= 0 || fateid == 0)
             {
-                var found = 0;
-                foreach (var item in FateManager.ActiveFates)
-                {
-                    if (item.Id == fateid)
-                    {
-                        found = 1;
-                    }
-                }
-
-                if (found == 0)
-                {
-                    if (currentfate != null)
-                    {
-                        SetLastFate();
-                    }
-
-                    currentstep = 0;
-                    fateid = 0;
-                    currentfate = null;
-                    Log.Information("Fate no longer active.");
-                }
+                return;
             }
+
+            var trackedFate = FateManager.GetFateById(fateid);
+            if (trackedFate != null && trackedFate.Status == FateStatus.ACTIVE)
+            {
+                return;
+            }
+
+            var endedFateId = fateid;
+            var endedFateName = !string.IsNullOrWhiteSpace(fateName) ? fateName : currentfate?.Name ?? $"FATE {endedFateId}";
+            var completionStatusObserved = trackedFate != null && trackedFate.Status == FateStatus.COMPLETE;
+            var finishedAfterParticipation = completionStatusObserved || participatedInTrackedFate;
+
+            if (currentfate != null)
+            {
+                SetLastFate();
+            }
+
+            // Retiring the FATE must also retire every movement owner. When no replacement FATE
+            // was available, the prior navigator/Flightor command otherwise kept driving in a
+            // straight line indefinitely because the disabled idle-hunt path issued no command
+            // to supersede it. Stop both navigation layers, release any FATE combat POI, and
+            // invalidate the cached destination before the same pulse searches for new work.
+            Navigator.Stop();
+            Flightor.Clear();
+            MovementManager.MoveStop();
+            Poi.Clear($"FATE {endedFateId} ended; clearing stale movement");
+            Position = Vector3.Zero;
+            currentstep = 0;
+            fateid = 0;
+            fateRadius = 0;
+            currentfate = null;
+
+            if (finishedAfterParticipation)
+            {
+                fatesDone++;
+                var evidence = completionStatusObserved ? "completion status observed" : "participated through event end";
+                Log.Information($"Finished FATE \"{endedFateName}\" ({endedFateId}; {evidence}). Session total: {fatesDone}.");
+            }
+            else
+            {
+                Log.Information($"FATE \"{endedFateName}\" ({endedFateId}) ended before LLFate observed participation or a completion status.");
+            }
+
+            participatedInTrackedFate = false;
         }
+
+        /// <summary>
+        /// Stops LLFate rather than allowing a malformed destination to carry the character
+        /// through a map exit. Profiles own inter-zone travel; LLFate is intentionally bounded to
+        /// the zone in which its tag started.
+        /// </summary>
+        private void EnforceZoneBoundary()
+        {
+            if (zoneSafetyTriggered || CommonBehaviors.IsLoading || WorldManager.ZoneId == llFateZoneId)
+            {
+                return;
+            }
+
+            zoneSafetyTriggered = true;
+            Navigator.Stop();
+            Poi.Clear("LLFate left its starting zone");
+            _done = true;
+            Log.Error($"LLFate unexpectedly left zone {llFateZoneId} and entered {WorldManager.ZoneId}; stopping to prevent cross-zone navigation.");
+            TreeRoot.Stop("LLFate left its configured zone unexpectedly.");
+        }
+
+        /// <summary>
+        /// Re-resolves the selected FATE by ID every pulse. The client reuses FATE table slots,
+        /// so retaining a live wrapper after an event ends can expose a different event's partial
+        /// data even though the wrapper itself still reports <c>IsValid</c>.
+        /// </summary>
+        private void ValidateTrackedFate()
+        {
+            if (currentstep <= 0 || fateid == 0)
+            {
+                return;
+            }
+
+            var trackedFate = FateManager.GetFateById(fateid);
+            if (IsUsableFate(trackedFate, fateid, true))
+            {
+                currentfate = trackedFate;
+                Position = trackedFate.Location;
+                return;
+            }
+
+            Navigator.Stop();
+            Poi.Clear("Rejected incomplete FATE snapshot");
+            currentstep = 0;
+            fateid = 0;
+            fateRadius = 0;
+            currentfate = null;
+            Position = Vector3.Zero;
+        }
+
+        /// <summary>
+        /// Verifies the semantic fields required for navigation, rather than trusting pointer
+        /// validity alone. Empty names, zero geometry, expired timers, and mismatched IDs identify
+        /// the transient slot-reuse state observed after a FATE completes.
+        /// </summary>
+        /// <param name="fate">The live RebornBuddy FATE wrapper to inspect.</param>
+        /// <param name="expectedId">The selected ID that the live wrapper must continue to represent, or zero for selection.</param>
+        /// <param name="logRejected">Whether to report the first rejected snapshot for this ID during the session.</param>
+        /// <returns><c>true</c> only when the snapshot contains a safe, active navigation target.</returns>
+        private bool IsUsableFate(FateData fate, uint expectedId = 0, bool logRejected = false)
+        {
+            if (fate == null)
+            {
+                return false;
+            }
+
+            var id = fate.Id;
+            var name = fate.Name;
+            var location = fate.Location;
+            var radius = fate.Radius;
+            var level = fate.Level;
+            var maxLevel = fate.MaxLevel;
+            var status = fate.Status;
+            var timeLeft = fate.TimeLeft;
+            var usable = fate.IsValid &&
+                         id != 0 &&
+                         (expectedId == 0 || id == expectedId) &&
+                         status == FateStatus.ACTIVE &&
+                         !string.IsNullOrWhiteSpace(name) &&
+                         location != Vector3.Zero &&
+                         IsFinite(location.X) && IsFinite(location.Y) && IsFinite(location.Z) &&
+                         radius > 0 &&
+                         level > 0 &&
+                         maxLevel > 0 &&
+                         timeLeft > TimeSpan.Zero;
+
+            if (!usable && logRejected && rejectedFateIds.Add(id))
+            {
+                Log.Warning($"Rejected incomplete FATE snapshot: Id={id}, Name=\"{name}\", Location={location}, Radius={radius}, Level={level}, MaxLevel={maxLevel}, Status={status}, TimeLeft={timeLeft}.");
+            }
+
+            return usable;
+        }
+
+        private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
         private void CountDeath()
         {
-            if (Core.Me.IsDead)
+            var isDead = Core.Me.IsDead;
+            if (isDead && !wasDead)
             {
                 died++;
             }
+
+            wasDead = isDead;
         }
 
         [Obsolete]
@@ -666,7 +977,6 @@ namespace LlamaUtilities.OrderbotTags
         [Obsolete]
         private void OnTimeout()
         {
-            Log.Information("TREE: Decorator1, Action 1");
             _done = true;
             Log.Information("Timeout we are done for now.");
             Log.Information("Moving to the nearest Aetheryte.");
@@ -675,29 +985,37 @@ namespace LlamaUtilities.OrderbotTags
                 .OrderBy(a => Core.Me.Distance(a))
                 .FirstOrDefault();
             Navigator.MoveToPointWithin(destination, 30);
-            Log.Information("--------------------------------------");
-            Log.Information($"I did {fatesDone} Fates this session.");
-            Log.Information($"I hunted and killed {mobsHunted} mobs.");
-            Log.Information($"I died {died} times.");
-            Log.Information("--------------------------------------");
+            ReportSessionSummary("timeout");
         }
 
         [Obsolete]
         private void OnDoneWhile()
         {
-            Log.Information("TREE: Decorator1, Action 1");
             _done = true;
             Log.Information("Completed While Condition");
-            Log.Information("Moving to the nearest Aetheryte.");
-            var destination = WorldManager.AetheryteIdsForZone(WorldManager.ZoneId)
-                .Select(a => a.Item2)
-                .OrderBy(a => Core.Me.Distance(a))
-                .FirstOrDefault();
-            Navigator.MoveToPointWithin(destination, 30);
+            // Completion hands control back to the owning profile immediately. Starting another
+            // movement here races its teleport/next-step logic and was the source of visible
+            // travel after the requested reward count had already been reached.
+            Navigator.Stop();
+            Poi.Clear("LLFate While condition completed");
+            ReportSessionSummary("while condition completed");
+        }
+
+        // A tag can reach OnDone after its normal stop path, so this guard keeps the
+        // user-facing totals visible without printing the same report twice.
+        private void ReportSessionSummary(string reason)
+        {
+            if (sessionSummaryReported)
+            {
+                return;
+            }
+
+            sessionSummaryReported = true;
             Log.Information("--------------------------------------");
-            Log.Information($"I did {fatesDone} Fates this session.");
-            Log.Information($"I hunted and killed {mobsHunted} mobs.");
-            Log.Information($"I died {died} times.");
+            Log.Information($"LLFate session ended: {reason}.");
+            Log.Information($"FATEs finished after observed participation: {fatesDone}.");
+            Log.Information($"Confirmed idle-hunt kills: {mobsHunted}.");
+            Log.Information($"Deaths: {died}.");
             Log.Information("--------------------------------------");
         }
 
@@ -717,31 +1035,30 @@ namespace LlamaUtilities.OrderbotTags
                 .Select(x => x.unit)
                 .FirstOrDefault();
 
-            Log.Information("Analyzing Fate Targets.");
-
+            // CombatTargeting calls this provider repeatedly, including while no FATE is
+            // active. Do not log each query; selection and completion transitions already
+            // provide the useful user-facing diagnostics without idle-period log spam.
             return target;
         }
+        /// <summary>
+        /// Finds the nearest conservative non-FATE target for optional downtime hunting.
+        /// The radius and health ceiling prevent LLFate from roaming away or selecting an
+        /// obviously unsafe target while it waits for an eligible FATE.
+        /// </summary>
+        /// <returns>The nearest eligible battle character, or <c>null</c> when none is safe.</returns>
         public GameObject GetNormalTargets()
         {
-            var _target = GameObjectManager.GameObjects.Where(unit => (unit as BattleCharacter) != null && unit.CanAttack && unit.IsTargetable && unit.IsVisible
-                                                                      && (unit as BattleCharacter).FateId == 0 && !(unit as BattleCharacter).IsDead).OrderBy(unit => unit.Distance(Core.Player.Location)).Take(3);
-            var targetArray = _target as GameObject[] ?? _target.ToArray();
-            if (targetArray.Length > 0 && targetArray[0].MaxHealth > Core.Me.CurrentHealth * 3)
-            {
-                return null;
-            }
-
-            if (targetArray.Length > 0 && targetArray[0].NpcId == 541)
-            {
-                return null;
-            }
-
-            if (targetArray.Length > 0)
-            {
-                return targetArray[0];
-            }
-
-            return null; // pick a random target
+            return GameObjectManager.GetObjectsOfType<BattleCharacter>()
+                .Where(unit => unit.CanAttack &&
+                               unit.IsTargetable &&
+                               unit.IsVisible &&
+                               !unit.IsDead &&
+                               unit.FateId == 0 &&
+                               unit.NpcId != 541 &&
+                               unit.Distance(Core.Player.Location) <= HuntRadius &&
+                               unit.MaxHealth <= Core.Me.CurrentHealth * 3)
+                .OrderBy(unit => unit.Distance(Core.Player.Location))
+                .FirstOrDefault();
         }
 
         public List<FateData> MyFilter(List<FateData> List)
@@ -749,6 +1066,10 @@ namespace LlamaUtilities.OrderbotTags
             var ReturnList = new List<FateData>();
             foreach (var f in List)
             {
+                if (!IsUsableFate(f, 0, true))
+                {
+                    continue;
+                }
                 if (f.Icon.ToString() == "Boss" && f.Progress > 85)
                 {
                     Log.Information($"Skipping FATE \"{f.Name}\". Boss FATE progress is greater than 85%.");
@@ -770,9 +1091,20 @@ namespace LlamaUtilities.OrderbotTags
 
         public async Task<bool> GetFates()
         {
+            if (ShouldStop())
+            {
+                currentfate = null;
+                return false;
+            }
+
             if (SharedFate)
             {
                 await LlamaLibrary.ScriptConditions.Extras.UpdateSharedFates();
+                if (ShouldStop())
+                {
+                    currentfate = null;
+                    return false;
+                }
             }
 
             if (FateIds.Length > 0)
@@ -792,7 +1124,7 @@ namespace LlamaUtilities.OrderbotTags
             var FateCandidates = FateManager.ActiveFates.ToList();
             var FateList = MyFilter(FateCandidates);
 
-            currentfate = FateList.OrderBy(fate => Core.Me.Distance(fate.Location)).FirstOrDefault(fate => fate.Level < _max && fate.Level > _min);
+            currentfate = FateList.OrderBy(fate => Core.Me.Distance(fate.Location)).FirstOrDefault(fate => fate.Level <= _max && fate.Level >= _min);
 
             return currentfate != null;
         }
@@ -800,7 +1132,12 @@ namespace LlamaUtilities.OrderbotTags
         // check all fates and return the FateData with the given Ids or null
         public FateData IsFateActive(int[] ids)
         {
-            var _fate = FateManager.ActiveFates.Where(fate => ids.Contains((int)fate.Id) && fate.Progress >= MinProgress).Take(1);
+            var _fate = FateManager.ActiveFates.Where(fate =>
+                ids.Contains((int)fate.Id) &&
+                fate.Progress >= MinProgress &&
+                fate.Level >= _min &&
+                fate.Level <= _max &&
+                IsUsableFate(fate, 0, true)).Take(1);
             var fateArray = _fate as FateData[] ?? _fate.ToArray();
 
             return fateArray.Length > 0 ? fateArray[0] : null;
@@ -848,7 +1185,7 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task<bool> CheckLevelSync()
         {
-            fateImIn = FateManager.ActiveFates.OrderBy(fate => Core.Me.Distance(fate.Location)).FirstOrDefault(fate => fate.Level < _max && fate.Level > _min);
+            fateImIn = FateManager.ActiveFates.OrderBy(fate => Core.Me.Distance(fate.Location)).FirstOrDefault(fate => fate.Level <= _max && fate.Level >= _min);
             if (fateImIn != null && FateManager.WithinFate && fateImIn.MaxLevel < Core.Player.ClassLevel && !Core.Me.IsLevelSynced)
             {
                 ToDoList.LevelSync();
@@ -870,7 +1207,17 @@ namespace LlamaUtilities.OrderbotTags
             AddHooks();
             _timeout = Convert.ToInt32(Timeout);
             currentstep = 0;
-            Log.Information("Doing fates and hunt in between.");
+            fatesDone = 0;
+            mobsHunted = 0;
+            died = 0;
+            wasDead = false;
+            sessionSummaryReported = false;
+            huntedTargetObjectId = 0;
+            llFateZoneId = WorldManager.ZoneId;
+            zoneSafetyTriggered = false;
+            participatedInTrackedFate = false;
+            rejectedFateIds.Clear();
+            Log.Information(HuntBetweenFates ? "Doing FATEs and hunting nearby targets in between." : "Doing FATEs; downtime hunting is disabled.");
             Log.Information($"Stats: MinFate level={_min} MaxFatelvl={_max}");
 
             // MaxLevel = "34";
@@ -891,6 +1238,7 @@ namespace LlamaUtilities.OrderbotTags
 
         protected override void OnDone()
         {
+            ReportSessionSummary("tag stopped");
             RemoveHooks();
             currentstep = 0;
 
@@ -961,8 +1309,15 @@ namespace LlamaUtilities.OrderbotTags
                 return false;
             }
 
-            //Make sure we always return true for units inside our aggro list
-            return _aggroedBattleCharacters.Contains(unit) || unit.IsFate && unit.CanAttack && Vector3.Distance(unit.Location, LLFate.Position) <= 50 && !incombat;
+            // The custom provider historically admitted only FATE units and attackers. Explicitly
+            // retaining the tag's kill POI is what lets optional downtime hunting enter combat.
+            var isSelectedIdleHuntTarget = Poi.Current?.Type == PoiType.Kill &&
+                                           Poi.Current.BattleCharacter?.ObjectId == unit.ObjectId &&
+                                           !unit.IsFate;
+
+            return _aggroedBattleCharacters.Contains(unit) ||
+                   (unit.CanAttack && !incombat &&
+                    (unit.IsFate && Vector3.Distance(unit.Location, LLFate.Position) <= 50 || isSelectedIdleHuntTarget));
         }
 
         /// <summary> Gets score for a unit. </summary>
