@@ -38,6 +38,8 @@ namespace LlamaUtilities.OrderbotTags
         private int _min;
         private int _max;
         private int _timeout;
+        private bool hasExplicitMinLevel;
+        private bool hasExplicitMaxLevel;
 
         [XmlAttribute("MaxLevel")]
         public string MaxLevel { get; set; }
@@ -117,6 +119,9 @@ namespace LlamaUtilities.OrderbotTags
         private bool wasDead;
         private bool sessionSummaryReported;
         private uint huntedTargetObjectId;
+        private Vector3? idleHuntAnchor;
+        private Vector3? postFateCombatLeashAnchor;
+        private readonly HashSet<uint> abandonedIdleHuntTargetIds = new HashSet<uint>();
         private uint llFateZoneId;
         private bool zoneSafetyTriggered;
         private bool participatedInTrackedFate;
@@ -677,6 +682,7 @@ namespace LlamaUtilities.OrderbotTags
                     Poi.Clear("Stopping idle hunt for an eligible FATE.");
                     huntedTargetObjectId = 0;
                 }
+                idleHuntAnchor = null;
 
                 Log.Information($"Fate Details: {currentfate}");
                 Position = currentfate.Location;
@@ -704,6 +710,9 @@ namespace LlamaUtilities.OrderbotTags
             if (target != null)
             {
                 huntedTargetObjectId = target.ObjectId;
+                // HuntRadius is a leash from the point at which downtime hunting starts, not a
+                // rolling player-relative selection radius that can follow a fleeing target forever.
+                idleHuntAnchor = Core.Player.Location;
                 Poi.Current = new Poi(target, PoiType.Kill);
                 Log.Information($"No eligible FATE is active; hunting nearby {target.Name} while waiting.");
             }
@@ -717,17 +726,69 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             var target = GameObjectManager.GetObjectByObjectId(huntedTargetObjectId) as BattleCharacter;
+            if (target != null && target.IsValid && !target.IsDead && !IsInsideIdleHuntLeash(target))
+            {
+                var abandonedTargetId = huntedTargetObjectId;
+                abandonedIdleHuntTargetIds.Add(abandonedTargetId);
+                if (Poi.Current?.Type == PoiType.Kill && Poi.Current.BattleCharacter?.ObjectId == abandonedTargetId)
+                {
+                    Poi.Clear("Idle hunt target exceeded HuntRadius.");
+                }
+                if (Core.Player.CurrentTargetId == abandonedTargetId)
+                {
+                    Core.Player.ClearTarget();
+                }
+                Navigator.Stop();
+                MovementManager.MoveStop();
+                Log.Information($"Abandoned idle hunt target {target.Name}; it moved beyond the {HuntRadius:0.#}-yalm HuntRadius leash.");
+                huntedTargetObjectId = 0;
+                idleHuntAnchor = null;
+                return;
+            }
+
             if (target != null && target.IsValid && target.IsDead)
             {
                 mobsHunted++;
                 Log.Information($"Completed idle hunt. Session hunt total: {mobsHunted}.");
                 huntedTargetObjectId = 0;
+                idleHuntAnchor = null;
             }
             else if (target == null && !Core.Me.InCombat)
             {
                 // A missing object is not enough to claim a kill: it may have phased or left object range.
                 huntedTargetObjectId = 0;
+                idleHuntAnchor = null;
             }
+        }
+
+        private bool IsInsideIdleHuntLeash(BattleCharacter unit)
+        {
+            return !idleHuntAnchor.HasValue ||
+                   Vector3.Distance(unit.Location, idleHuntAnchor.Value) <= HuntRadius;
+        }
+
+        /// <summary>
+        /// Supplies the targeting provider with the same live safety bounds used by LLFate's
+        /// behavior tree. RebornBuddy pulses targeting independently during scheduling, so this
+        /// admission check must enforce leashes before a unit can be promoted back into a kill POI.
+        /// </summary>
+        /// <param name="unit">The unit CombatTargeting is considering.</param>
+        /// <returns><c>true</c> when the unit remains inside every active leash.</returns>
+        private bool IsInsideActiveTargetingLeashes(BattleCharacter unit)
+        {
+            if (postFateCombatLeashAnchor.HasValue)
+            {
+                if (!Core.Me.InCombat)
+                {
+                    postFateCombatLeashAnchor = null;
+                }
+                else if (Vector3.Distance(unit.Location, postFateCombatLeashAnchor.Value) > PostFateCombatLeash)
+                {
+                    return false;
+                }
+            }
+
+            return huntedTargetObjectId == 0 || unit.IsFate || IsInsideIdleHuntLeash(unit);
         }
 
         private void SetLastFate()
@@ -784,6 +845,9 @@ namespace LlamaUtilities.OrderbotTags
             // straight line indefinitely because the disabled idle-hunt path issued no command
             // to supersede it. Stop both navigation layers, release any FATE combat POI, and
             // invalidate the cached destination before the same pulse searches for new work.
+            // Keep the combat anchor active in the provider before clearing POI. RB may pulse
+            // CombatTargeting later in this scheduling pass and must not reacquire distant attackers.
+            postFateCombatLeashAnchor = Core.Player.Location;
             Navigator.Stop();
             Flightor.Clear();
             MovementManager.MoveStop();
@@ -1055,6 +1119,7 @@ namespace LlamaUtilities.OrderbotTags
                                !unit.IsDead &&
                                unit.FateId == 0 &&
                                unit.NpcId != 541 &&
+                               !abandonedIdleHuntTargetIds.Contains(unit.ObjectId) &&
                                unit.Distance(Core.Player.Location) <= HuntRadius &&
                                unit.MaxHealth <= Core.Me.CurrentHealth * 3)
                 .OrderBy(unit => unit.Distance(Core.Player.Location))
@@ -1135,8 +1200,11 @@ namespace LlamaUtilities.OrderbotTags
             var _fate = FateManager.ActiveFates.Where(fate =>
                 ids.Contains((int)fate.Id) &&
                 fate.Progress >= MinProgress &&
-                fate.Level >= _min &&
-                fate.Level <= _max &&
+                // Focused FateId profiles historically did not require level attributes. Apply
+                // each bound only when its XML attribute was supplied, preserving those profiles
+                // while still honoring intentional one-sided or two-sided constraints.
+                (!hasExplicitMinLevel || fate.Level >= _min) &&
+                (!hasExplicitMaxLevel || fate.Level <= _max) &&
                 IsUsableFate(fate, 0, true)).Take(1);
             var fateArray = _fate as FateData[] ?? _fate.ToArray();
 
@@ -1201,8 +1269,10 @@ namespace LlamaUtilities.OrderbotTags
 
         protected override void OnStart()
         {
-            _min = Convert.ToInt32(MinLevel);
-            _max = Convert.ToInt32(MaxLevel);
+            hasExplicitMinLevel = !string.IsNullOrWhiteSpace(MinLevel);
+            hasExplicitMaxLevel = !string.IsNullOrWhiteSpace(MaxLevel);
+            _min = hasExplicitMinLevel ? Convert.ToInt32(MinLevel) : 0;
+            _max = hasExplicitMaxLevel ? Convert.ToInt32(MaxLevel) : 0;
             _coroutine = new ActionRunCoroutine(r => CheckLevelSync());
             AddHooks();
             _timeout = Convert.ToInt32(Timeout);
@@ -1213,6 +1283,9 @@ namespace LlamaUtilities.OrderbotTags
             wasDead = false;
             sessionSummaryReported = false;
             huntedTargetObjectId = 0;
+            idleHuntAnchor = null;
+            postFateCombatLeashAnchor = null;
+            abandonedIdleHuntTargetIds.Clear();
             llFateZoneId = WorldManager.ZoneId;
             zoneSafetyTriggered = false;
             participatedInTrackedFate = false;
@@ -1223,7 +1296,7 @@ namespace LlamaUtilities.OrderbotTags
             // MaxLevel = "34";
             // MinLevel = "25";
             cachedProvider = CombatTargeting.Instance.Provider;
-            CombatTargeting.Instance.Provider = new MySuperAwesomeTargetingProvider();
+            CombatTargeting.Instance.Provider = new MySuperAwesomeTargetingProvider(IsInsideActiveTargetingLeashes);
             currentfate = null;
             Poi.Clear("Clearing POI");
             saveNow = DateTime.Now;
@@ -1241,6 +1314,8 @@ namespace LlamaUtilities.OrderbotTags
             ReportSessionSummary("tag stopped");
             RemoveHooks();
             currentstep = 0;
+            idleHuntAnchor = null;
+            postFateCombatLeashAnchor = null;
 
             CombatTargeting.Instance.Provider = cachedProvider;
         }
@@ -1262,6 +1337,18 @@ namespace LlamaUtilities.OrderbotTags
         };
 
         private BattleCharacter[] _aggroedBattleCharacters;
+        private readonly Func<BattleCharacter, bool> admissionConstraint;
+
+        /// <summary>
+        /// Creates LLFate's targeting provider with an optional owner-supplied admission policy.
+        /// The callback lets runtime leashes constrain RebornBuddy's independent targeting pulse
+        /// instead of relying on POI cleanup after an unsafe unit was already admitted.
+        /// </summary>
+        /// <param name="admissionConstraint">A live unit predicate, or <c>null</c> for legacy admission behavior.</param>
+        public MySuperAwesomeTargetingProvider(Func<BattleCharacter, bool> admissionConstraint = null)
+        {
+            this.admissionConstraint = admissionConstraint;
+        }
 
         /// <summary> Gets the objects by weight. </summary>
         /// <remarks> Nesox, 2013-06-29. </remarks>
@@ -1293,6 +1380,11 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             if (IgnoreNpcIds.Contains(unit.NpcId))
+            {
+                return false;
+            }
+
+            if (admissionConstraint != null && !admissionConstraint(unit))
             {
                 return false;
             }

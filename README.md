@@ -45,16 +45,22 @@ routing into the intended map before invoking the tag.
 ```
 
 - `FateIds` limits selection to the listed FATE row IDs. `BlacklistIds` excludes IDs;
-  the legacy `Blacklist` spelling is also accepted for profile compatibility.
+  the legacy `Blacklist` spelling is also accepted for profile compatibility. Focused
+  `FateIds` profiles may omit `MinLevel` and `MaxLevel`; each level bound is applied only
+  when that attribute is explicitly present, preserving older focused profiles.
 - `HuntBetweenFates` is `false` by default. When enabled, `HuntRadius` (default `50`)
-  limits optional non-FATE targets so downtime hunting cannot roam far from a newly
-  spawned event.
+  is anchored where each optional hunt begins. Both the behavior and targeting provider
+  abandon targets that cross the leash, preventing a moving enemy from pulling LLFate
+  across the zone.
 - When `While` becomes false, LLFate cancels both ground and flight movement before
   returning control to the profile. It does not start a trip to an aetheryte.
 - Session reporting counts a FATE when RB exposes its completion state or when LLFate
   observed the player participating in that tracked event through its disappearance.
   The latter is necessary because the client often removes the live FATE wrapper before
   a `COMPLETE` status can be sampled.
+- After a FATE retires, the same local combat leash constrains targeting-provider
+  admission as well as POI selection. This prevents RB's independent targeting pulse
+  from reacquiring a retreating attacker after LLFate clears movement.
 - Stale or incomplete live FATE snapshots are rejected before navigation. Leaving the
   starting map unexpectedly stops the bot rather than allowing an old destination to
   carry the character across zone boundaries.
