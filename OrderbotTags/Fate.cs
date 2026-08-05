@@ -103,29 +103,114 @@ namespace LlamaUtilities.OrderbotTags
         private readonly FatebotSettings fatebotInstance = FatebotSettings.Instance;
 
         //private int timeout = 100;
-        private uint lastFateId = 0;
-
         private DateTime saveNow = DateTime.Now;
         public override bool IsDone => _done;
 
         //some Statistics
         private FateData currentfate;
-        private FateData fateImIn;
-
+        // FateData is a live wrapper over a reusable client-table slot. It is retained only long
+        // enough to select an event; all state used across bot pulses is copied into primitives.
+        private FateIconType fateIcon;
+        private int fateMaxLevel;
         private int fatesDone;
+        private int participatedFateEndings;
         private int mobsHunted;
         private int died;
         private bool wasDead;
         private bool sessionSummaryReported;
         private uint huntedTargetObjectId;
         private Vector3? idleHuntAnchor;
+        private Vector3? defensiveCombatAnchor;
         private Vector3? postFateCombatLeashAnchor;
-        private readonly HashSet<uint> abandonedIdleHuntTargetIds = new HashSet<uint>();
+        private DateTime combatRetirementDeadlineUtc;
+        // Game-object IDs are transient and may be reused after an actor leaves the object table.
+        // Suppress an abandoned hunt target only long enough for RB's combat scheduling to unwind;
+        // retaining the ID for the whole tag run could incorrectly reject an unrelated later actor.
+        private readonly Dictionary<uint, DateTime> abandonedIdleHuntTargetsUntil = new Dictionary<uint, DateTime>();
         private uint llFateZoneId;
         private bool zoneSafetyTriggered;
         private bool participatedInTrackedFate;
         private uint rejectedCenterLandingFateId;
         private readonly HashSet<uint> rejectedFateIds = new HashSet<uint>();
+        private readonly Dictionary<uint, DateTime> landingFailureCooldowns = new Dictionary<uint, DateTime>();
+        // Policy skips are stable for a FATE ID during one tag run. Remember their diagnostics so
+        // a low-progress or unsupported event does not emit the same message every bot pulse.
+        private readonly HashSet<uint> reportedPolicySkipFateIds = new HashSet<uint>();
+        // FATE wrappers commonly disappear before their remaining attackers retire. Remembering
+        // a successfully validated event lets defensive cleanup finish those known-safe actors
+        // without weakening the fail-closed rule for unknown or KillHandIn event ownership.
+        private readonly HashSet<uint> supportedFateIds = new HashSet<uint>();
+        private readonly HashSet<uint> unsupportedFateIds = new HashSet<uint>();
+
+        // Visibility only means that the client has rendered an actor; it does not prove that a
+        // combat action can reach it. Give transient occlusion a short grace period, then suppress
+        // the actor long enough for another target to be selected instead of immediately cycling
+        // back to the same unreachable platform or room.
+        private static readonly TimeSpan LineOfSightGracePeriod = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan LineOfSightSuppressionPeriod = TimeSpan.FromSeconds(15);
+        private static readonly TimeSpan CombatRetirementTimeout = TimeSpan.FromSeconds(60);
+        private static readonly TimeSpan IdleHuntAbandonmentPeriod = TimeSpan.FromSeconds(60);
+        private static readonly TimeSpan LineOfSightApproachTimeout = TimeSpan.FromSeconds(10);
+        // FateData is frame-cached and may briefly disappear or expose partially refreshed fields.
+        // Require a sustained invalid state before abandoning an event so one client-table refresh
+        // cannot be mistaken for completion or split a running travel coroutine from tracked state.
+        private static readonly TimeSpan FateSnapshotTransitionGracePeriod = TimeSpan.FromSeconds(1);
+
+        /// <summary>
+        /// Immutable primitive copy of the live FATE-table fields LLFate consumes in one pulse.
+        /// FateData wraps a reusable native slot, so retaining or repeatedly dereferencing it can
+        /// combine fields from different client refresh states when a FATE spawns or retires.
+        /// </summary>
+        private struct FateSnapshot
+        {
+            public bool IsValid;
+            public uint Id;
+            public string Name;
+            public Vector3 Location;
+            public float Radius;
+            public int Level;
+            public int MaxLevel;
+            public FateStatus Status;
+            public TimeSpan TimeLeft;
+            public FateIconType Icon;
+            public int Progress;
+        }
+        // A failed landing describes the current terrain/event state, not the FATE definition for
+        // the whole session. A bounded cooldown prevents an immediate retry loop while allowing a
+        // later spawn of the same recurring FATE ID to be considered normally.
+        private static readonly TimeSpan LandingFailureCooldown = TimeSpan.FromMinutes(5);
+        private const float FateTargetLeashTolerance = 8f;
+        // When no FATE or optional hunt owns combat, attackers are admitted only near the point at
+        // which defensive combat began. This prevents RB's independent targeting pulse from turning
+        // incidental aggro into an unbounded cross-zone chase while LLFate is idle.
+        private const float DefensiveCombatLeash = 20f;
+        // Small-radius FATEs can report a radius at or below the historical ten-yalm inset.
+        // Clamp the travel destination instead of producing a zero or negative arrival radius.
+        private const float MinimumFateArrivalDistance = 1f;
+        private const int MaximumCenterLandingAssessments = 3;
+        private const int MaximumLandingPointScans = 5;
+        // Probe close offsets first so recovery stays near active enemies while still escaping an
+        // unlandable prop, water cell, or exact event centroid. Y remains the anchor's ground Y;
+        // CanLand performs the authoritative native terrain validation from the elevated point.
+        private static readonly Vector3[] LandingProbeOffsets =
+        {
+            Vector3.Zero,
+            new Vector3(6f, 0f, 0f), new Vector3(-6f, 0f, 0f),
+            new Vector3(0f, 0f, 6f), new Vector3(0f, 0f, -6f),
+            new Vector3(6f, 0f, 6f), new Vector3(6f, 0f, -6f),
+            new Vector3(-6f, 0f, 6f), new Vector3(-6f, 0f, -6f),
+            new Vector3(12f, 0f, 0f), new Vector3(-12f, 0f, 0f),
+            new Vector3(0f, 0f, 12f), new Vector3(0f, 0f, -12f),
+        };
+        private uint landingRecoveryFateId;
+        private int centerLandingAssessmentFailures;
+        private int landingPointScanFailures;
+        private readonly Dictionary<uint, DateTime> lineOfSightSuppressedUntil = new Dictionary<uint, DateTime>();
+        private uint obstructedPoiObjectId;
+        private DateTime obstructedPoiSinceUtc;
+        private DateTime trackedFateUnavailableSinceUtc;
+        private DateTime trackedFateInvalidSinceUtc;
+        private Composite safetyPulseHook;
 
         //----------------------
         public bool IsCompleted = false;
@@ -165,6 +250,73 @@ namespace LlamaUtilities.OrderbotTags
             return compiledCondition != null && !compiledCondition();
         }
 
+        /// <summary>
+        /// Runs state retirement and target-safety checks from OrderBot's always-pulsed PoiAction
+        /// slot. Normal profile behavior is skipped while a Kill POI exists, so keeping these
+        /// checks inside the LLFate behavior tree would make LOS, hunt-radius, and FATE-end leashes
+        /// ineffective precisely while combat owns the character.
+        /// </summary>
+        /// <returns><see cref="RunStatus.Failure"/> so ordinary OrderBot processing continues.</returns>
+        private RunStatus RunSafetyPulse()
+        {
+            // PoiAction also pulses through loading and death transitions. Live wrappers are not
+            // safe to dereference until RB has republished a valid local player for the new frame.
+            if (_done || CommonBehaviors.IsLoading || Core.Player == null || !Core.Player.IsValid)
+            {
+                return RunStatus.Failure;
+            }
+
+            // A POI keeps the wrapper that existed when it was assigned. Reacquire it once from
+            // the current object table and share that wrapper across this pulse so independent
+            // validators cannot observe different generations of the same transient object ID.
+            BattleCharacter liveCombatPoiTarget;
+            TryGetLiveCombatPoiTarget(out liveCombatPoiTarget);
+
+            CountDeath();
+            UpdateHuntStatistics(liveCombatPoiTarget);
+            UpdateDefensiveCombatState();
+            EnforceZoneBoundary();
+            ValidateCombatRetirementDeadline();
+            if (_done)
+            {
+                return RunStatus.Failure;
+            }
+            InterruptIdleHuntForEligibleFate();
+            IsFateStillActive();
+            ValidateTrackedFate();
+            UpdateFateData();
+            ValidateLiveCombatPoi(liveCombatPoiTarget);
+            return RunStatus.Failure;
+        }
+
+        /// <summary>
+        /// Applies every POI leash to the single current-frame wrapper captured by the safety
+        /// pulse. Keeping these reads in one guarded block prevents one validator from retaining a
+        /// wrapper that another validator already observed despawning during a FATE transition.
+        /// </summary>
+        /// <param name="target">Current-frame Kill POI actor, or <c>null</c> when none is live.</param>
+        private void ValidateLiveCombatPoi(BattleCharacter target)
+        {
+            try
+            {
+                ValidatePostFateCombatLeash(target);
+                ValidateDefensiveCombatLeash(target);
+                ValidateCombatPoiFateLeash(target);
+                ValidateCombatPoiLineOfSight(target);
+            }
+            catch (Exception exception)
+            {
+                if (exception.GetType().Name != "ReadWriteMemoryException")
+                {
+                    throw;
+                }
+
+                // The actor can retire after current-frame reacquisition but before the final
+                // native property read. Treat only GreyMagic's precise memory fault as a despawn.
+                ClearStaleCombatPoi("Combat target despawned during LLFate safety validation.");
+            }
+        }
+
         private Func<bool> GetCondition()
         {
             try
@@ -191,23 +343,19 @@ namespace LlamaUtilities.OrderbotTags
         protected override Composite CreateBehavior()
         {
             return new PrioritySelector(
-                                        // Session tracking must run before the stop condition. Reward-based while
-                                        // conditions commonly turn false on the same pulse that the FATE completes.
-                                        new Sequence(new Action(r => CountDeath()),
-                                                     new Action(r => UpdateHuntStatistics()),
-                                                     new Action(r => EnforceZoneBoundary()),
-                                                     new Action(r => IsFateStillActive()),
-                                                     new Action(r => ValidateTrackedFate()),
-                                                     new Action(r => UpdateFateData()),
-                                                     new ActionAlwaysFail() //always fail that the rest of the tree is traveresd
-                                                    ),
                                         new Decorator(ret => ShouldStop(),
                                                       new Action(r => OnDoneWhile())),
                                         new Decorator(ret => DateTime.Now > saveNow + TimeSpan.FromSeconds(_timeout) && currentstep == 0,
                                                       new Action(r => OnTimeout())),
 
+                                        // A missing FATE row is debounced for one second, but no profile action may
+                                        // run against the old event during that window. The safety pulse owns the
+                                        // transition and will either refresh the primitive snapshot or retire it.
+                                        new Decorator(ret => IsTrackedFateTransitionPending(),
+                                                      new Action(r => RunStatus.Success)),
+
                                         // Start fighting Fate Mobs but only when we are in close range to the fate position.
-                                        new Decorator(r => currentfate != null && FateManager.WithinFate && Core.Me.ElementalLevel > 0 && currentfate.MaxLevel < Core.Me.ElementalLevel,
+                                        new Decorator(r => currentstep == 1 && FateManager.WithinFate && Core.Me.ElementalLevel > 0 && fateMaxLevel < Core.Me.ElementalLevel && !Core.Me.IsLevelSynced,
                                                       new ActionRunCoroutine(async r =>
                                                       {
                                                           Log.Information("Applying Eureka Level Sync.");
@@ -220,7 +368,7 @@ namespace LlamaUtilities.OrderbotTags
                                                       })),
                                         // State-only diagnostics do not belong in this per-pulse path: log only
                                         // the level-sync action below so ordinary FATE participation stays quiet.
-                                        new Decorator(r => currentfate != null && FateManager.WithinFate && currentfate.MaxLevel < Core.Player.ClassLevel && !Core.Me.IsLevelSynced,
+                                        new Decorator(r => currentstep == 1 && FateManager.WithinFate && fateMaxLevel < Core.Player.ClassLevel && !Core.Me.IsLevelSynced,
                                                       new ActionRunCoroutine(async r =>
                                                       {
                                                           Log.Information("Applying Level Sync.");
@@ -232,25 +380,26 @@ namespace LlamaUtilities.OrderbotTags
                                                           return false;
                                                       })),
                                         new Decorator(ret => !ShouldStop() && currentstep == 1 &&
-                                                             (Vector3.Distance(Core.Player.Location, Position) > (fateRadius - 10) ||
-                                                              (MovementManager.IsFlying && Poi.Current?.Type != PoiType.Kill)),
+                                                             (Vector3.Distance(Core.Player.Location, Position) > GetFateArrivalDistance(fateRadius) ||
+                                                              MovementManager.IsFlying),
                                                       new PrioritySelector(
-                                                                           new Decorator(ret => UseFlight && AetherCurrentManager.FinishedZones.Contains(WorldManager.ZoneId),
-                                                                                         new ActionRunCoroutine(obj => FlyToFateAndLand(() => currentfate))),
+                                                                           // An already-airborne character must finish through the flight path even
+                                                                           // when UseFlight is disabled; handing an airborne player to Navigator
+                                                                           // leaves ground movement unable to make progress or land safely.
+                                                                           new Decorator(ret => MovementManager.IsFlying ||
+                                                                                                (UseFlight && AetherCurrentManager.FinishedZones.Contains(WorldManager.ZoneId)),
+                                                                                         new ActionRunCoroutine(obj => FlyToFateAndLand())),
                                                                            // LLFate is already bounded to its starting zone, so ground travel must
                                                                            // remain pulse-driven to recheck While instead of entering GetTo's
                                                                            // uninterruptible navigation-graph coroutine.
-                                                                           new Decorator(ret => WorldManager.ZoneId == llFateZoneId &&
+                                                                           new Decorator(ret => !MovementManager.IsFlying &&
+                                                                                                WorldManager.ZoneId == llFateZoneId &&
                                                                                                 IsUsableFate(FateManager.GetFateById(fateid), fateid, false),
                                                                                          new ActionRunCoroutine(obj => GroundMoveToFate())))),
                                         //Find fates
-                                        new Decorator(r => currentfate != null && fateid != 0 && Poi.Current.Type != PoiType.Kill,
-                                                      new ActionRunCoroutine(r =>
-                                                      {
-                                                          MoveToFocusedFate();
-                                                          return Task.CompletedTask;
-                                                      })),
-                                        new Decorator(ret => currentfate == null && currentstep == 0,
+                                        new Decorator(r => currentstep == 1 && fateid != 0 && Poi.Current.Type != PoiType.Kill,
+                                                      new ActionRunCoroutine(r => MoveToFocusedFate())),
+                                        new Decorator(ret => fateid == 0 && currentstep == 0,
                                                       new Sequence(new ActionRunCoroutine(async r =>
                                                       {
                                                           await GetFates();
@@ -277,24 +426,26 @@ namespace LlamaUtilities.OrderbotTags
 
         // End of B Tree
 
-        private async Task<bool> FlyToFateAndLand(Func<FateData> getCurrentFate)
+        private async Task<bool> FlyToFateAndLand()
         {
-            var fate = getCurrentFate();
-
-            if (!IsUsableFate(fate, fateid, false))
+            var fate = FateManager.GetFateById(fateid);
+            FateSnapshot selectedSnapshot;
+            if (!TryReadFateSnapshot(fate, out selectedSnapshot) ||
+                !IsUsableFateSnapshot(selectedSnapshot, fateid, false))
                 return false;
 
             // FateData is a live wrapper over a reusable client slot. Cache the validated target
             // before yielding so a slot refresh cannot redirect an in-progress flight elsewhere.
-            var selectedFateId = fate.Id;
-            var selectedFateName = fate.Name;
-            var selectedFateLocation = fate.Location;
-            var selectedFateRadius = fate.Radius;
+            var selectedFateId = selectedSnapshot.Id;
+            var selectedFateName = selectedSnapshot.Name;
+            var selectedFateLocation = selectedSnapshot.Location;
+            var selectedFateRadius = selectedSnapshot.Radius;
 
             bool AbortFlight()
             {
                 var activeFate = FateManager.GetFateById(selectedFateId);
-                return WorldManager.ZoneId != llFateZoneId ||
+                return currentstep != 1 || fateid != selectedFateId ||
+                       WorldManager.ZoneId != llFateZoneId ||
                        !IsUsableFate(activeFate, selectedFateId, false) ||
                        ShouldStop();
             }
@@ -305,14 +456,33 @@ namespace LlamaUtilities.OrderbotTags
             var combatWaitAnchor = Core.Player.Location;
             var combatWaitAnnounced = false;
             var combatWaitMovementCleared = false;
+            // These fields are also consumed by PoiAction because assigning a defensive Kill POI
+            // suspends this coroutine until combat releases it.
+            postFateCombatLeashAnchor = combatWaitAnchor;
+            combatRetirementDeadlineUtc = DateTime.UtcNow + CombatRetirementTimeout;
             while (Core.Me.InCombat && !Core.Me.IsDead)
             {
                 if (ShouldStop() ||
+                    currentstep != 1 || fateid != selectedFateId ||
                     WorldManager.ZoneId != llFateZoneId ||
                     !IsUsableFate(FateManager.GetFateById(selectedFateId), selectedFateId, false))
                 {
                     Navigator.Stop();
                     MovementManager.MoveStop();
+                    ClearCombatRetirementState();
+                    return false;
+                }
+
+                if (DateTime.UtcNow >= combatRetirementDeadlineUtc)
+                {
+                    // Remaining in combat prevents mounting, teleporting, and safe profile
+                    // handoff. Fail closed instead of holding ActionRunCoroutine forever, which
+                    // also prevents the normal LLFate timeout sibling from being evaluated.
+                    ReleaseOwnedControl("LLFate combat-retirement timeout");
+                    _done = true;
+                    var reason = $"LLFate could not leave combat within {CombatRetirementTimeout.TotalSeconds:0} seconds.";
+                    Log.Error(reason);
+                    TreeRoot.Stop(reason);
                     return false;
                 }
 
@@ -322,15 +492,25 @@ namespace LlamaUtilities.OrderbotTags
                     combatWaitAnnounced = true;
                 }
 
-                var target = GameObjectManager.Attackers
+                var eligibleAttackers = GameObjectManager.Attackers
                     .Where(a => a.IsValid &&
+                                a.CanAttack &&
+                                a.IsTargetable &&
+                                IsLineOfSightCandidate(a) &&
                                 !a.IsDead &&
+                                !IsUnsupportedOrUnresolvedFateActor(a) &&
                                 Vector3.Distance(a.Location, combatWaitAnchor) <= PostFateCombatLeash)
-                    .OrderBy(a => a.Distance())
-                    .FirstOrDefault();
+                    .ToArray();
+                // Keep the current defensive engagement stable while it remains eligible. Picking
+                // the nearest attacker on every half-second sample allowed two moving actors to
+                // trade places repeatedly and recreate the same POI churn as active FATE combat.
+                var existingTarget = Poi.Current?.BattleCharacter;
+                var target = existingTarget == null
+                    ? null
+                    : eligibleAttackers.FirstOrDefault(a => a.ObjectId == existingTarget.ObjectId);
+                target = target ?? eligibleAttackers.OrderBy(a => a.Distance()).FirstOrDefault();
                 if (target != null)
                 {
-                    var existingTarget = Poi.Current?.BattleCharacter;
                     if (Poi.Current?.Type != PoiType.Kill || existingTarget?.ObjectId != target.ObjectId)
                     {
                         Poi.Current = new Poi(target, PoiType.Kill);
@@ -353,6 +533,8 @@ namespace LlamaUtilities.OrderbotTags
                 await Coroutine.Sleep(500);
             }
 
+            ClearCombatRetirementState();
+
             if (combatWaitAnnounced)
             {
                 Poi.Clear("Post-FATE combat wait completed");
@@ -373,27 +555,57 @@ namespace LlamaUtilities.OrderbotTags
                 }
             }
 
-            // Try the inexpensive historical destination once per FATE. If its exact centroid is
-            // over water, a prop, or other non-dismountable collision, remember that rejection so
-            // later pulses rescan nearby enemies without repeating the same failed landing/log.
+            // Fly and land are evaluated separately because FlyToAndLandAsync returns false for
+            // cancellation, route failure, and landing failure alike. Unknown terrain results and
+            // failed positive probes receive a small bounded retry budget before alternate terrain
+            // is used; otherwise the tag can remain airborne until the entire FATE expires.
             if (rejectedCenterLandingFateId != selectedFateId)
             {
-                var centerResult = await CommonTasks.FlyToAndLandAsync(
-                                                                            selectedFateLocation.Add(0f, FateLandingHeight, 0f),
-                                                                            abortCondition: AbortFlight,
-                                                                            destinationName: $"FlyToFateAndLand:{selectedFateName}");
-                if (centerResult)
+                var centerFlightResult = await CommonTasks.FlyToAsync(
+                                                                          selectedFateLocation.Add(0f, FateLandingHeight, 0f),
+                                                                          abortCondition: AbortFlight,
+                                                                          destinationName: $"FlyToFate:{selectedFateName}");
+                if (centerFlightResult != MoveResult.ReachedDestination || AbortFlight())
                 {
-                    return true;
-                }
-
-                if (AbortFlight())
-                {
+                    Flightor.Clear();
                     return false;
                 }
 
+                if (!MovementManager.IsFlying)
+                {
+                    // Successful arrival completes this event generation's landing attempt. The
+                    // same FATE ID may spawn again later and must receive a fresh retry budget.
+                    ClearLandingRecoveryState();
+                    return true;
+                }
+
+                var centerLandingAssessment = CommonTasks.CanLand();
+                if (centerLandingAssessment == CanLandResult.Yes)
+                {
+                    var landed = await CommonTasks.Land() && !MovementManager.IsFlying;
+                    if (landed)
+                    {
+                        ClearLandingRecoveryState();
+                        return true;
+                    }
+
+                    centerLandingAssessmentFailures++;
+                    if (centerLandingAssessmentFailures < MaximumCenterLandingAssessments)
+                    {
+                        return false;
+                    }
+                }
+                else if (centerLandingAssessment != CanLandResult.No)
+                {
+                    centerLandingAssessmentFailures++;
+                    if (centerLandingAssessmentFailures < MaximumCenterLandingAssessments)
+                    {
+                        return false;
+                    }
+                }
+
                 rejectedCenterLandingFateId = selectedFateId;
-                Log.Information($"The center of FATE \"{selectedFateName}\" is not landable; looking for a nearby FATE enemy on valid terrain.");
+                Log.Information($"The center of FATE \"{selectedFateName}\" did not produce a safe landing; probing nearby FATE terrain.");
             }
 
             var scanDeadline = DateTime.UtcNow.AddMilliseconds(FateEnemyLandingScanMilliseconds);
@@ -404,47 +616,70 @@ namespace LlamaUtilities.OrderbotTags
                     return false;
                 }
 
-                var enemyLandingPoint = FindFateEnemyLandingPoint(
-                                                                       selectedFateId,
-                                                                       selectedFateLocation,
-                                                                       selectedFateRadius);
-                if (enemyLandingPoint.HasValue)
+                var landingPoint = FindFateLandingPoint(
+                                                                selectedFateId,
+                                                                selectedFateLocation,
+                                                                selectedFateRadius);
+                if (landingPoint.HasValue)
                 {
-                    Log.Information($"Using a validated enemy position to land for FATE \"{selectedFateName}\".");
+                    Log.Information($"Using a validated alternate position to land for FATE \"{selectedFateName}\".");
                     var enemyResult = await CommonTasks.FlyToAndLandAsync(
-                                                                               enemyLandingPoint.Value,
+                                                                               landingPoint.Value,
                                                                                abortCondition: AbortFlight,
                                                                                destinationName: $"FateEnemyLanding:{selectedFateName}");
                     if (enemyResult)
                     {
-                        rejectedCenterLandingFateId = 0;
+                        ClearLandingRecoveryState();
+                        return true;
                     }
 
-                    return enemyResult;
+                    if (AbortFlight())
+                    {
+                        return false;
+                    }
+
+                    landingPointScanFailures++;
+                    if (landingPointScanFailures >= MaximumLandingPointScans)
+                    {
+                        RejectFateAfterLandingFailure(selectedFateId, selectedFateName);
+                    }
+
+                    return false;
                 }
 
                 await Coroutine.Sleep(250);
             }
             while (DateTime.UtcNow < scanDeadline);
 
+            if (AbortFlight())
+            {
+                return false;
+            }
+
+            landingPointScanFailures++;
+            if (landingPointScanFailures >= MaximumLandingPointScans)
+            {
+                RejectFateAfterLandingFailure(selectedFateId, selectedFateName);
+            }
+
             return false;
         }
 
         /// <summary>
-        /// Finds an airborne landing point directly above a live enemy in the selected FATE. The
-        /// enemy location is snapshotted before any coroutine yields, and RebornBuddy's native
-        /// landing query rejects flying actors, water, props, and other non-dismountable geometry.
+        /// Finds an airborne landing point at or near live enemies, then falls back to a small ring
+        /// around the event center. Enemy locations are snapshotted before any coroutine yields,
+        /// and RebornBuddy's native landing query rejects water, props, and other unsafe geometry.
         /// </summary>
         /// <param name="selectedFateId">Stable ID of the FATE that owns the recovery attempt.</param>
         /// <param name="selectedFateLocation">Snapshotted event center used to enforce its radius.</param>
         /// <param name="selectedFateRadius">Snapshotted event radius.</param>
         /// <returns>A validated flight position, or <c>null</c> until a suitable enemy is loaded.</returns>
-        private static Vector3? FindFateEnemyLandingPoint(
-                                                               uint selectedFateId,
-                                                               Vector3 selectedFateLocation,
-                                                               float selectedFateRadius)
+        private static Vector3? FindFateLandingPoint(
+                                                       uint selectedFateId,
+                                                       Vector3 selectedFateLocation,
+                                                       float selectedFateRadius)
         {
-            var candidates = GameObjectManager.GetObjectsOfType<BattleCharacter>()
+            var anchors = GameObjectManager.GetObjectsOfType<BattleCharacter>()
                 .Where(enemy => enemy.IsValid &&
                                 enemy.IsFate &&
                                 enemy.FateId == selectedFateId &&
@@ -456,18 +691,80 @@ namespace LlamaUtilities.OrderbotTags
                 .Where(location => location != Vector3.Zero &&
                                    Vector3.Distance(location, selectedFateLocation) <= selectedFateRadius)
                 .OrderBy(location => Vector3.Distance(location, Core.Player.Location))
+                // Limit native terrain probes per pulse. Moving enemies are re-snapshotted on the
+                // next bounded scan, so examining every actor adds cost without improving safety.
+                .Take(4)
+                .Concat(new[] { selectedFateLocation })
                 .ToArray();
 
-            foreach (var groundLocation in candidates)
+            foreach (var anchor in anchors)
             {
-                var flightLocation = groundLocation.Add(0f, FateLandingHeight, 0f);
-                if (CommonTasks.CanLand(flightLocation) == CanLandResult.Yes)
+                foreach (var offset in LandingProbeOffsets)
                 {
-                    return flightLocation;
+                    var groundLocation = anchor.Add(offset.X, offset.Y, offset.Z);
+                    if (Vector3.Distance(groundLocation, selectedFateLocation) > selectedFateRadius)
+                    {
+                        continue;
+                    }
+
+                    var flightLocation = groundLocation.Add(0f, FateLandingHeight, 0f);
+                    if (CommonTasks.CanLand(flightLocation) == CanLandResult.Yes)
+                    {
+                        return flightLocation;
+                    }
                 }
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Starts a fresh bounded landing attempt when LLFate adopts a different event generation.
+        /// The rejected-center marker belongs to the same attempt as the counters and must be reset
+        /// with them; otherwise a recurring FATE can inherit an old terrain verdict after cooldown.
+        /// </summary>
+        private void ResetLandingRecoveryState(uint selectedFateId)
+        {
+            if (landingRecoveryFateId == selectedFateId)
+            {
+                return;
+            }
+
+            landingRecoveryFateId = selectedFateId;
+            rejectedCenterLandingFateId = 0;
+            centerLandingAssessmentFailures = 0;
+            landingPointScanFailures = 0;
+        }
+
+        /// <summary>
+        /// Invalidates the exhausted landing attempt after applying its cooldown. Setting the owner
+        /// ID back to zero ensures a later spawn of the same FATE receives the complete center and
+        /// alternate-point retry budgets instead of inheriting the terminal counters.
+        /// </summary>
+        private void ClearLandingRecoveryState()
+        {
+            landingRecoveryFateId = 0;
+            rejectedCenterLandingFateId = 0;
+            centerLandingAssessmentFailures = 0;
+            landingPointScanFailures = 0;
+        }
+
+        /// <summary>
+        /// Retires an event that exhausted every safe landing path and excludes it for this tag run.
+        /// Remaining airborne is safer than descending blindly over water or invalid terrain; a
+        /// later eligible FATE can still be reached normally through Flightor.
+        /// </summary>
+        private void RejectFateAfterLandingFailure(uint selectedFateId, string selectedFateName)
+        {
+            if (currentstep != 1 || fateid != selectedFateId)
+            {
+                return;
+            }
+
+            landingFailureCooldowns[selectedFateId] = DateTime.UtcNow + LandingFailureCooldown;
+            ClearLandingRecoveryState();
+            RetireTrackedFateState($"FATE {selectedFateId} exhausted safe landing recovery");
+            Log.Warning($"Skipping FATE \"{selectedFateName}\" ({selectedFateId}) for {LandingFailureCooldown.TotalMinutes:0} minutes because no safe landing point was found after {MaximumLandingPointScans} bounded scans. A later spawn will be retried.");
         }
 
         /// <summary>
@@ -479,17 +776,20 @@ namespace LlamaUtilities.OrderbotTags
         private async Task<bool> GroundMoveToFate()
         {
             var selectedFateId = fateid;
-            while (!ShouldStop() && WorldManager.ZoneId == llFateZoneId && !Core.Me.IsDead)
+            while (!ShouldStop() && currentstep == 1 && fateid == selectedFateId &&
+                   WorldManager.ZoneId == llFateZoneId && !Core.Me.IsDead)
             {
                 var fate = FateManager.GetFateById(selectedFateId);
-                if (!IsUsableFate(fate, selectedFateId, false))
+                FateSnapshot snapshot;
+                if (!TryReadFateSnapshot(fate, out snapshot) ||
+                    !IsUsableFateSnapshot(snapshot, selectedFateId, false))
                 {
                     break;
                 }
 
-                Position = fate.Location;
-                fateRadius = fate.Radius;
-                if (Vector3.Distance(Core.Player.Location, Position) <= fateRadius - 10)
+                Position = snapshot.Location;
+                fateRadius = snapshot.Radius;
+                if (Vector3.Distance(Core.Player.Location, Position) <= GetFateArrivalDistance(fateRadius))
                 {
                     Navigator.Stop();
                     return true;
@@ -501,7 +801,7 @@ namespace LlamaUtilities.OrderbotTags
                     Core.Me.Distance(Position) > CharacterSettings.Instance.MountDistance)
                 {
                     await CommonTasks.SummonFlyingMount();
-                    if (ShouldStop())
+                    if (ShouldStop() || currentstep != 1 || fateid != selectedFateId)
                     {
                         break;
                     }
@@ -685,10 +985,10 @@ namespace LlamaUtilities.OrderbotTags
         }
 
         [Obsolete]
-        private Task MoveToFocusedFate()
+        private async Task MoveToFocusedFate()
         {
             Vector3 currentMove;
-            if (currentfate.Icon == FateIconType.ProtectNPC || currentfate.Icon == FateIconType.ProtectNPC2)
+            if (fateIcon == FateIconType.ProtectNPC || fateIcon == FateIconType.ProtectNPC2)
             {
                 if (ClusterTimer.ElapsedMilliseconds > 5000)
                 {
@@ -700,8 +1000,8 @@ namespace LlamaUtilities.OrderbotTags
                     var total = 0.0f;
                     GameObjectManager.GetObjectsOfType<BattleCharacter>()
                         .Where(bc =>
-                                   ((bc.IsFate && bc.FateId == currentfate.Id && !bc.CanAttack) || bc.Type == GameObjectType.Pc) &&
-                                   bc.Location.Distance(currentfate.Location) < currentfate.Radius)
+                                   ((bc.IsFate && bc.FateId == fateid && !bc.CanAttack) || bc.Type == GameObjectType.Pc) &&
+                                   bc.Location.Distance(Position) < fateRadius)
                         .ForEach(bc =>
                         {
                             total++;
@@ -720,10 +1020,71 @@ namespace LlamaUtilities.OrderbotTags
             }
             else
             {
-                TrySetFateCombatPoi();
+                if (!TrySetFateCombatPoi())
+                {
+                    await ApproachFateTargetForLineOfSight();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Approaches one selected-FATE enemy without creating a Kill POI until a combat ray is
+        /// available. This lets Navigator handle legitimate corners and structures while keeping
+        /// the combat routine from spamming actions at an obstructed target. Attempts are bounded;
+        /// a target that remains hidden is temporarily suppressed so another actor can be tried.
+        /// </summary>
+        private async Task ApproachFateTargetForLineOfSight()
+        {
+            var target = GetFateApproachTarget();
+            if (target == null)
+            {
+                return;
             }
 
-            return Task.CompletedTask;
+            var targetObjectId = target.ObjectId;
+            var selectedFateId = fateid;
+            var deadline = DateTime.UtcNow + LineOfSightApproachTimeout;
+            while (DateTime.UtcNow < deadline && !ShouldStop() && !Core.Me.IsDead)
+            {
+                var liveTarget = GameObjectManager.GetObjectByObjectId(targetObjectId) as BattleCharacter;
+                if (liveTarget == null || !liveTarget.IsValid || liveTarget.IsDead ||
+                    liveTarget.FateId != selectedFateId ||
+                    !IsInsideTrackedFateTargetBoundary(liveTarget) ||
+                    !IsUsableFate(FateManager.GetFateById(selectedFateId), selectedFateId, false))
+                {
+                    break;
+                }
+
+                if (IsLineOfSightCandidate(liveTarget))
+                {
+                    Navigator.Stop();
+                    MovementManager.MoveStop();
+                    Poi.Current = new Poi(liveTarget, PoiType.Kill);
+                    return;
+                }
+
+                var moveResult = Navigator.MoveTo(new MoveToParameters(liveTarget.Location, $"Approaching {liveTarget.Name} for line of sight")
+                {
+                    DistanceTolerance = 5f,
+                    UseMount = false
+                });
+                if (moveResult == MoveResult.Failed)
+                {
+                    break;
+                }
+
+                await Coroutine.Yield();
+            }
+
+            Navigator.Stop();
+            MovementManager.MoveStop();
+            var failedTarget = GameObjectManager.GetObjectByObjectId(targetObjectId) as BattleCharacter;
+            if (failedTarget != null && failedTarget.IsValid && !failedTarget.IsDead &&
+                failedTarget.FateId == selectedFateId &&
+                IsInsideTrackedFateTargetBoundary(failedTarget) && !failedTarget.InLineOfSight())
+            {
+                SuppressObstructedTarget(failedTarget, "bounded LOS approach failed");
+            }
         }
 
         private void GoFate()
@@ -739,6 +1100,14 @@ namespace LlamaUtilities.OrderbotTags
 
             if (currentfate != null)
             {
+                FateSnapshot snapshot;
+                if (!TryReadFateSnapshot(currentfate, out snapshot) ||
+                    !IsUsableFateSnapshot(snapshot, snapshot.Id, false))
+                {
+                    currentfate = null;
+                    return;
+                }
+
                 participatedInTrackedFate = false;
                 var idleHuntTarget = Poi.Current?.BattleCharacter;
                 if (huntedTargetObjectId != 0 && idleHuntTarget?.ObjectId == huntedTargetObjectId)
@@ -749,12 +1118,23 @@ namespace LlamaUtilities.OrderbotTags
                 }
                 idleHuntAnchor = null;
 
-                Log.Information($"Fate Details: {currentfate}");
-                Position = currentfate.Location;
-                fateRadius = currentfate.Radius;
-                fateid = currentfate.Id;
-                fateName = currentfate.Name;
+                // Copy every value needed after this pulse. Holding the live wrapper across a FATE
+                // retirement previously caused deterministic ReadWriteMemoryException failures
+                // when Panda's post-FATE cleanup yielded control back to OrderBot.
+                Position = snapshot.Location;
+                fateRadius = snapshot.Radius;
+                fateid = snapshot.Id;
+                fateName = snapshot.Name;
+                fateIcon = snapshot.Icon;
+                fateMaxLevel = snapshot.MaxLevel;
+                Log.Information($"Fate Details: Name:{fateName} Id:{fateid} Icon:{fateIcon} Location:{Position} Radius:{fateRadius} MaxLevel:{fateMaxLevel}");
                 currentstep = 1;
+                // A newly selected ID starts a fresh snapshot-observation window. Carrying a timer
+                // from the prior event could otherwise make the first incomplete pulse terminal.
+                trackedFateUnavailableSinceUtc = default(DateTime);
+                trackedFateInvalidSinceUtc = default(DateTime);
+                ResetLandingRecoveryState(fateid);
+                currentfate = null;
             }
         }
 
@@ -776,21 +1156,23 @@ namespace LlamaUtilities.OrderbotTags
                                                             float selectedFateRadius)
         {
             var refreshedFate = SelectBestEligibleFate(logCandidates: false);
-            if (refreshedFate == null || refreshedFate.Id == selectedFateId)
+            FateSnapshot refreshedSnapshot;
+            if (!TryReadFateSnapshot(refreshedFate, out refreshedSnapshot) ||
+                refreshedSnapshot.Id == selectedFateId)
             {
                 return false;
             }
 
             var selectedDistance = Vector3.Distance(Core.Player.Location, selectedFateLocation);
-            var refreshedDistance = Core.Me.Distance(refreshedFate.Location);
+            var refreshedDistance = Core.Me.Distance(refreshedSnapshot.Location);
             var playerInsideSelected = selectedDistance <= selectedFateRadius;
-            var playerInsideRefreshed = refreshedDistance <= refreshedFate.Radius;
+            var playerInsideRefreshed = refreshedDistance <= refreshedSnapshot.Radius;
             if ((!playerInsideRefreshed || playerInsideSelected) && refreshedDistance >= selectedDistance)
             {
                 return false;
             }
 
-            var refreshedName = refreshedFate.Name;
+            var refreshedName = refreshedSnapshot.Name;
             Log.Information(
                 $"A closer FATE appeared during the combat wait; switching from \"{selectedFateName}\" to \"{refreshedName}\".");
             Poi.Clear("Switching to a closer FATE that appeared during combat wait");
@@ -799,7 +1181,7 @@ namespace LlamaUtilities.OrderbotTags
             currentfate = refreshedFate;
             rejectedCenterLandingFateId = 0;
             GoFate();
-            return currentfate != null && fateid == refreshedFate.Id;
+            return currentstep == 1 && fateid == refreshedSnapshot.Id;
         }
 
         private void GoHunting()
@@ -827,46 +1209,77 @@ namespace LlamaUtilities.OrderbotTags
             }
         }
 
-        private void UpdateHuntStatistics()
+        private void UpdateHuntStatistics(BattleCharacter liveCombatPoiTarget)
         {
-            if (huntedTargetObjectId == 0)
+            try
             {
-                return;
-            }
-
-            var target = GameObjectManager.GetObjectByObjectId(huntedTargetObjectId) as BattleCharacter;
-            if (target != null && target.IsValid && !target.IsDead && !IsInsideIdleHuntLeash(target))
-            {
-                var abandonedTargetId = huntedTargetObjectId;
-                abandonedIdleHuntTargetIds.Add(abandonedTargetId);
-                if (Poi.Current?.Type == PoiType.Kill && Poi.Current.BattleCharacter?.ObjectId == abandonedTargetId)
+                if (huntedTargetObjectId == 0)
                 {
-                    Poi.Clear("Idle hunt target exceeded HuntRadius.");
+                    // The anchor remains active while combat winds down after an abandoned target so
+                    // RB's independent targeting pulse cannot replace it with a distant attacker.
+                    if (idleHuntAnchor.HasValue && !Core.Me.InCombat)
+                    {
+                        idleHuntAnchor = null;
+                    }
+                    return;
                 }
-                if (Core.Player.CurrentTargetId == abandonedTargetId)
-                {
-                    Core.Player.ClearTarget();
-                }
-                Navigator.Stop();
-                MovementManager.MoveStop();
-                Log.Information($"Abandoned idle hunt target {target.Name}; it moved beyond the {HuntRadius:0.#}-yalm HuntRadius leash.");
-                huntedTargetObjectId = 0;
-                idleHuntAnchor = null;
-                return;
-            }
 
-            if (target != null && target.IsValid && target.IsDead)
-            {
-                mobsHunted++;
-                Log.Information($"Completed idle hunt. Session hunt total: {mobsHunted}.");
-                huntedTargetObjectId = 0;
-                idleHuntAnchor = null;
+                // Prefer the safety pulse's current-frame POI wrapper. The fallback covers the brief
+                // interval after RB clears a dead POI but before LLFate records the completed hunt.
+                var target = liveCombatPoiTarget != null && liveCombatPoiTarget.ObjectId == huntedTargetObjectId
+                    ? liveCombatPoiTarget
+                    : GameObjectManager.GetObjectByObjectId(huntedTargetObjectId) as BattleCharacter;
+                if (target != null && target.IsValid && !target.IsDead && !IsInsideIdleHuntLeash(target))
+                {
+                    var abandonedTargetId = huntedTargetObjectId;
+                    abandonedIdleHuntTargetsUntil[abandonedTargetId] = DateTime.UtcNow + IdleHuntAbandonmentPeriod;
+                    if (liveCombatPoiTarget != null && liveCombatPoiTarget.ObjectId == abandonedTargetId)
+                    {
+                        Poi.Clear("Idle hunt target exceeded HuntRadius.");
+                    }
+                    if (Core.Player.CurrentTargetId == abandonedTargetId)
+                    {
+                        Core.Player.ClearTarget();
+                    }
+                    Navigator.Stop();
+                    MovementManager.MoveStop();
+                    Log.Information($"Abandoned idle hunt target {target.Name}; it moved beyond the {HuntRadius:0.#}-yalm HuntRadius leash.");
+                    huntedTargetObjectId = 0;
+                    if (!Core.Me.InCombat)
+                    {
+                        idleHuntAnchor = null;
+                    }
+                    return;
+                }
+
+                if (target != null && target.IsValid && target.IsDead)
+                {
+                    mobsHunted++;
+                    Log.Information($"Completed idle hunt. Session hunt total: {mobsHunted}.");
+                    huntedTargetObjectId = 0;
+                    if (!Core.Me.InCombat)
+                    {
+                        idleHuntAnchor = null;
+                    }
+                }
+                else if (target == null && !Core.Me.InCombat)
+                {
+                    // A missing object is not enough to claim a kill: it may have phased or left object range.
+                    huntedTargetObjectId = 0;
+                    idleHuntAnchor = null;
+                }
             }
-            else if (target == null && !Core.Me.InCombat)
+            catch (Exception exception)
             {
-                // A missing object is not enough to claim a kill: it may have phased or left object range.
-                huntedTargetObjectId = 0;
-                idleHuntAnchor = null;
+                if (exception.GetType().Name != "ReadWriteMemoryException")
+                {
+                    throw;
+                }
+
+                // Hunt actors can retire after the pulse reacquires the POI but before statistics
+                // finish reading it. Clear only the stale control surfaces; the next pulse decides
+                // whether combat is still active before retiring the hunt anchor and target ID.
+                ClearStaleCombatPoi("Idle hunt target despawned during LLFate statistics validation.");
             }
         }
 
@@ -874,6 +1287,374 @@ namespace LlamaUtilities.OrderbotTags
         {
             return !idleHuntAnchor.HasValue ||
                    Vector3.Distance(unit.Location, idleHuntAnchor.Value) <= HuntRadius;
+        }
+
+        /// <summary>
+        /// Clears the incidental-aggro anchor whenever another explicit LLFate objective owns
+        /// targeting, or after combat ends. The provider can establish the anchor first because
+        /// CombatTargeting may pulse before the OrderBot safety hook in a scheduling pass.
+        /// </summary>
+        private void UpdateDefensiveCombatState()
+        {
+            if (!Core.Me.InCombat || fateid != 0 || idleHuntAnchor.HasValue || postFateCombatLeashAnchor.HasValue)
+            {
+                defensiveCombatAnchor = null;
+            }
+        }
+
+        /// <summary>
+        /// Lets a newly eligible FATE preempt downtime hunting from the always-pulsed safety hook.
+        /// A Kill POI prevents normal profile selection from running, so waiting for GetFates would
+        /// incorrectly make the optional hunt more important than the tag's primary FATE work.
+        /// </summary>
+        private void InterruptIdleHuntForEligibleFate()
+        {
+            if (huntedTargetObjectId == 0 || currentfate != null || ShouldStop())
+            {
+                return;
+            }
+
+            var eligibleFate = SelectBestEligibleFate(logCandidates: false);
+            FateSnapshot eligibleSnapshot;
+            if (!TryReadFateSnapshot(eligibleFate, out eligibleSnapshot) ||
+                !IsUsableFateSnapshot(eligibleSnapshot, 0, false))
+            {
+                return;
+            }
+
+            // Hand any unavoidable combat to the existing bounded retirement path before GoFate
+            // clears the hunt anchor. This prevents provider admission from becoming unbounded in
+            // the scheduling pass that switches objectives.
+            if (Core.Me.InCombat)
+            {
+                postFateCombatLeashAnchor = Core.Player.Location;
+                combatRetirementDeadlineUtc = DateTime.UtcNow + CombatRetirementTimeout;
+            }
+
+            // Selection returns a live native wrapper. Use the validated primitive snapshot for
+            // diagnostics so a row retiring at this handoff cannot fault the always-pulsed hook.
+            Log.Information($"Eligible FATE \"{eligibleSnapshot.Name}\" appeared; interrupting optional idle hunting.");
+            currentfate = eligibleFate;
+            GoFate();
+        }
+
+        /// <summary>
+        /// Enforces the combat-retirement deadline from an always-running hook. A defensive Kill
+        /// POI prevents the profile coroutine that created it from resuming, so checking only
+        /// inside that coroutine cannot guarantee a bound.
+        /// </summary>
+        private void ValidateCombatRetirementDeadline()
+        {
+            if (combatRetirementDeadlineUtc == default(DateTime))
+            {
+                return;
+            }
+
+            if (!Core.Me.InCombat)
+            {
+                ClearCombatRetirementState();
+                return;
+            }
+
+            if (DateTime.UtcNow < combatRetirementDeadlineUtc)
+            {
+                return;
+            }
+
+            ReleaseOwnedControl("LLFate combat-retirement safety timeout");
+            _done = true;
+            combatRetirementDeadlineUtc = default(DateTime);
+            var reason = $"LLFate could not leave combat within {CombatRetirementTimeout.TotalSeconds:0} seconds.";
+            Log.Error(reason);
+            TreeRoot.Stop(reason);
+        }
+
+        /// <summary>Clears the temporary leash and deadline after combat safely retires.</summary>
+        private void ClearCombatRetirementState()
+        {
+            postFateCombatLeashAnchor = null;
+            combatRetirementDeadlineUtc = default(DateTime);
+        }
+
+        /// <summary>
+        /// Clears an existing Kill POI after its actor crosses the post-FATE leash. Provider
+        /// admission prevents new reacquisition, but RebornBuddy continues executing an already
+        /// assigned POI until its owner explicitly retires it.
+        /// </summary>
+        private void ValidatePostFateCombatLeash(BattleCharacter target)
+        {
+            if (!postFateCombatLeashAnchor.HasValue || !Core.Me.InCombat)
+            {
+                return;
+            }
+
+            if (target == null ||
+                Vector3.Distance(target.Location, postFateCombatLeashAnchor.Value) <= PostFateCombatLeash)
+            {
+                return;
+            }
+
+            var targetId = target.ObjectId;
+            Poi.Clear($"Post-FATE target exceeded the {PostFateCombatLeash:0.#}-yalm leash");
+            if (Core.Player != null && Core.Player.CurrentTargetId == targetId)
+            {
+                Core.Player.ClearTarget();
+            }
+            Navigator.Stop();
+            MovementManager.MoveStop();
+            Log.Information($"Released retreating target \"{target.Name}\" after it crossed the post-FATE combat leash.");
+        }
+
+        /// <summary>
+        /// Releases an already assigned incidental-aggro POI after it crosses the same fixed area
+        /// enforced during provider admission. Provider filtering prevents reacquisition, while
+        /// this check retires a POI that RB assigned before the actor moved out of bounds.
+        /// </summary>
+        private void ValidateDefensiveCombatLeash(BattleCharacter target)
+        {
+            if (!defensiveCombatAnchor.HasValue || !Core.Me.InCombat || fateid != 0 ||
+                idleHuntAnchor.HasValue || postFateCombatLeashAnchor.HasValue)
+            {
+                return;
+            }
+
+            if (target == null || target.IsFate ||
+                Vector3.Distance(target.Location, defensiveCombatAnchor.Value) <= DefensiveCombatLeash)
+            {
+                return;
+            }
+
+            var targetId = target.ObjectId;
+            Poi.Clear($"Defensive target exceeded the {DefensiveCombatLeash:0.#}-yalm leash");
+            if (Core.Player.CurrentTargetId == targetId)
+            {
+                Core.Player.ClearTarget();
+            }
+
+            Navigator.Stop();
+            MovementManager.MoveStop();
+            Log.Information($"Released incidental attacker \"{target.Name}\" after it crossed the defensive-combat leash.");
+        }
+
+        /// <summary>
+        /// Retires any active-FATE combat POI that leaves the event's actual boundary. Ordinary
+        /// overworld attackers can aggro during an event and are just as capable of dragging the
+        /// routine away, so both FATE and defensive targets share the same geometric leash.
+        /// </summary>
+        private void ValidateCombatPoiFateLeash(BattleCharacter target)
+        {
+            if (target == null ||
+                postFateCombatLeashAnchor.HasValue || fateid == 0)
+            {
+                return;
+            }
+
+            var isInsideBoundary = target.IsFate
+                ? IsInsideTrackedFateTargetBoundary(target)
+                : IsInsideTrackedFateGeometry(target);
+            if (isInsideBoundary)
+            {
+                return;
+            }
+
+            var targetId = target.ObjectId;
+            Poi.Clear($"Active-FATE target exceeded the event-radius leash: {target.Name}");
+            if (Core.Player != null && Core.Player.CurrentTargetId == targetId)
+            {
+                Core.Player.ClearTarget();
+            }
+
+            Navigator.Stop();
+            MovementManager.MoveStop();
+            Log.Information($"Released combat target \"{target.Name}\" after it moved outside the active FATE boundary.");
+        }
+
+        /// <summary>
+        /// Retires an LLFate-owned kill objective that remains obstructed. Combat routines continue
+        /// acting on an existing POI even after the targeting provider stops returning that unit,
+        /// so provider filtering alone cannot recover from an enemy behind permanent geometry.
+        /// </summary>
+        private void ValidateCombatPoiLineOfSight(BattleCharacter target)
+        {
+            if (target == null)
+            {
+                obstructedPoiObjectId = 0;
+                obstructedPoiSinceUtc = default(DateTime);
+                return;
+            }
+
+            try
+            {
+                var targetObjectId = target.ObjectId;
+                var isFateTarget = target.IsFate;
+                var isAttacker = GameObjectManager.Attackers.Any(
+                    attacker => attacker.ObjectId == targetObjectId);
+                var isRetiringAttacker = postFateCombatLeashAnchor.HasValue && Core.Me.InCombat && isAttacker;
+                var isActiveFateAttacker = fateid != 0 && !isFateTarget && isAttacker;
+                var isDefensiveAttacker = defensiveCombatAnchor.HasValue && !isFateTarget && isAttacker;
+                var isOwnedTarget = (fateid != 0 && isFateTarget && target.FateId == fateid) ||
+                                    (huntedTargetObjectId != 0 && targetObjectId == huntedTargetObjectId) ||
+                                    isActiveFateAttacker ||
+                                    isDefensiveAttacker ||
+                                    isRetiringAttacker;
+                if (!isOwnedTarget || target.IsDead || target.InLineOfSight())
+                {
+                    obstructedPoiObjectId = 0;
+                    obstructedPoiSinceUtc = default(DateTime);
+                    return;
+                }
+
+                var now = DateTime.UtcNow;
+                if (obstructedPoiObjectId != targetObjectId)
+                {
+                    obstructedPoiObjectId = targetObjectId;
+                    obstructedPoiSinceUtc = now;
+                    return;
+                }
+
+                if (now - obstructedPoiSinceUtc < LineOfSightGracePeriod)
+                {
+                    return;
+                }
+
+                SuppressObstructedTarget(target, "target remained out of line of sight");
+                obstructedPoiObjectId = 0;
+                obstructedPoiSinceUtc = default(DateTime);
+            }
+            catch (Exception exception)
+            {
+                if (exception.GetType().Name != "ReadWriteMemoryException")
+                {
+                    throw;
+                }
+
+                // The object table can retire a FATE actor between reacquisition and the remaining
+                // native reads in this pulse. GreyMagic exposes this exception as a private global
+                // type in current RB builds, so it must be identified by its exact runtime name;
+                // every other exception is rethrown instead of being hidden by this recovery path.
+                ClearStaleCombatPoi("Combat target despawned during LLFate safety validation.");
+            }
+        }
+
+        /// <summary>
+        /// Reacquires a combat POI from the current game-object table before reading combat fields.
+        /// POI retains the wrapper that existed when it was assigned, but RB invalidates wrappers
+        /// when an actor despawns or its object-table slot is reused at a FATE transition.
+        /// </summary>
+        /// <param name="target">The current-frame battle-character wrapper when available.</param>
+        /// <returns><c>true</c> only when the Kill POI still resolves to a valid live actor.</returns>
+        private bool TryGetLiveCombatPoiTarget(out BattleCharacter target)
+        {
+            target = null;
+            if (Poi.Current?.Type != PoiType.Kill)
+            {
+                return false;
+            }
+
+            try
+            {
+                var cachedTarget = Poi.Current.BattleCharacter;
+                if (cachedTarget == null)
+                {
+                    ClearStaleCombatPoi("LLFate Kill POI no longer has a combat actor.");
+                    return false;
+                }
+
+                var objectId = cachedTarget.ObjectId;
+                target = GameObjectManager.GetObjectByObjectId(objectId) as BattleCharacter;
+                if (target != null && target.IsValid)
+                {
+                    return true;
+                }
+
+                ClearStaleCombatPoi("LLFate Kill POI actor is no longer present in the current object table.");
+                target = null;
+                return false;
+            }
+            catch (Exception exception)
+            {
+                if (exception.GetType().Name != "ReadWriteMemoryException")
+                {
+                    throw;
+                }
+
+                // ReadWriteMemoryException is private in GreyMagic.dll and therefore cannot be
+                // referenced in source. Matching its exact runtime name keeps this guard narrow.
+                ClearStaleCombatPoi("LLFate Kill POI wrapper expired before it could be reacquired.");
+                target = null;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Releases movement and targeting retained for an actor that no longer exists. This is
+        /// intentionally quiet beyond the standard POI-clear diagnostic because despawns are a
+        /// normal FATE transition and should not create recurring warning or error noise.
+        /// </summary>
+        /// <param name="reason">Diagnostic reason recorded by RebornBuddy's POI manager.</param>
+        private void ClearStaleCombatPoi(string reason)
+        {
+            Poi.Clear(reason);
+            Core.Player.ClearTarget();
+            Navigator.Stop();
+            MovementManager.MoveStop();
+            obstructedPoiObjectId = 0;
+            obstructedPoiSinceUtc = default(DateTime);
+        }
+
+        /// <summary>
+        /// Releases one obstructed target from every LLFate-owned control surface and delays its
+        /// eligibility. Both the active-POI validator and the pre-combat approach path use this
+        /// shared cleanup so neither can immediately reacquire the same unreachable actor.
+        /// </summary>
+        /// <param name="target">Live actor that failed the LOS policy.</param>
+        /// <param name="reason">Concise diagnostic explanation for the suppression.</param>
+        private void SuppressObstructedTarget(BattleCharacter target, string reason)
+        {
+            lineOfSightSuppressedUntil[target.ObjectId] = DateTime.UtcNow + LineOfSightSuppressionPeriod;
+            if (Poi.Current?.Type == PoiType.Kill && Poi.Current.BattleCharacter?.ObjectId == target.ObjectId)
+            {
+                Poi.Clear($"LLFate {reason}: {target.Name}");
+            }
+            if (Core.Player != null && Core.Player.CurrentTargetId == target.ObjectId)
+            {
+                Core.Player.ClearTarget();
+            }
+
+            Navigator.Stop();
+            MovementManager.MoveStop();
+            Log.Information(
+                $"Skipping obstructed target \"{target.Name}\" for {LineOfSightSuppressionPeriod.TotalSeconds:0} seconds ({reason}).");
+        }
+
+        /// <summary>
+        /// Determines whether an actor has a usable combat ray and is not cooling down after a
+        /// persistent obstruction. Expired entries are removed lazily because object IDs are
+        /// short-lived and the list remains bounded to targets encountered by this tag run.
+        /// </summary>
+        /// <param name="unit">Candidate combat actor.</param>
+        /// <returns><c>true</c> when LLFate may select or admit the actor.</returns>
+        private bool IsLineOfSightCandidate(BattleCharacter unit)
+        {
+            return unit != null && unit.InLineOfSight() && !IsLineOfSightSuppressed(unit.ObjectId);
+        }
+
+        /// <summary>Checks the temporary obstruction cache and lazily removes expired entries.</summary>
+        private bool IsLineOfSightSuppressed(uint objectId)
+        {
+            DateTime suppressedUntil;
+            if (!lineOfSightSuppressedUntil.TryGetValue(objectId, out suppressedUntil))
+            {
+                return false;
+            }
+
+            if (DateTime.UtcNow < suppressedUntil)
+            {
+                return true;
+            }
+
+            lineOfSightSuppressedUntil.Remove(objectId);
+            return false;
         }
 
         /// <summary>
@@ -885,13 +1666,73 @@ namespace LlamaUtilities.OrderbotTags
         /// <returns><c>true</c> when the unit remains inside every active leash.</returns>
         private bool IsInsideActiveTargetingLeashes(BattleCharacter unit)
         {
+            if (!IsLineOfSightCandidate(unit))
+            {
+                return false;
+            }
+
+            if (IsUnsupportedOrUnresolvedFateActor(unit))
+            {
+                return false;
+            }
+
+            // Clearing the POI and current target alone is insufficient because CombatTargeting
+            // can immediately promote the same attacker again. The suppression is deliberately
+            // temporary because the client may later reuse this transient object ID.
+            if (!unit.IsFate && IsIdleHuntTargetAbandoned(unit.ObjectId))
+            {
+                return false;
+            }
+
             if (postFateCombatLeashAnchor.HasValue)
             {
                 if (!Core.Me.InCombat)
                 {
-                    postFateCombatLeashAnchor = null;
+                    ClearCombatRetirementState();
                 }
                 else if (Vector3.Distance(unit.Location, postFateCombatLeashAnchor.Value) > PostFateCombatLeash)
+                {
+                    return false;
+                }
+            }
+
+            if (!postFateCombatLeashAnchor.HasValue && fateid != 0 &&
+                (unit.IsFate
+                    ? !IsInsideTrackedFateTargetBoundary(unit)
+                    : !IsInsideTrackedFateGeometry(unit)))
+            {
+                // Outside the short defensive handoff, every combat target must remain inside the
+                // selected event. FATE actors additionally require the matching FateId; ordinary
+                // attackers use the same geometry so they cannot drag combat across the zone.
+                return false;
+            }
+
+            if (!postFateCombatLeashAnchor.HasValue && fateid == 0 && unit.IsFate)
+            {
+                // An active event must be selected through GetFates before its actors are eligible.
+                // This prevents overlapping or policy-rejected FATEs from bypassing selection while idle.
+                return false;
+            }
+
+            if (!unit.IsFate && idleHuntAnchor.HasValue && !IsInsideIdleHuntLeash(unit))
+            {
+                return false;
+            }
+
+            if (!unit.IsFate && fateid == 0 && !postFateCombatLeashAnchor.HasValue &&
+                !idleHuntAnchor.HasValue)
+            {
+                if (!Core.Me.InCombat)
+                {
+                    return false;
+                }
+
+                if (!defensiveCombatAnchor.HasValue)
+                {
+                    defensiveCombatAnchor = Core.Player.Location;
+                }
+
+                if (Vector3.Distance(unit.Location, defensiveCombatAnchor.Value) > DefensiveCombatLeash)
                 {
                     return false;
                 }
@@ -900,25 +1741,98 @@ namespace LlamaUtilities.OrderbotTags
             return huntedTargetObjectId == 0 || unit.IsFate || IsInsideIdleHuntLeash(unit);
         }
 
-        private void SetLastFate()
+        /// <summary>
+        /// Converts a FATE's reported radius into a reachable ground-travel threshold while
+        /// preserving the established ten-yalm inset for ordinary events.
+        /// </summary>
+        /// <param name="radius">The live radius reported by the selected FATE.</param>
+        /// <returns>A strictly positive distance at which travel is considered complete.</returns>
+        private static float GetFateArrivalDistance(float radius)
         {
-            lastFateId = currentfate.Id;
-            Log.Information($"Setting last Fate to {currentfate.Name}.");
+            return Math.Max(MinimumFateArrivalDistance, radius - 10f);
+        }
+
+        /// <summary>
+        /// Applies the selected event's live geometry to every FATE combat path. The small tolerance
+        /// absorbs actors fighting on the boundary without restoring the old unbounded chase.
+        /// Cached geometry is intentionally used during brief FateData refresh gaps.
+        /// </summary>
+        private bool IsInsideTrackedFateTargetBoundary(BattleCharacter unit)
+        {
+            return unit != null && unit.IsFate && fateid != 0 && unit.FateId == fateid &&
+                   IsInsideTrackedFateGeometry(unit);
+        }
+
+        /// <summary>
+        /// Applies the selected event's geometric leash to actors that do not carry its FateId.
+        /// Ambient enemies can join combat inside a FATE, but they must not be allowed to pull the
+        /// routine farther than an event enemy could travel.
+        /// </summary>
+        /// <param name="unit">The live combat actor whose position should be bounded.</param>
+        /// <returns><c>true</c> when the actor remains inside the selected event radius and tolerance.</returns>
+        private bool IsInsideTrackedFateGeometry(BattleCharacter unit)
+        {
+            return unit != null && fateid != 0 && Position != Vector3.Zero && fateRadius > 0 &&
+                   Vector3.Distance(unit.Location, Position) <= fateRadius + FateTargetLeashTolerance;
+        }
+
+        /// <summary>
+        /// Rejects hand-in actors and unknown FATE actors whose owning event cannot be resolved.
+        /// Previously validated supported IDs remain eligible only for bounded defensive cleanup;
+        /// every genuinely unknown ID stays fail-closed when its wrapper is unavailable.
+        /// </summary>
+        private bool IsUnsupportedOrUnresolvedFateActor(BattleCharacter unit)
+        {
+            if (unit == null || !unit.IsFate)
+            {
+                return false;
+            }
+
+            if (unit.FateId == 0 || unsupportedFateIds.Contains(unit.FateId))
+            {
+                return true;
+            }
+
+            var owner = FateManager.GetFateById(unit.FateId);
+            FateSnapshot ownerSnapshot;
+            if (!TryReadFateSnapshot(owner, out ownerSnapshot))
+            {
+                return !supportedFateIds.Contains(unit.FateId);
+            }
+
+            // A copied row is not necessarily the row requested: the native FATE table can reuse
+            // its slot during the same scheduling pass. Never let an invalid or mismatched row
+            // poison the session-long support cache used during defensive combat retirement.
+            if (!ownerSnapshot.IsValid || ownerSnapshot.Id != unit.FateId)
+            {
+                return true;
+            }
+
+            if (ownerSnapshot.Icon == FateIconType.KillHandIn)
+            {
+                unsupportedFateIds.Add(unit.FateId);
+                supportedFateIds.Remove(unit.FateId);
+                return true;
+            }
+
+            supportedFateIds.Add(unit.FateId);
+            return false;
         }
 
         private void UpdateFateData()
         {
             foreach (var item in FateManager.ActiveFates)
             {
-                if (item.Id == fateid)
+                FateSnapshot snapshot;
+                if (TryReadFateSnapshot(item, out snapshot) && snapshot.Id == fateid)
                 {
-                    Position = item.Location;
-                    fateName = item.Name;
-                    fateStatus = item.Status.ToString();
+                    Position = snapshot.Location;
+                    fateName = snapshot.Name;
+                    fateStatus = snapshot.Status.ToString();
                     // RB commonly removes the FateData wrapper before exposing COMPLETE. Record
                     // that the player entered this exact event so its disappearance can still be
                     // included in the session report instead of silently losing the count.
-                    if (FateManager.WithinFate && Core.Me.Distance(item.Location) <= item.Radius)
+                    if (FateManager.WithinFate && Core.Me.Distance(snapshot.Location) <= snapshot.Radius)
                     {
                         participatedInTrackedFate = true;
                     }
@@ -934,44 +1848,48 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             var trackedFate = FateManager.GetFateById(fateid);
-            if (trackedFate != null && trackedFate.Status == FateStatus.ACTIVE)
+            FateSnapshot snapshot;
+            var hasSnapshot = TryReadFateSnapshot(trackedFate, out snapshot);
+            // GetFateById can retain a wrapper whose native table slot has already been reused.
+            // Only a valid row that still carries the selected ID may prove activity or completion;
+            // every other readable row follows the same debounce as a temporarily missing row.
+            var hasMatchingSnapshot = hasSnapshot && snapshot.IsValid && snapshot.Id == fateid;
+            if (hasMatchingSnapshot && snapshot.Status == FateStatus.ACTIVE &&
+                snapshot.TimeLeft > TimeSpan.Zero)
             {
+                trackedFateUnavailableSinceUtc = default(DateTime);
+                return;
+            }
+
+            var completionStatusObserved = hasMatchingSnapshot && snapshot.Status == FateStatus.COMPLETE;
+            if (!completionStatusObserved && !HasSnapshotTransitionSettled(ref trackedFateUnavailableSinceUtc))
+            {
+                // The grace period protects against one-frame table refreshes, but movement must
+                // not resume toward an event whose live row has disappeared.
+                Flightor.Clear();
+                Navigator.Stop();
+                MovementManager.MoveStop();
                 return;
             }
 
             var endedFateId = fateid;
-            var endedFateName = !string.IsNullOrWhiteSpace(fateName) ? fateName : currentfate?.Name ?? $"FATE {endedFateId}";
-            var completionStatusObserved = trackedFate != null && trackedFate.Status == FateStatus.COMPLETE;
-            var finishedAfterParticipation = completionStatusObserved || participatedInTrackedFate;
+            var endedFateName = !string.IsNullOrWhiteSpace(fateName) ? fateName : $"FATE {endedFateId}";
 
-            if (currentfate != null)
-            {
-                SetLastFate();
-            }
+            RetireTrackedFateState($"FATE {endedFateId} ended; clearing stale movement");
 
-            // Retiring the FATE must also retire every movement owner. When no replacement FATE
-            // was available, the prior navigator/Flightor command otherwise kept driving in a
-            // straight line indefinitely because the disabled idle-hunt path issued no command
-            // to supersede it. Stop both navigation layers, release any FATE combat POI, and
-            // invalidate the cached destination before the same pulse searches for new work.
-            // Keep the combat anchor active in the provider before clearing POI. RB may pulse
-            // CombatTargeting later in this scheduling pass and must not reacquire distant attackers.
-            postFateCombatLeashAnchor = Core.Player.Location;
-            Navigator.Stop();
-            Flightor.Clear();
-            MovementManager.MoveStop();
-            Poi.Clear($"FATE {endedFateId} ended; clearing stale movement");
-            Position = Vector3.Zero;
-            currentstep = 0;
-            fateid = 0;
-            fateRadius = 0;
-            currentfate = null;
-
-            if (finishedAfterParticipation)
+            if (completionStatusObserved && participatedInTrackedFate)
             {
                 fatesDone++;
-                var evidence = completionStatusObserved ? "completion status observed" : "participated through event end";
-                Log.Information($"Finished FATE \"{endedFateName}\" ({endedFateId}; {evidence}). Session total: {fatesDone}.");
+                Log.Information($"Completed FATE \"{endedFateName}\" ({endedFateId}; completion status observed). Confirmed session total: {fatesDone}.");
+            }
+            else if (completionStatusObserved)
+            {
+                Log.Information($"FATE \"{endedFateName}\" ({endedFateId}) completed before LLFate observed participation; it was not added to the session completion total.");
+            }
+            else if (participatedInTrackedFate)
+            {
+                participatedFateEndings++;
+                Log.Information($"Observed FATE \"{endedFateName}\" ({endedFateId}) end after participation; the client did not expose a completion result. Observed-ending total: {participatedFateEndings}.");
             }
             else
             {
@@ -979,6 +1897,67 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             participatedInTrackedFate = false;
+        }
+
+        /// <summary>
+        /// Prevents the profile tree from acting on cached event state while the safety pulse is
+        /// confirming a transient missing or malformed FATE row.
+        /// </summary>
+        /// <returns><c>true</c> while either tracked transition grace period is active.</returns>
+        private bool IsTrackedFateTransitionPending()
+        {
+            return currentstep > 0 && fateid != 0 &&
+                   (trackedFateUnavailableSinceUtc != default(DateTime) ||
+                    trackedFateInvalidSinceUtc != default(DateTime));
+        }
+
+        /// <summary>
+        /// Confirms a transient FateData transition across several bot pulses. The timestamp is
+        /// reset by the corresponding healthy path, allowing separate unavailable and malformed
+        /// states to recover independently without losing the selected event.
+        /// </summary>
+        private static bool HasSnapshotTransitionSettled(ref DateTime transitionStartedUtc)
+        {
+            if (transitionStartedUtc == default(DateTime))
+            {
+                transitionStartedUtc = DateTime.UtcNow;
+                return false;
+            }
+
+            return DateTime.UtcNow - transitionStartedUtc >= FateSnapshotTransitionGracePeriod;
+        }
+
+        /// <summary>
+        /// Releases all navigation, targeting, and cached destination state for a selected FATE.
+        /// Combat retirement is armed before provider/POI cleanup so RB cannot reacquire a distant
+        /// attacker later in the same scheduling pass.
+        /// </summary>
+        private void RetireTrackedFateState(string reason)
+        {
+            defensiveCombatAnchor = null;
+            if (Core.Me.InCombat)
+            {
+                postFateCombatLeashAnchor = Core.Player.Location;
+                combatRetirementDeadlineUtc = DateTime.UtcNow + CombatRetirementTimeout;
+            }
+            else
+            {
+                ClearCombatRetirementState();
+            }
+
+            ReleaseOwnedControl(reason);
+            // Fate IDs identify definitions, not individual spawns. Retiring one generation must
+            // discard its terrain verdicts so a later recurrence cannot inherit exhausted retries.
+            ClearLandingRecoveryState();
+            Position = Vector3.Zero;
+            currentstep = 0;
+            fateid = 0;
+            fateRadius = 0;
+            fateIcon = default(FateIconType);
+            fateMaxLevel = 0;
+            currentfate = null;
+            trackedFateUnavailableSinceUtc = default(DateTime);
+            trackedFateInvalidSinceUtc = default(DateTime);
         }
 
         /// <summary>
@@ -1014,20 +1993,33 @@ namespace LlamaUtilities.OrderbotTags
             }
 
             var trackedFate = FateManager.GetFateById(fateid);
-            if (IsUsableFate(trackedFate, fateid, true))
+            FateSnapshot snapshot;
+            var hasSnapshot = TryReadFateSnapshot(trackedFate, out snapshot);
+            if (hasSnapshot && IsUsableFateSnapshot(snapshot, fateid, true))
             {
-                currentfate = trackedFate;
-                Position = trackedFate.Location;
+                trackedFateInvalidSinceUtc = default(DateTime);
+                Position = snapshot.Location;
+                fateRadius = snapshot.Radius;
+                fateIcon = snapshot.Icon;
+                fateMaxLevel = snapshot.MaxLevel;
                 return;
             }
 
-            Navigator.Stop();
-            Poi.Clear("Rejected incomplete FATE snapshot");
-            currentstep = 0;
-            fateid = 0;
-            fateRadius = 0;
-            currentfate = null;
-            Position = Vector3.Zero;
+            // Missing and non-active wrappers are owned by IsFateStillActive, which distinguishes
+            // explicit completion from a frame-cached disappearance. ACTIVE snapshots whose timer
+            // reached zero use that same ending debounce because zero is a normal expiry boundary,
+            // not malformed geometry. Only other sustained malformed ACTIVE data is abandoned here.
+            if (!hasSnapshot || snapshot.Status != FateStatus.ACTIVE ||
+                snapshot.TimeLeft <= TimeSpan.Zero ||
+                !HasSnapshotTransitionSettled(ref trackedFateInvalidSinceUtc))
+            {
+                return;
+            }
+
+            var rejectedFateId = fateid;
+            RetireTrackedFateState($"FATE {rejectedFateId} remained incomplete after the snapshot grace period");
+            participatedInTrackedFate = false;
+            Log.Warning($"Abandoned FATE {rejectedFateId} because its active snapshot remained incomplete for {FateSnapshotTransitionGracePeriod.TotalSeconds:0.#} seconds.");
         }
 
         /// <summary>
@@ -1041,27 +2033,85 @@ namespace LlamaUtilities.OrderbotTags
         /// <returns><c>true</c> only when the snapshot contains a safe, active navigation target.</returns>
         private bool IsUsableFate(FateData fate, uint expectedId = 0, bool logRejected = false)
         {
+            FateSnapshot snapshot;
+            return TryReadFateSnapshot(fate, out snapshot) &&
+                   IsUsableFateSnapshot(snapshot, expectedId, logRejected);
+        }
+
+        /// <summary>
+        /// Copies all native FATE fields needed by LLFate under one guarded read. A slot can retire
+        /// between any two property accesses; a failed copy is therefore treated as an unavailable
+        /// snapshot and handled by the existing transition grace period rather than escaping as a
+        /// GreyMagic memory exception.
+        /// </summary>
+        /// <param name="fate">Live RebornBuddy wrapper to copy.</param>
+        /// <param name="snapshot">Primitive snapshot when every required field was read.</param>
+        /// <returns><c>true</c> when the complete snapshot was captured.</returns>
+        private static bool TryReadFateSnapshot(FateData fate, out FateSnapshot snapshot)
+        {
+            snapshot = default(FateSnapshot);
             if (fate == null)
             {
                 return false;
             }
 
-            var id = fate.Id;
-            var name = fate.Name;
-            var location = fate.Location;
-            var radius = fate.Radius;
-            var level = fate.Level;
-            var maxLevel = fate.MaxLevel;
-            var status = fate.Status;
-            var timeLeft = fate.TimeLeft;
+            try
+            {
+                snapshot = new FateSnapshot
+                {
+                    IsValid = fate.IsValid,
+                    Id = fate.Id,
+                    Name = fate.Name,
+                    Location = fate.Location,
+                    Radius = fate.Radius,
+                    Level = Convert.ToInt32(fate.Level),
+                    MaxLevel = Convert.ToInt32(fate.MaxLevel),
+                    Status = fate.Status,
+                    TimeLeft = fate.TimeLeft,
+                    Icon = fate.Icon,
+                    Progress = Convert.ToInt32(fate.Progress)
+                };
+                return true;
+            }
+            catch (Exception exception)
+            {
+                if (exception.GetType().Name != "ReadWriteMemoryException")
+                {
+                    throw;
+                }
+
+                // GreyMagic's exception is private in current RB builds, so exact runtime-name
+                // matching is the narrowest source-compatible guard available to this tag.
+                snapshot = default(FateSnapshot);
+                return false;
+            }
+        }
+
+        /// <summary>Applies LLFate's semantic safety policy to a stable primitive snapshot.</summary>
+        /// <param name="snapshot">Complete FATE fields captured by <see cref="TryReadFateSnapshot"/>.</param>
+        /// <param name="expectedId">Selected ID that the snapshot must represent, or zero during selection.</param>
+        /// <param name="logRejected">Whether to report the first rejected snapshot for this ID.</param>
+        /// <returns><c>true</c> only when the snapshot is a safe active navigation target.</returns>
+        private bool IsUsableFateSnapshot(FateSnapshot snapshot, uint expectedId, bool logRejected)
+        {
+            var id = snapshot.Id;
+            var name = snapshot.Name;
+            var location = snapshot.Location;
+            var radius = snapshot.Radius;
+            var level = snapshot.Level;
+            var maxLevel = snapshot.MaxLevel;
+            var status = snapshot.Status;
+            var timeLeft = snapshot.TimeLeft;
 
             // TODO: Revisit KillHandIn support when LLFate has a reliable way to identify the
             // event-specific key item, select the correct receiver, and recover every dialog state.
             // Until then, rejecting the icon here protects open, focused-ID, refresh, and tracked
             // FATE paths from entering the old unsafe hand-in behavior.
-            if (fate.Icon == FateIconType.KillHandIn)
+            if (snapshot.Icon == FateIconType.KillHandIn)
             {
-                if (logRejected && rejectedFateIds.Add(id))
+                unsupportedFateIds.Add(id);
+                supportedFateIds.Remove(id);
+                if (logRejected && reportedPolicySkipFateIds.Add(id))
                 {
                     Log.Information($"Skipping unsupported hand-in FATE \"{name}\" ({id}).");
                 }
@@ -1069,7 +2119,7 @@ namespace LlamaUtilities.OrderbotTags
                 return false;
             }
 
-            var usable = fate.IsValid &&
+            var usable = snapshot.IsValid &&
                          id != 0 &&
                          (expectedId == 0 || id == expectedId) &&
                          status == FateStatus.ACTIVE &&
@@ -1084,6 +2134,13 @@ namespace LlamaUtilities.OrderbotTags
             if (!usable && logRejected && rejectedFateIds.Add(id))
             {
                 Log.Warning($"Rejected incomplete FATE snapshot: Id={id}, Name=\"{name}\", Location={location}, Radius={radius}, Level={level}, MaxLevel={maxLevel}, Status={status}, TimeLeft={timeLeft}.");
+            }
+
+            if (usable)
+            {
+                // A validated non-hand-in definition remains safe for the short defensive handoff
+                // after its FateData wrapper disappears; distance is still bounded separately.
+                supportedFateIds.Add(id);
             }
 
             return usable;
@@ -1107,12 +2164,12 @@ namespace LlamaUtilities.OrderbotTags
         {
             Log.Information("Escort FATE");
 
-            if (currentfate.Icon == FateIconType.ProtectNPC ||
-                currentfate.Icon == FateIconType.ProtectNPC2)
+            if (fateIcon == FateIconType.ProtectNPC ||
+                fateIcon == FateIconType.ProtectNPC2)
             {
                 var npc = GameObjectManager
                     .GetObjectsOfType<BattleCharacter>()
-                    .FirstOrDefault(b => b.IsFate && !b.CanAttack && b.FateId == currentfate.Id);
+                    .FirstOrDefault(b => b.IsFate && !b.CanAttack && b.FateId == fateid);
                 Log.Information($"NPC = {npc}");
                 if (npc != null && npc.IsValid && (npc.IsBehind || npc.IsFlanking) &&
                     Core.Me.Distance(npc) > 7)
@@ -1162,17 +2219,59 @@ namespace LlamaUtilities.OrderbotTags
             return true;
         }
 
+        /// <summary>
+        /// Checks whether a hunt target is still in its post-abandonment cooldown. Entries expire
+        /// lazily so the provider remains inexpensive while avoiding permanent rejection of a
+        /// recycled game-object ID.
+        /// </summary>
+        /// <param name="objectId">Transient game-object ID being considered for targeting.</param>
+        /// <returns><c>true</c> while the actor remains temporarily suppressed.</returns>
+        private bool IsIdleHuntTargetAbandoned(uint objectId)
+        {
+            DateTime suppressedUntil;
+            if (!abandonedIdleHuntTargetsUntil.TryGetValue(objectId, out suppressedUntil))
+            {
+                return false;
+            }
+
+            if (DateTime.UtcNow < suppressedUntil)
+            {
+                return true;
+            }
+
+            abandonedIdleHuntTargetsUntil.Remove(objectId);
+            return false;
+        }
+
+        /// <summary>
+        /// Releases every movement and combat objective owned by LLFate before profile control is
+        /// returned. Navigator and Flightor are independent movement systems, while the current
+        /// target can outlive a cleared POI, so all four inputs must be retired together.
+        /// </summary>
+        /// <param name="reason">Diagnostic reason recorded with the POI cleanup.</param>
+        private static void ReleaseOwnedControl(string reason)
+        {
+            Flightor.Clear();
+            Navigator.Stop();
+            MovementManager.MoveStop();
+            Poi.Clear(reason);
+            // OnDone can run during a loading transition where RB has temporarily released the
+            // local player wrapper. Movement cleanup is still required, but target cleanup must
+            // not turn a normal profile stop into a null-reference failure.
+            if (Core.Player != null)
+            {
+                Core.Player.ClearTarget();
+            }
+        }
+
         [Obsolete]
         private void OnTimeout()
         {
             _done = true;
             Log.Information("Timeout we are done for now.");
-            Log.Information("Moving to the nearest Aetheryte.");
-            var destination = WorldManager.AetheryteIdsForZone(WorldManager.ZoneId)
-                .Select(a => a.Item2)
-                .OrderBy(a => Core.Me.Distance(a))
-                .FirstOrDefault();
-            Navigator.MoveToPointWithin(destination, 30);
+            // A completed tag must not leave an aetheryte movement request racing the next profile
+            // behavior. The profile owns any desired timeout recovery or inter-zone travel.
+            ReleaseOwnedControl("LLFate timeout completed");
             ReportSessionSummary("timeout");
         }
 
@@ -1184,8 +2283,7 @@ namespace LlamaUtilities.OrderbotTags
             // Completion hands control back to the owning profile immediately. Starting another
             // movement here races its teleport/next-step logic and was the source of visible
             // travel after the requested reward count had already been reached.
-            Navigator.Stop();
-            Poi.Clear("LLFate While condition completed");
+            ReleaseOwnedControl("LLFate While condition completed");
             ReportSessionSummary("while condition completed");
         }
 
@@ -1201,7 +2299,8 @@ namespace LlamaUtilities.OrderbotTags
             sessionSummaryReported = true;
             Log.Information("--------------------------------------");
             Log.Information($"LLFate session ended: {reason}.");
-            Log.Information($"FATEs finished after observed participation: {fatesDone}.");
+            Log.Information($"Confirmed FATE completions: {fatesDone}.");
+            Log.Information($"Participated FATE endings without a client completion result: {participatedFateEndings}.");
             Log.Information($"Confirmed idle-hunt kills: {mobsHunted}.");
             Log.Information($"Deaths: {died}.");
             Log.Information("--------------------------------------");
@@ -1217,7 +2316,24 @@ namespace LlamaUtilities.OrderbotTags
         /// <returns><c>true</c> when a valid target was assigned; otherwise <c>false</c>.</returns>
         private bool TrySetFateCombatPoi()
         {
+            // CombatTargeting owns target ranking once it has published a safe Kill POI. Replacing
+            // that POI here with the nearest actor made the two selectors alternate targets on
+            // every scheduling pulse, which could starve navigation and trigger anti-stuck logic.
+            // Forlorn actors remain an intentional exception because the tag has always promoted
+            // those time-sensitive bonus targets ahead of ordinary FATE enemies.
+            var existingTarget = Poi.Current?.BattleCharacter;
             var target = GetFateTargets();
+            var priorityTargetAvailable = target != null &&
+                                          (target.NpcId == forelornMaiden || target.NpcId == theForlorn);
+            var existingTargetHasPriority = existingTarget != null &&
+                                            (existingTarget.NpcId == forelornMaiden || existingTarget.NpcId == theForlorn);
+            if (Poi.Current?.Type == PoiType.Kill &&
+                IsEligibleTrackedFateCombatTarget(existingTarget) &&
+                (!priorityTargetAvailable || existingTargetHasPriority))
+            {
+                return true;
+            }
+
             if (target == null || !target.IsValid)
             {
                 return false;
@@ -1228,9 +2344,9 @@ namespace LlamaUtilities.OrderbotTags
         }
 
         /// <summary>
-        /// Finds the nearest visible, attackable actor belonging to the currently tracked FATE.
-        /// Restricting by the selected ID prevents overlapping events from donating an unrelated
-        /// target while LLFate is waiting for the selected event's next wave.
+        /// Finds the nearest visible, attackable actor with a clear combat ray in the currently
+        /// tracked FATE. Restricting by the selected ID prevents overlapping events from donating
+        /// an unrelated target while LLFate is waiting for the selected event's next wave.
         /// </summary>
         /// <returns>A valid target candidate, or <c>null</c> when the FATE has no active target.</returns>
         public GameObject GetFateTargets()
@@ -1242,13 +2358,7 @@ namespace LlamaUtilities.OrderbotTags
 
             var target = GameObjectManager.GameObjects
                 .Select(unit => new { unit, bc = unit as BattleCharacter })
-                .Where(x =>
-                           x.bc != null &&
-                           x.unit.CanAttack &&
-                           x.unit.IsTargetable &&
-                           x.unit.IsVisible &&
-                           x.bc.FateId == fateid &&
-                           !x.bc.IsDead)
+                .Where(x => IsEligibleTrackedFateCombatTarget(x.bc))
                 .OrderByDescending(x => x.bc.NpcId == forelornMaiden || x.bc.NpcId == theForlorn)
                 .ThenBy(x => x.unit.Distance(Core.Player.Location))
                 .Select(x => x.unit)
@@ -1259,6 +2369,56 @@ namespace LlamaUtilities.OrderbotTags
             // provide the useful user-facing diagnostics without idle-period log spam.
             return target;
         }
+
+        /// <summary>
+        /// Applies one eligibility policy to both direct POI publication and retention. Keeping
+        /// these checks identical prevents a target accepted by one LLFate path from being
+        /// immediately rejected or replaced by the other.
+        /// </summary>
+        /// <param name="unit">The live FATE combat actor to validate.</param>
+        /// <returns><c>true</c> when the actor is safe to retain or publish as the Kill POI.</returns>
+        private bool IsEligibleTrackedFateCombatTarget(BattleCharacter unit)
+        {
+            return unit != null &&
+                   unit.IsValid &&
+                   unit.IsFate &&
+                   unit.CanAttack &&
+                   unit.IsTargetable &&
+                   unit.IsVisible &&
+                   !unit.IsDead &&
+                   IsLineOfSightCandidate(unit) &&
+                   !IsUnsupportedOrUnresolvedFateActor(unit) &&
+                   IsInsideTrackedFateTargetBoundary(unit);
+        }
+
+        /// <summary>
+        /// Finds the nearest selected-FATE actor that is temporarily hidden but still suitable for
+        /// a bounded ground approach. This method deliberately does not create a combat POI; the
+        /// caller must first acquire line of sight so combat routines cannot cast through geometry.
+        /// </summary>
+        /// <returns>An approach candidate, or <c>null</c> when no unsuppressed actor is available.</returns>
+        private BattleCharacter GetFateApproachTarget()
+        {
+            if (fateid == 0)
+            {
+                return null;
+            }
+
+            return GameObjectManager.GetObjectsOfType<BattleCharacter>()
+                .Where(unit => unit.IsValid &&
+                               unit.IsFate &&
+                               unit.CanAttack &&
+                               unit.IsTargetable &&
+                               unit.IsVisible &&
+                               !unit.IsDead &&
+                               !IsUnsupportedOrUnresolvedFateActor(unit) &&
+                               IsInsideTrackedFateTargetBoundary(unit) &&
+                               !IsLineOfSightSuppressed(unit.ObjectId))
+                .OrderByDescending(unit => unit.NpcId == forelornMaiden || unit.NpcId == theForlorn)
+                .ThenBy(unit => unit.Distance(Core.Player.Location))
+                .FirstOrDefault();
+        }
+
         /// <summary>
         /// Finds the nearest conservative non-FATE target for optional downtime hunting.
         /// The radius and health ceiling prevent LLFate from roaming away or selecting an
@@ -1271,10 +2431,11 @@ namespace LlamaUtilities.OrderbotTags
                 .Where(unit => unit.CanAttack &&
                                unit.IsTargetable &&
                                unit.IsVisible &&
+                               IsLineOfSightCandidate(unit) &&
                                !unit.IsDead &&
                                unit.FateId == 0 &&
                                unit.NpcId != 541 &&
-                               !abandonedIdleHuntTargetIds.Contains(unit.ObjectId) &&
+                               !IsIdleHuntTargetAbandoned(unit.ObjectId) &&
                                unit.Distance(Core.Player.Location) <= HuntRadius &&
                                unit.MaxHealth <= Core.Me.CurrentHealth * 3)
                 .OrderBy(unit => unit.Distance(Core.Player.Location))
@@ -1299,18 +2460,42 @@ namespace LlamaUtilities.OrderbotTags
             var ReturnList = new List<FateData>();
             foreach (var f in candidates)
             {
-                if (!IsUsableFate(f, 0, true))
+                FateSnapshot snapshot;
+                if (!TryReadFateSnapshot(f, out snapshot) || !IsUsableFateSnapshot(snapshot, 0, true))
                 {
                     continue;
                 }
-                if (f.Icon.ToString() == "Boss" && f.Progress > 85)
+                if (IsLandingFailureCoolingDown(snapshot.Id))
                 {
-                    if (logCandidates)
+                    continue;
+                }
+                if ((hasExplicitMinLevel && snapshot.Level < _min) ||
+                    (hasExplicitMaxLevel && snapshot.Level > _max))
+                {
+                    // Open mode follows the same optional-bound contract as focused IDs. Applying
+                    // an omitted bound as zero makes every real FATE ineligible even though the XML
+                    // intentionally requested no level restriction.
+                    if (logCandidates && reportedPolicySkipFateIds.Add(snapshot.Id))
                     {
-                        Log.Information($"Skipping FATE \"{f.Name}\". Boss FATE progress is greater than 85%.");
+                        Log.Information($"Skipping FATE \"{snapshot.Name}\". Level {snapshot.Level} is outside the explicitly configured level bounds.");
+                    }
+                    continue;
+                }
+                if (snapshot.Progress < MinProgress)
+                {
+                    if (logCandidates && reportedPolicySkipFateIds.Add(snapshot.Id))
+                    {
+                        Log.Information($"Skipping FATE \"{snapshot.Name}\". Progress {snapshot.Progress}% is below the configured {MinProgress}% minimum.");
                     }
                 }
-                else if (fatebotInstance.BlackListedFates.Contains(f.Name) || BlacklistIds.Contains((int)f.Id))
+                else if (snapshot.Icon.ToString() == "Boss" && snapshot.Progress > 85)
+                {
+                    if (logCandidates && reportedPolicySkipFateIds.Add(snapshot.Id))
+                    {
+                        Log.Information($"Skipping FATE \"{snapshot.Name}\". Boss FATE progress is greater than 85%.");
+                    }
+                }
+                else if (IsBlacklistedFate(snapshot.Name, snapshot.Id))
                 {
                     //Log.Information($"Skipping FATE {f.Name}. FATE is blacklisted");
                 }
@@ -1320,12 +2505,46 @@ namespace LlamaUtilities.OrderbotTags
 
                     if (logCandidates)
                     {
-                        Log.Information($"Adding FATE \"{f.Name}\". Distance is {Core.Me.Distance(f.Location)}.");
+                        Log.Information($"Adding FATE \"{snapshot.Name}\". Distance is {Core.Me.Distance(snapshot.Location)}.");
                     }
                 }
             }
 
             return ReturnList;
+        }
+
+        /// <summary>
+        /// Checks whether a FATE is still inside its landing-recovery cooldown and lazily expires
+        /// old entries so recurring events become eligible again without an unbounded cache.
+        /// </summary>
+        private bool IsLandingFailureCoolingDown(uint fateId)
+        {
+            DateTime retryAfter;
+            if (!landingFailureCooldowns.TryGetValue(fateId, out retryAfter))
+            {
+                return false;
+            }
+
+            if (DateTime.UtcNow < retryAfter)
+            {
+                return true;
+            }
+
+            landingFailureCooldowns.Remove(fateId);
+            return false;
+        }
+
+        /// <summary>
+        /// Applies the same built-in name and profile ID blacklist to open and focused selection.
+        /// Focused IDs narrow the candidate set but must not override explicit safety exclusions.
+        /// </summary>
+        /// <param name="name">Candidate event name copied from its guarded snapshot.</param>
+        /// <param name="id">Candidate event ID copied from its guarded snapshot.</param>
+        /// <returns><c>true</c> when either configured blacklist excludes the event.</returns>
+        private bool IsBlacklistedFate(string name, uint id)
+        {
+            return fatebotInstance.BlackListedFates.Contains(name) ||
+                   (BlacklistIds ?? Array.Empty<int>()).Contains((int)id);
         }
 
         /// <summary>
@@ -1342,17 +2561,41 @@ namespace LlamaUtilities.OrderbotTags
                 var focusedFate = IsFateActive(FateIds);
                 if (logCandidates && focusedFate != null)
                 {
-                    Log.Information($"Adding Focused FATE: {focusedFate.Name}. Distance is {Core.Me.Distance(focusedFate.Location)}.");
+                    FateSnapshot focusedSnapshot;
+                    if (TryReadFateSnapshot(focusedFate, out focusedSnapshot))
+                    {
+                        Log.Information($"Adding Focused FATE: {focusedSnapshot.Name}. Distance is {Core.Me.Distance(focusedSnapshot.Location)}.");
+                    }
                 }
 
                 return focusedFate;
             }
 
-            return FilterFateCandidates(FateManager.ActiveFates.ToList(), logCandidates)
-                .Where(fate => fate.Level <= _max && fate.Level >= _min)
-                .OrderByDescending(fate => Core.Me.Distance(fate.Location) <= fate.Radius)
-                .ThenBy(fate => Core.Me.Distance(fate.Location))
+            var candidates = new List<KeyValuePair<FateData, FateSnapshot>>();
+            foreach (var fate in FilterFateCandidates(FateManager.ActiveFates.ToList(), logCandidates))
+            {
+                FateSnapshot snapshot;
+                // Filtering and distance ordering are separate operations over live native rows.
+                // Reapply every selection rule to the snapshot that will actually be sorted so a
+                // FATE cannot complete, expire, or cross a policy threshold between those reads.
+                if (TryReadFateSnapshot(fate, out snapshot) &&
+                    IsUsableFateSnapshot(snapshot, 0, false) &&
+                    !IsLandingFailureCoolingDown(snapshot.Id) &&
+                    (!hasExplicitMinLevel || snapshot.Level >= _min) &&
+                    (!hasExplicitMaxLevel || snapshot.Level <= _max) &&
+                    snapshot.Progress >= MinProgress &&
+                    !(snapshot.Icon.ToString() == "Boss" && snapshot.Progress > 85) &&
+                    !IsBlacklistedFate(snapshot.Name, snapshot.Id))
+                {
+                    candidates.Add(new KeyValuePair<FateData, FateSnapshot>(fate, snapshot));
+                }
+            }
+
+            var selected = candidates
+                .OrderByDescending(candidate => Core.Me.Distance(candidate.Value.Location) <= candidate.Value.Radius)
+                .ThenBy(candidate => Core.Me.Distance(candidate.Value.Location))
                 .FirstOrDefault();
+            return selected.Key;
         }
 
         public async Task<bool> GetFates()
@@ -1386,21 +2629,33 @@ namespace LlamaUtilities.OrderbotTags
         /// <returns>The best eligible focused event, or <c>null</c> when none is active.</returns>
         public FateData IsFateActive(int[] ids)
         {
-            var _fate = FateManager.ActiveFates.Where(fate =>
-                ids.Contains((int)fate.Id) &&
-                fate.Progress >= MinProgress &&
-                // Focused FateId profiles historically did not require level attributes. Apply
-                // each bound only when its XML attribute was supplied, preserving those profiles
-                // while still honoring intentional one-sided or two-sided constraints.
-                (!hasExplicitMinLevel || fate.Level >= _min) &&
-                (!hasExplicitMaxLevel || fate.Level <= _max) &&
-                IsUsableFate(fate, 0, true))
-                .OrderByDescending(fate => Core.Me.Distance(fate.Location) <= fate.Radius)
-                .ThenBy(fate => Core.Me.Distance(fate.Location))
-                .Take(1);
-            var fateArray = _fate as FateData[] ?? _fate.ToArray();
+            var candidates = new List<KeyValuePair<FateData, FateSnapshot>>();
+            foreach (var fate in FateManager.ActiveFates)
+            {
+                FateSnapshot snapshot;
+                if (!TryReadFateSnapshot(fate, out snapshot) ||
+                    !ids.Contains((int)snapshot.Id) ||
+                    snapshot.Progress < MinProgress ||
+                    // Focused FateId profiles historically did not require level attributes. Apply
+                    // each bound only when its XML attribute was supplied, preserving those profiles
+                    // while still honoring intentional one-sided or two-sided constraints.
+                    (hasExplicitMinLevel && snapshot.Level < _min) ||
+                    (hasExplicitMaxLevel && snapshot.Level > _max) ||
+                    IsLandingFailureCoolingDown(snapshot.Id) ||
+                    IsBlacklistedFate(snapshot.Name, snapshot.Id) ||
+                    !IsUsableFateSnapshot(snapshot, 0, true))
+                {
+                    continue;
+                }
 
-            return fateArray.Length > 0 ? fateArray[0] : null;
+                candidates.Add(new KeyValuePair<FateData, FateSnapshot>(fate, snapshot));
+            }
+
+            var selected = candidates
+                .OrderByDescending(candidate => Core.Me.Distance(candidate.Value.Location) <= candidate.Value.Radius)
+                .ThenBy(candidate => Core.Me.Distance(candidate.Value.Location))
+                .FirstOrDefault();
+            return selected.Key;
         }
 
         protected override void OnResetCachedDone()
@@ -1408,21 +2663,8 @@ namespace LlamaUtilities.OrderbotTags
             _done = false;
         }
 
-        private async Task<bool> CheckLevelSync()
-        {
-            fateImIn = FateManager.ActiveFates.OrderBy(fate => Core.Me.Distance(fate.Location)).FirstOrDefault(fate => fate.Level <= _max && fate.Level >= _min);
-            if (fateImIn != null && FateManager.WithinFate && fateImIn.MaxLevel < Core.Player.ClassLevel && !Core.Me.IsLevelSynced)
-            {
-                ToDoList.LevelSync();
-                return false;
-            }
-
-            return false;
-        }
-
         private ITargetingProvider cachedProvider;
-
-        private Composite _coroutine;
+        private MySuperAwesomeTargetingProvider installedProvider;
 
         protected override void OnStart()
         {
@@ -1430,59 +2672,102 @@ namespace LlamaUtilities.OrderbotTags
             hasExplicitMaxLevel = !string.IsNullOrWhiteSpace(MaxLevel);
             _min = hasExplicitMinLevel ? Convert.ToInt32(MinLevel) : 0;
             _max = hasExplicitMaxLevel ? Convert.ToInt32(MaxLevel) : 0;
-            _coroutine = new ActionRunCoroutine(r => CheckLevelSync());
-            AddHooks();
             _timeout = Convert.ToInt32(Timeout);
             currentstep = 0;
             fatesDone = 0;
+            participatedFateEndings = 0;
             mobsHunted = 0;
             died = 0;
             wasDead = false;
             sessionSummaryReported = false;
             huntedTargetObjectId = 0;
             idleHuntAnchor = null;
+            defensiveCombatAnchor = null;
             postFateCombatLeashAnchor = null;
-            abandonedIdleHuntTargetIds.Clear();
+            combatRetirementDeadlineUtc = default(DateTime);
+            abandonedIdleHuntTargetsUntil.Clear();
             rejectedCenterLandingFateId = 0;
+            landingRecoveryFateId = 0;
+            centerLandingAssessmentFailures = 0;
+            landingPointScanFailures = 0;
+            landingFailureCooldowns.Clear();
             llFateZoneId = WorldManager.ZoneId;
             zoneSafetyTriggered = false;
             participatedInTrackedFate = false;
             rejectedFateIds.Clear();
+            reportedPolicySkipFateIds.Clear();
+            supportedFateIds.Clear();
+            unsupportedFateIds.Clear();
+            lineOfSightSuppressedUntil.Clear();
+            obstructedPoiObjectId = 0;
+            obstructedPoiSinceUtc = default(DateTime);
+            trackedFateUnavailableSinceUtc = default(DateTime);
+            trackedFateInvalidSinceUtc = default(DateTime);
             Log.Information(HuntBetweenFates ? "Doing FATEs and hunting nearby targets in between." : "Doing FATEs; downtime hunting is disabled.");
             Log.Information($"Stats: MinFate level={_min} MaxFatelvl={_max}");
 
+            // ProfileOrderBehavior_Hook is skipped while any Kill POI exists. PoiAction is the
+            // earliest ordinary brain slot that continues to pulse through combat, allowing the
+            // tag to retire ended FATEs and enforce target leashes without claiming the tick.
+            if (safetyPulseHook != null)
+            {
+                TreeHooks.Instance.RemoveHook("PoiAction", safetyPulseHook);
+            }
+            safetyPulseHook = new Action(_ => RunSafetyPulse());
+            // Safety retirement must precede any optional PoiAction hook that may claim the tick
+            // with Success or Running; appending here would make the leashes silently order-dependent.
+            TreeHooks.Instance.InsertHook("PoiAction", 0, safetyPulseHook);
+
             // MaxLevel = "34";
             // MinLevel = "25";
+            // Profile behaviors can be restarted after an interrupted scheduling lifecycle without
+            // receiving OnDone. If our prior provider is still installed, restore the original
+            // provider before caching state; otherwise OnDone would restore LLFate's stale callback.
+            if (installedProvider != null &&
+                ReferenceEquals(CombatTargeting.Instance.Provider, installedProvider))
+            {
+                CombatTargeting.Instance.Provider = cachedProvider;
+            }
+
+            installedProvider = null;
             cachedProvider = CombatTargeting.Instance.Provider;
-            CombatTargeting.Instance.Provider = new MySuperAwesomeTargetingProvider(IsInsideActiveTargetingLeashes);
+            installedProvider = new MySuperAwesomeTargetingProvider(IsInsideActiveTargetingLeashes);
+            CombatTargeting.Instance.Provider = installedProvider;
             currentfate = null;
+            fateid = 0;
+            fateName = string.Empty;
+            fateRadius = 0;
+            fateIcon = default(FateIconType);
+            fateMaxLevel = 0;
+            Position = Vector3.Zero;
             Poi.Clear("Clearing POI");
             saveNow = DateTime.Now;
         }
 
-        private void AddHooks()
-        {
-            Log.Information($"Adding LevelSync Hook");
-
-            TreeHooks.Instance.AddHook("TreeStart", _coroutine);
-        }
-
         protected override void OnDone()
         {
+            if (safetyPulseHook != null)
+            {
+                TreeHooks.Instance.RemoveHook("PoiAction", safetyPulseHook);
+                safetyPulseHook = null;
+            }
+
             ReportSessionSummary("tag stopped");
-            RemoveHooks();
+            ReleaseOwnedControl("LLFate tag stopped");
             currentstep = 0;
             idleHuntAnchor = null;
-            postFateCombatLeashAnchor = null;
+            defensiveCombatAnchor = null;
+            ClearCombatRetirementState();
             rejectedCenterLandingFateId = 0;
 
-            CombatTargeting.Instance.Provider = cachedProvider;
-        }
+            // Do not overwrite a provider another component deliberately installed while LLFate
+            // was active; restore only when the provider is still the instance owned by this tag.
+            if (ReferenceEquals(CombatTargeting.Instance.Provider, installedProvider))
+            {
+                CombatTargeting.Instance.Provider = cachedProvider;
+            }
 
-        private void RemoveHooks()
-        {
-            Log.Information($"Removing LevelSync Hook");
-            TreeHooks.Instance.RemoveHook("TreeStart", _coroutine);
+            installedProvider = null;
         }
     }
 
@@ -1490,12 +2775,18 @@ namespace LlamaUtilities.OrderbotTags
 
     public class MySuperAwesomeTargetingProvider : ITargetingProvider
     {
+        // Standalone legacy callers do not provide LLFate's live radius callback. Preserve their
+        // historical 50-yalm behavior while the tag-owned provider delegates to the selected
+        // event's real radius and tolerance through admissionConstraint.
+        private const float LegacyFateTargetRadius = 50f;
+
         public HashSet<uint> IgnoreNpcIds = new HashSet<uint>()
         {
             1201
         };
 
         private BattleCharacter[] _aggroedBattleCharacters;
+        private uint currentKillPoiObjectId;
         private readonly Func<BattleCharacter, bool> admissionConstraint;
 
         /// <summary>
@@ -1514,6 +2805,10 @@ namespace LlamaUtilities.OrderbotTags
         /// <returns> The objects by weight. </returns>
         public List<BattleCharacter> GetObjectsByWeight()
         {
+            // CombatTargeting can pulse before LLFate's PoiAction safety hook. Resolve the retained
+            // POI once from the current object table so ranking and idle-hunt admission never read
+            // combat fields from the stale wrapper stored when the POI was originally assigned.
+            currentKillPoiObjectId = ResolveCurrentKillPoiObjectId();
             var allUnits = GameObjectManager.GetObjectsOfType<BattleCharacter>().ToArray();
 
             _aggroedBattleCharacters = GameObjectManager.Attackers.ToArray();
@@ -1525,15 +2820,26 @@ namespace LlamaUtilities.OrderbotTags
                     Weight = GetScoreForUnit(n)
                 }).ToArray();
 
-            // Order by weight (descending).
-            return hostileUnits.OrderByDescending(s => s.Weight).Select(s => s.Unit).ToList();
+            // A valid Kill POI is already the target chosen for this combat engagement. Preserve
+            // it ahead of score ordering so repeated CombatTargeting pulses cannot oscillate
+            // between similarly ranked actors and starve movement. Invalid, dead, obstructed, or
+            // out-of-leash POIs never enter hostileUnits and therefore receive no sticky priority.
+            return hostileUnits
+                // Preserve LLFate's established priority for the two time-sensitive Forlorn bonus
+                // actors; stickiness applies within that priority tier, not ahead of it.
+                .OrderByDescending(s => s.Unit.NpcId == 6737 || s.Unit.NpcId == 6738)
+                .ThenByDescending(s => currentKillPoiObjectId != 0 && s.Unit.ObjectId == currentKillPoiObjectId)
+                .ThenByDescending(s => s.Weight)
+                .Select(s => s.Unit)
+                .ToList();
         }
 
         /// <summary> Query if 'unit' is valid unit. </summary>
         /// <remarks> Nesox, 2013-06-29. </remarks>
         private bool IsValidUnit(bool incombat, BattleCharacter unit)
         {
-            if (!unit.IsValid || !unit.InLineOfSight() || unit.IsDead || !unit.IsVisible || unit.CurrentHealthPercent <= 0)
+            if (!unit.IsValid || !unit.CanAttack || !unit.IsTargetable || !unit.InLineOfSight() ||
+                unit.IsDead || !unit.IsVisible || unit.CurrentHealthPercent <= 0)
             {
                 return false;
             }
@@ -1541,10 +2847,16 @@ namespace LlamaUtilities.OrderbotTags
             // Selection rejects hand-in events, but CombatTargeting pulses independently and can
             // otherwise reacquire an enemy from an overlapping FATE. Enforce the unsupported icon
             // here as well so no LLFate-owned targeting path can engage a KillHandIn event.
-            if (unit.IsFate && unit.FateId != 0 &&
-                FateManager.GetFateById(unit.FateId)?.Icon == FateIconType.KillHandIn)
+            if (unit.IsFate && admissionConstraint == null)
             {
-                return false;
+                var owner = unit.FateId == 0 ? null : FateManager.GetFateById(unit.FateId);
+                if (IsMissingOrUnsupportedFateOwner(owner))
+                {
+                    // Legacy standalone callers lack LLFate's supported/unsupported caches, so
+                    // unknown ownership must remain fail-closed for them. Tag-owned providers use
+                    // admissionConstraint, which permits cached supported retirement targets only.
+                    return false;
+                }
             }
 
             if (IgnoreNpcIds.Contains(unit.NpcId))
@@ -1571,13 +2883,89 @@ namespace LlamaUtilities.OrderbotTags
 
             // The custom provider historically admitted only FATE units and attackers. Explicitly
             // retaining the tag's kill POI is what lets optional downtime hunting enter combat.
-            var isSelectedIdleHuntTarget = Poi.Current?.Type == PoiType.Kill &&
-                                           Poi.Current.BattleCharacter?.ObjectId == unit.ObjectId &&
+            var isSelectedIdleHuntTarget = currentKillPoiObjectId != 0 &&
+                                           currentKillPoiObjectId == unit.ObjectId &&
                                            !unit.IsFate;
 
             return _aggroedBattleCharacters.Contains(unit) ||
                    (unit.CanAttack && !incombat &&
-                    (unit.IsFate && Vector3.Distance(unit.Location, LLFate.Position) <= 50 || isSelectedIdleHuntTarget));
+                    (unit.IsFate &&
+                     (admissionConstraint != null ||
+                      Vector3.Distance(unit.Location, LLFate.Position) <= LegacyFateTargetRadius) ||
+                     isSelectedIdleHuntTarget));
+        }
+
+        /// <summary>
+        /// Reads the one owner field needed by the legacy provider under a narrow native-wrapper
+        /// guard. A FATE row disappearing during CombatTargeting must reject the actor, not fault
+        /// the provider and leave RB acting on its previous selection.
+        /// </summary>
+        /// <param name="owner">Live owner row for a FATE actor.</param>
+        /// <returns><c>true</c> when ownership cannot be verified or belongs to a hand-in FATE.</returns>
+        private static bool IsMissingOrUnsupportedFateOwner(FateData owner)
+        {
+            if (owner == null)
+            {
+                return true;
+            }
+
+            try
+            {
+                return !owner.IsValid || owner.Icon == FateIconType.KillHandIn;
+            }
+            catch (Exception exception)
+            {
+                if (exception.GetType().Name != "ReadWriteMemoryException")
+                {
+                    throw;
+                }
+
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Resolves the retained Kill POI to a current-frame actor and returns its stable object ID.
+        /// GreyMagic's memory exception is a private global type in current RB builds, so the narrow
+        /// recovery path identifies it by exact runtime name and rethrows every unrelated failure.
+        /// </summary>
+        /// <returns>The live POI actor ID, or zero when no valid Kill POI remains.</returns>
+        private static uint ResolveCurrentKillPoiObjectId()
+        {
+            if (Poi.Current?.Type != PoiType.Kill)
+            {
+                return 0;
+            }
+
+            try
+            {
+                var cachedTarget = Poi.Current.BattleCharacter;
+                if (cachedTarget == null)
+                {
+                    Poi.Clear("LLFate targeting provider found an empty Kill POI.");
+                    return 0;
+                }
+
+                var objectId = cachedTarget.ObjectId;
+                var liveTarget = GameObjectManager.GetObjectByObjectId(objectId) as BattleCharacter;
+                if (liveTarget != null && liveTarget.IsValid)
+                {
+                    return objectId;
+                }
+
+                Poi.Clear("LLFate targeting provider retired a stale Kill POI.");
+                return 0;
+            }
+            catch (Exception exception)
+            {
+                if (exception.GetType().Name != "ReadWriteMemoryException")
+                {
+                    throw;
+                }
+
+                Poi.Clear("LLFate targeting provider retired an expired Kill POI wrapper.");
+                return 0;
+            }
         }
 
         /// <summary> Gets score for a unit. </summary>
@@ -1590,9 +2978,10 @@ namespace LlamaUtilities.OrderbotTags
 
             weight += unit.MaxHealth; // asuming that bosses have huge health this should make us target a boss
 
-            if (unit.CurrentTargetId == Core.Player.CurrentTargetId)
+            if (unit.ObjectId == Core.Player.CurrentTargetId)
             {
-                // Little extra weight on current targets.
+                // Keep the player's selected unit stable instead of comparing what two unrelated
+                // actors happen to be targeting.
                 weight += 120;
             }
 
