@@ -100,7 +100,6 @@ namespace LlamaUtilities.OrderbotTags
         [DefaultValue(50f)]
         public float HuntRadius { get; set; } = 50f;
 
-        private readonly BattleCharacter npc;
         private readonly FatebotSettings fatebotInstance = FatebotSettings.Instance;
 
         //private int timeout = 100;
@@ -125,6 +124,7 @@ namespace LlamaUtilities.OrderbotTags
         private uint llFateZoneId;
         private bool zoneSafetyTriggered;
         private bool participatedInTrackedFate;
+        private uint rejectedCenterLandingFateId;
         private readonly HashSet<uint> rejectedFateIds = new HashSet<uint>();
 
         //----------------------
@@ -137,7 +137,6 @@ namespace LlamaUtilities.OrderbotTags
         private float fateRadius;
         private string fateName = "";
         private string fateStatus = "";
-        private ITargetingProvider tempProvider;
         private int forelornMaiden = 6737;
         private int theForlorn = 6738;
 
@@ -150,6 +149,10 @@ namespace LlamaUtilities.OrderbotTags
         // retreating. Keep defensive cleanup local to the handoff point; following a retreating
         // attacker here makes the combat routine run indefinitely away from the completed FATE.
         private const float PostFateCombatLeash = 20f;
+        // FATE coordinates describe an event centroid, not guaranteed walkable terrain. Keep the
+        // established travel altitude, then validate enemy positions only after reaching object range.
+        private const float FateLandingHeight = 15f;
+        private const int FateEnemyLandingScanMilliseconds = 3000;
         protected Func<bool> condition;
 
         public LLFate() : base()
@@ -228,7 +231,9 @@ namespace LlamaUtilities.OrderbotTags
 
                                                           return false;
                                                       })),
-                                        new Decorator(ret => !ShouldStop() && currentstep == 1 && Vector3.Distance(Core.Player.Location, Position) > (fateRadius - 10),
+                                        new Decorator(ret => !ShouldStop() && currentstep == 1 &&
+                                                             (Vector3.Distance(Core.Player.Location, Position) > (fateRadius - 10) ||
+                                                              (MovementManager.IsFlying && Poi.Current?.Type != PoiType.Kill)),
                                                       new PrioritySelector(
                                                                            new Decorator(ret => UseFlight && AetherCurrentManager.FinishedZones.Contains(WorldManager.ZoneId),
                                                                                          new ActionRunCoroutine(obj => FlyToFateAndLand(() => currentfate))),
@@ -238,51 +243,6 @@ namespace LlamaUtilities.OrderbotTags
                                                                            new Decorator(ret => WorldManager.ZoneId == llFateZoneId &&
                                                                                                 IsUsableFate(FateManager.GetFateById(fateid), fateid, false),
                                                                                          new ActionRunCoroutine(obj => GroundMoveToFate())))),
-                                        new Decorator(r => currentfate != null && FateManager.WithinFate && currentfate.Icon == FateIconType.KillHandIn && currentfate.TimeLeft.Minutes <= 8,
-                                                      new Sequence(new ActionRunCoroutine(async r =>
-                                                                   {
-                                                                       Poi.Clear("Handing in items.");
-                                                                       Log.Information("Hand-in Fate");
-
-                                                                       var fateNpcs = GameObjectManager
-                                                                           .GetObjectsOfType<BattleCharacter>()
-                                                                           .Where(bc => bc.IsFate && !bc.CanAttack && bc.FateId == currentfate.Id)
-                                                                           .GroupBy(bc => bc)
-                                                                           .OrderByDescending(group => group.Count())
-                                                                           .Select(group => group.Key);
-
-                                                                       var handinNpc = fateNpcs.LastOrDefault();
-
-                                                                       if (handinNpc == null)
-                                                                       {
-                                                                           Log.Error("Could not find handin NPC. Something is wrong.");
-                                                                           return;
-                                                                       }
-
-                                                                       tempProvider = CombatTargeting.Instance.Provider;
-                                                                       CombatTargeting.Instance.Provider = new NullTargetingProvider();
-
-                                                                       await MoveTo(handinNpc.Location);
-
-                                                                       GameObjectManager.GetObjectByNPCId(handinNpc.NpcId).Interact();
-                                                                       Talk.Next();
-                                                                       InventoryManager.GetBagByInventoryBagId(InventoryBagId.KeyItems).FilledSlots.LastOrDefault().Handover();
-                                                                       Request.HandOver();
-
-                                                                       CombatTargeting.Instance.Provider = tempProvider;
-                                                                   }),
-                                                                   new ActionAlwaysFail() //always fail that the rest of the tree is traveresd
-                                                                  )),
-                                        new Decorator(ret => Talk.DialogOpen,
-                                                      new Action(r => { Talk.Next(); })),
-                                        new Decorator(ret => Request.IsOpen,
-                                                      new Action(r =>
-                                                      {
-                                                          GameObjectManager.GetObjectByNPCId(npc.NpcId).Interact();
-                                                          InventoryManager.GetBagByInventoryBagId(InventoryBagId.KeyItems).FilledSlots.LastOrDefault().Handover();
-                                                          Request.HandOver();
-                                                      })),
-
                                         //Find fates
                                         new Decorator(r => currentfate != null && fateid != 0 && Poi.Current.Type != PoiType.Kill,
                                                       new ActionRunCoroutine(r =>
@@ -329,6 +289,15 @@ namespace LlamaUtilities.OrderbotTags
             var selectedFateId = fate.Id;
             var selectedFateName = fate.Name;
             var selectedFateLocation = fate.Location;
+            var selectedFateRadius = fate.Radius;
+
+            bool AbortFlight()
+            {
+                var activeFate = FateManager.GetFateById(selectedFateId);
+                return WorldManager.ZoneId != llFateZoneId ||
+                       !IsUsableFate(activeFate, selectedFateId, false) ||
+                       ShouldStop();
+            }
 
             // Flight cannot begin while combat is still active. Anchor this wait so a retreating
             // enemy from the previous FATE cannot drag the combat routine across the zone while
@@ -389,20 +358,116 @@ namespace LlamaUtilities.OrderbotTags
                 Poi.Clear("Post-FATE combat wait completed");
                 Navigator.Stop();
                 MovementManager.MoveStop();
+
+                // Chain FATEs commonly appear at the completed event's location while combat is
+                // still retiring. Re-evaluate exactly once at this safe handoff, before flight
+                // owns movement, so a newly spawned local event can replace a stale distant pick
+                // without allowing destination thrashing during travel.
+                if (TryAdoptCloserFateAfterCombatWait(
+                                                         selectedFateId,
+                                                         selectedFateName,
+                                                         selectedFateLocation,
+                                                         selectedFateRadius))
+                {
+                    return false;
+                }
             }
 
-            var result = await CommonTasks.FlyToAndLandAsync(
-                                                             selectedFateLocation.Add(0f, 15, 0f),
-                                                             abortCondition: () =>
-                                                             {
-                                                                 var f = FateManager.GetFateById(selectedFateId);
-                                                                 return WorldManager.ZoneId != llFateZoneId ||
-                                                                        !IsUsableFate(f, selectedFateId, false) ||
-                                                                        ShouldStop();
-                                                             },
-                                                             destinationName: $"FlyToFateAndLand:{selectedFateName}");
+            // Try the inexpensive historical destination once per FATE. If its exact centroid is
+            // over water, a prop, or other non-dismountable collision, remember that rejection so
+            // later pulses rescan nearby enemies without repeating the same failed landing/log.
+            if (rejectedCenterLandingFateId != selectedFateId)
+            {
+                var centerResult = await CommonTasks.FlyToAndLandAsync(
+                                                                            selectedFateLocation.Add(0f, FateLandingHeight, 0f),
+                                                                            abortCondition: AbortFlight,
+                                                                            destinationName: $"FlyToFateAndLand:{selectedFateName}");
+                if (centerResult)
+                {
+                    return true;
+                }
 
-            return result;
+                if (AbortFlight())
+                {
+                    return false;
+                }
+
+                rejectedCenterLandingFateId = selectedFateId;
+                Log.Information($"The center of FATE \"{selectedFateName}\" is not landable; looking for a nearby FATE enemy on valid terrain.");
+            }
+
+            var scanDeadline = DateTime.UtcNow.AddMilliseconds(FateEnemyLandingScanMilliseconds);
+            do
+            {
+                if (AbortFlight())
+                {
+                    return false;
+                }
+
+                var enemyLandingPoint = FindFateEnemyLandingPoint(
+                                                                       selectedFateId,
+                                                                       selectedFateLocation,
+                                                                       selectedFateRadius);
+                if (enemyLandingPoint.HasValue)
+                {
+                    Log.Information($"Using a validated enemy position to land for FATE \"{selectedFateName}\".");
+                    var enemyResult = await CommonTasks.FlyToAndLandAsync(
+                                                                               enemyLandingPoint.Value,
+                                                                               abortCondition: AbortFlight,
+                                                                               destinationName: $"FateEnemyLanding:{selectedFateName}");
+                    if (enemyResult)
+                    {
+                        rejectedCenterLandingFateId = 0;
+                    }
+
+                    return enemyResult;
+                }
+
+                await Coroutine.Sleep(250);
+            }
+            while (DateTime.UtcNow < scanDeadline);
+
+            return false;
+        }
+
+        /// <summary>
+        /// Finds an airborne landing point directly above a live enemy in the selected FATE. The
+        /// enemy location is snapshotted before any coroutine yields, and RebornBuddy's native
+        /// landing query rejects flying actors, water, props, and other non-dismountable geometry.
+        /// </summary>
+        /// <param name="selectedFateId">Stable ID of the FATE that owns the recovery attempt.</param>
+        /// <param name="selectedFateLocation">Snapshotted event center used to enforce its radius.</param>
+        /// <param name="selectedFateRadius">Snapshotted event radius.</param>
+        /// <returns>A validated flight position, or <c>null</c> until a suitable enemy is loaded.</returns>
+        private static Vector3? FindFateEnemyLandingPoint(
+                                                               uint selectedFateId,
+                                                               Vector3 selectedFateLocation,
+                                                               float selectedFateRadius)
+        {
+            var candidates = GameObjectManager.GetObjectsOfType<BattleCharacter>()
+                .Where(enemy => enemy.IsValid &&
+                                enemy.IsFate &&
+                                enemy.FateId == selectedFateId &&
+                                enemy.CanAttack &&
+                                enemy.IsTargetable &&
+                                enemy.IsVisible &&
+                                !enemy.IsDead)
+                .Select(enemy => enemy.Location)
+                .Where(location => location != Vector3.Zero &&
+                                   Vector3.Distance(location, selectedFateLocation) <= selectedFateRadius)
+                .OrderBy(location => Vector3.Distance(location, Core.Player.Location))
+                .ToArray();
+
+            foreach (var groundLocation in candidates)
+            {
+                var flightLocation = groundLocation.Add(0f, FateLandingHeight, 0f);
+                if (CommonTasks.CanLand(flightLocation) == CanLandResult.Yes)
+                {
+                    return flightLocation;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -655,7 +720,7 @@ namespace LlamaUtilities.OrderbotTags
             }
             else
             {
-                Poi.Current = new Poi(GetFateTargets(), PoiType.Kill);
+                TrySetFateCombatPoi();
             }
 
             return Task.CompletedTask;
@@ -691,6 +756,50 @@ namespace LlamaUtilities.OrderbotTags
                 fateName = currentfate.Name;
                 currentstep = 1;
             }
+        }
+
+        /// <summary>
+        /// Reconsiders the selected destination after lingering combat has ended. A candidate
+        /// already containing the player has priority; otherwise the normal nearest-event ordering
+        /// applies. This method is called only once before travel begins, so ordinary FATE spawns
+        /// cannot redirect an active flight.
+        /// </summary>
+        /// <param name="selectedFateId">ID selected before the combat wait.</param>
+        /// <param name="selectedFateName">Stable name selected before the combat wait.</param>
+        /// <param name="selectedFateLocation">Stable center selected before the combat wait.</param>
+        /// <param name="selectedFateRadius">Stable radius selected before the combat wait.</param>
+        /// <returns><c>true</c> when LLFate adopted a newly eligible, closer event.</returns>
+        private bool TryAdoptCloserFateAfterCombatWait(
+                                                            uint selectedFateId,
+                                                            string selectedFateName,
+                                                            Vector3 selectedFateLocation,
+                                                            float selectedFateRadius)
+        {
+            var refreshedFate = SelectBestEligibleFate(logCandidates: false);
+            if (refreshedFate == null || refreshedFate.Id == selectedFateId)
+            {
+                return false;
+            }
+
+            var selectedDistance = Vector3.Distance(Core.Player.Location, selectedFateLocation);
+            var refreshedDistance = Core.Me.Distance(refreshedFate.Location);
+            var playerInsideSelected = selectedDistance <= selectedFateRadius;
+            var playerInsideRefreshed = refreshedDistance <= refreshedFate.Radius;
+            if ((!playerInsideRefreshed || playerInsideSelected) && refreshedDistance >= selectedDistance)
+            {
+                return false;
+            }
+
+            var refreshedName = refreshedFate.Name;
+            Log.Information(
+                $"A closer FATE appeared during the combat wait; switching from \"{selectedFateName}\" to \"{refreshedName}\".");
+            Poi.Clear("Switching to a closer FATE that appeared during combat wait");
+            Navigator.Stop();
+            MovementManager.MoveStop();
+            currentfate = refreshedFate;
+            rejectedCenterLandingFateId = 0;
+            GoFate();
+            return currentfate != null && fateid == refreshedFate.Id;
         }
 
         private void GoHunting()
@@ -923,8 +1032,8 @@ namespace LlamaUtilities.OrderbotTags
 
         /// <summary>
         /// Verifies the semantic fields required for navigation, rather than trusting pointer
-        /// validity alone. Empty names, zero geometry, expired timers, and mismatched IDs identify
-        /// the transient slot-reuse state observed after a FATE completes.
+        /// validity alone. Empty names, zero geometry, expired timers, mismatched IDs, and event
+        /// types that LLFate cannot safely automate are rejected before selection or travel.
         /// </summary>
         /// <param name="fate">The live RebornBuddy FATE wrapper to inspect.</param>
         /// <param name="expectedId">The selected ID that the live wrapper must continue to represent, or zero for selection.</param>
@@ -945,6 +1054,21 @@ namespace LlamaUtilities.OrderbotTags
             var maxLevel = fate.MaxLevel;
             var status = fate.Status;
             var timeLeft = fate.TimeLeft;
+
+            // TODO: Revisit KillHandIn support when LLFate has a reliable way to identify the
+            // event-specific key item, select the correct receiver, and recover every dialog state.
+            // Until then, rejecting the icon here protects open, focused-ID, refresh, and tracked
+            // FATE paths from entering the old unsafe hand-in behavior.
+            if (fate.Icon == FateIconType.KillHandIn)
+            {
+                if (logRejected && rejectedFateIds.Add(id))
+                {
+                    Log.Information($"Skipping unsupported hand-in FATE \"{name}\" ({id}).");
+                }
+
+                return false;
+            }
+
             var usable = fate.IsValid &&
                          id != 0 &&
                          (expectedId == 0 || id == expectedId) &&
@@ -1032,7 +1156,7 @@ namespace LlamaUtilities.OrderbotTags
             }
             else
             {
-                Poi.Current = new Poi(GetFateTargets(), PoiType.Kill);
+                TrySetFateCombatPoi();
             }
 
             return true;
@@ -1083,8 +1207,39 @@ namespace LlamaUtilities.OrderbotTags
             Log.Information("--------------------------------------");
         }
 
+        /// <summary>
+        /// Attempts to publish a combat POI for the currently tracked FATE. FATE waves can have
+        /// short periods with no targetable actors, and flight can leave the player above a FATE
+        /// whose actors are not yet loaded. A null Kill POI is invalid in RebornBuddy and is
+        /// immediately cleared by combat scheduling, so waiting quietly here prevents a set/clear
+        /// loop on every bot pulse.
+        /// </summary>
+        /// <returns><c>true</c> when a valid target was assigned; otherwise <c>false</c>.</returns>
+        private bool TrySetFateCombatPoi()
+        {
+            var target = GetFateTargets();
+            if (target == null || !target.IsValid)
+            {
+                return false;
+            }
+
+            Poi.Current = new Poi(target, PoiType.Kill);
+            return true;
+        }
+
+        /// <summary>
+        /// Finds the nearest visible, attackable actor belonging to the currently tracked FATE.
+        /// Restricting by the selected ID prevents overlapping events from donating an unrelated
+        /// target while LLFate is waiting for the selected event's next wave.
+        /// </summary>
+        /// <returns>A valid target candidate, or <c>null</c> when the FATE has no active target.</returns>
         public GameObject GetFateTargets()
         {
+            if (fateid == 0)
+            {
+                return null;
+            }
+
             var target = GameObjectManager.GameObjects
                 .Select(unit => new { unit, bc = unit as BattleCharacter })
                 .Where(x =>
@@ -1092,7 +1247,7 @@ namespace LlamaUtilities.OrderbotTags
                            x.unit.CanAttack &&
                            x.unit.IsTargetable &&
                            x.unit.IsVisible &&
-                           x.bc.FateId != 0 &&
+                           x.bc.FateId == fateid &&
                            !x.bc.IsDead)
                 .OrderByDescending(x => x.bc.NpcId == forelornMaiden || x.bc.NpcId == theForlorn)
                 .ThenBy(x => x.unit.Distance(Core.Player.Location))
@@ -1126,10 +1281,23 @@ namespace LlamaUtilities.OrderbotTags
                 .FirstOrDefault();
         }
 
+        /// <summary>Applies LLFate's configured validity, progress, and blacklist rules.</summary>
+        /// <param name="List">Active FATE snapshots to evaluate.</param>
+        /// <returns>The eligible snapshots, with normal selection diagnostics written to the log.</returns>
         public List<FateData> MyFilter(List<FateData> List)
         {
+            return FilterFateCandidates(List, logCandidates: true);
+        }
+
+        /// <summary>
+        /// Applies the shared candidate rules with optional diagnostics. Post-combat re-selection
+        /// uses the quiet path because the same candidates were already reported during the initial
+        /// scan and logging them again would obscure the meaningful destination-switch message.
+        /// </summary>
+        private List<FateData> FilterFateCandidates(List<FateData> candidates, bool logCandidates)
+        {
             var ReturnList = new List<FateData>();
-            foreach (var f in List)
+            foreach (var f in candidates)
             {
                 if (!IsUsableFate(f, 0, true))
                 {
@@ -1137,7 +1305,10 @@ namespace LlamaUtilities.OrderbotTags
                 }
                 if (f.Icon.ToString() == "Boss" && f.Progress > 85)
                 {
-                    Log.Information($"Skipping FATE \"{f.Name}\". Boss FATE progress is greater than 85%.");
+                    if (logCandidates)
+                    {
+                        Log.Information($"Skipping FATE \"{f.Name}\". Boss FATE progress is greater than 85%.");
+                    }
                 }
                 else if (fatebotInstance.BlackListedFates.Contains(f.Name) || BlacklistIds.Contains((int)f.Id))
                 {
@@ -1147,11 +1318,41 @@ namespace LlamaUtilities.OrderbotTags
                 {
                     ReturnList.Add(f);
 
-                    Log.Information($"Adding FATE \"{f.Name}\". Distance is {Core.Me.Distance(f.Location)}.");
+                    if (logCandidates)
+                    {
+                        Log.Information($"Adding FATE \"{f.Name}\". Distance is {Core.Me.Distance(f.Location)}.");
+                    }
                 }
             }
 
             return ReturnList;
+        }
+
+        /// <summary>
+        /// Selects the best currently eligible event without mutating LLFate's tracked destination.
+        /// Events already containing the player outrank ordinary distance so chain FATEs that spawn
+        /// at the previous event's location are not abandoned for an older distant candidate.
+        /// </summary>
+        /// <param name="logCandidates">Whether to emit the normal candidate-discovery messages.</param>
+        /// <returns>The best live FATE snapshot, or <c>null</c> when none is eligible.</returns>
+        private FateData SelectBestEligibleFate(bool logCandidates)
+        {
+            if (FateIds.Length > 0)
+            {
+                var focusedFate = IsFateActive(FateIds);
+                if (logCandidates && focusedFate != null)
+                {
+                    Log.Information($"Adding Focused FATE: {focusedFate.Name}. Distance is {Core.Me.Distance(focusedFate.Location)}.");
+                }
+
+                return focusedFate;
+            }
+
+            return FilterFateCandidates(FateManager.ActiveFates.ToList(), logCandidates)
+                .Where(fate => fate.Level <= _max && fate.Level >= _min)
+                .OrderByDescending(fate => Core.Me.Distance(fate.Location) <= fate.Radius)
+                .ThenBy(fate => Core.Me.Distance(fate.Location))
+                .FirstOrDefault();
         }
 
         public async Task<bool> GetFates()
@@ -1172,29 +1373,17 @@ namespace LlamaUtilities.OrderbotTags
                 }
             }
 
-            if (FateIds.Length > 0)
-            {
-                currentfate = IsFateActive(FateIds);
-                if (currentfate == null)
-                {
-                    return false;
-                }
-                else
-                {
-                    Log.Information($"Adding Focused FATE: {currentfate.Name}. Distance is {Core.Me.Distance(currentfate.Location)}.");
-                    return true;
-                }
-            }
-
-            var FateCandidates = FateManager.ActiveFates.ToList();
-            var FateList = MyFilter(FateCandidates);
-
-            currentfate = FateList.OrderBy(fate => Core.Me.Distance(fate.Location)).FirstOrDefault(fate => fate.Level <= _max && fate.Level >= _min);
-
+            currentfate = SelectBestEligibleFate(logCandidates: true);
             return currentfate != null;
         }
 
-        // check all fates and return the FateData with the given Ids or null
+        /// <summary>
+        /// Selects an active event from an explicit focused-ID profile. Containing the player and
+        /// then proximity determine priority so focused chain profiles receive the same post-combat
+        /// behavior as open-zone selection while retaining their historical optional level bounds.
+        /// </summary>
+        /// <param name="ids">Allowed FATE IDs from the profile.</param>
+        /// <returns>The best eligible focused event, or <c>null</c> when none is active.</returns>
         public FateData IsFateActive(int[] ids)
         {
             var _fate = FateManager.ActiveFates.Where(fate =>
@@ -1205,45 +1394,13 @@ namespace LlamaUtilities.OrderbotTags
                 // while still honoring intentional one-sided or two-sided constraints.
                 (!hasExplicitMinLevel || fate.Level >= _min) &&
                 (!hasExplicitMaxLevel || fate.Level <= _max) &&
-                IsUsableFate(fate, 0, true)).Take(1);
+                IsUsableFate(fate, 0, true))
+                .OrderByDescending(fate => Core.Me.Distance(fate.Location) <= fate.Radius)
+                .ThenBy(fate => Core.Me.Distance(fate.Location))
+                .Take(1);
             var fateArray = _fate as FateData[] ?? _fate.ToArray();
 
             return fateArray.Length > 0 ? fateArray[0] : null;
-        }
-
-        [Obsolete]
-        public static async Task<bool> MoveTo(Vector3 location)
-        {
-            var goalReached = false;
-
-            var distance = Core.Me.Location.Distance(location);
-            if (distance < 3f)
-            {
-                return true;
-            }
-
-            while (Core.Me.IsAlive && !goalReached)
-            {
-                Navigator.MoveTo(location);
-                distance = Core.Me.Location.Distance(location);
-                goalReached = distance < 3f;
-
-                if (MovementManager.IsMoving && !Core.Me.IsMounted)
-                {
-                    if (ActionManager.IsSprintReady && WorldManager.InSanctuary)
-                    {
-                        ActionManager.Sprint();
-                    }
-                    else if (ActionManager.IsSprintReady && !WorldManager.InSanctuary && Core.Me.InCombat)
-                    {
-                        ActionManager.Sprint();
-                    }
-                }
-
-                await Coroutine.Yield();
-            }
-
-            return true;
         }
 
         protected override void OnResetCachedDone()
@@ -1286,6 +1443,7 @@ namespace LlamaUtilities.OrderbotTags
             idleHuntAnchor = null;
             postFateCombatLeashAnchor = null;
             abandonedIdleHuntTargetIds.Clear();
+            rejectedCenterLandingFateId = 0;
             llFateZoneId = WorldManager.ZoneId;
             zoneSafetyTriggered = false;
             participatedInTrackedFate = false;
@@ -1316,6 +1474,7 @@ namespace LlamaUtilities.OrderbotTags
             currentstep = 0;
             idleHuntAnchor = null;
             postFateCombatLeashAnchor = null;
+            rejectedCenterLandingFateId = 0;
 
             CombatTargeting.Instance.Provider = cachedProvider;
         }
@@ -1375,6 +1534,15 @@ namespace LlamaUtilities.OrderbotTags
         private bool IsValidUnit(bool incombat, BattleCharacter unit)
         {
             if (!unit.IsValid || !unit.InLineOfSight() || unit.IsDead || !unit.IsVisible || unit.CurrentHealthPercent <= 0)
+            {
+                return false;
+            }
+
+            // Selection rejects hand-in events, but CombatTargeting pulses independently and can
+            // otherwise reacquire an enemy from an overlapping FATE. Enforce the unsupported icon
+            // here as well so no LLFate-owned targeting path can engage a KillHandIn event.
+            if (unit.IsFate && unit.FateId != 0 &&
+                FateManager.GetFateById(unit.FateId)?.Icon == FateIconType.KillHandIn)
             {
                 return false;
             }
