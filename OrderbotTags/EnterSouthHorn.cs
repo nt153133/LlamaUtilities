@@ -96,24 +96,25 @@ namespace LlamaUtilities.OrderbotTags
                     await LlamaLibrary.Helpers.Navigation.UseNpcTransition(_passageToThePhantomVillage.Location.ZoneId, _passageToThePhantomVillage.Location.Coordinates, _passageToThePhantomVillage.NpcId, 0);
                 }
 
-                if (!await LlamaLibrary.Helpers.Navigation.GetToInteractNpcSelectString(_jeffroy))
+                LlamaLibrary.Helpers.NPC.Npc jeffroy = new(1053611, 1269, new Vector3(-77.958374f, 5f, -15.396423f)); // Jeffroy
+                if (!await LlamaLibrary.Helpers.Navigation.GetToInteractNpcSelectString(jeffroy))
                 {
-                    Log.Error($"Failed to get to {DataManager.GetLocalizedNPCName((int)_jeffroy.NpcId)}");
+                    Log.Error($"Failed to get to {DataManager.GetLocalizedNPCName(1053611)}");
                     return;
                 }
 
                 if (ff14bot.RemoteWindows.SelectString.IsOpen)
                 {
-                    Log.Information($"Selecting {OccultCrescent}");
-                    ff14bot.RemoteWindows.SelectString.ClickLineContains(OccultCrescent);
+                    Log.Information($"Clicking {LlamaLibrary.Helpers.Translator.JourneyToSouthHorn}");
+                    ff14bot.RemoteWindows.SelectString.ClickLineContains(LlamaLibrary.Helpers.Translator.JourneyToSouthHorn);
                     await Coroutine.Wait(5000, () => !SelectString.IsOpen);
                     await Coroutine.Wait(5000, () => SelectString.IsOpen);
                 }
 
                 if (ff14bot.RemoteWindows.SelectString.IsOpen)
                 {
-                    Log.Information($"Clicking {Yes}");
-                    ff14bot.RemoteWindows.SelectString.ClickLineContains(Yes);
+                    Log.Information("Clicking Yes");
+                    ff14bot.RemoteWindows.SelectString.ClickLineContains("Yes");
                     await Coroutine.Wait(5000, () => ContentsFinderConfirm.IsOpen);
                 }
 
@@ -125,9 +126,9 @@ namespace LlamaUtilities.OrderbotTags
                     if (CommonBehaviors.IsLoading)
                     {
                         await Coroutine.Wait(-1, () => !CommonBehaviors.IsLoading);
-                        await Coroutine.Wait(-1, () => WorldManager.ZoneId == 1252);
                     }
                 }
+
 
                 if (WorldManager.ZoneId == SouthHornZoneId)
                 {
