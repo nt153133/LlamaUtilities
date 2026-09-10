@@ -51,6 +51,11 @@ namespace LlamaUtilities.OrderbotTags
         [XmlAttribute("SpellId")]
         public uint SpellId { get; set; }
 
+        /// <summary>Gets or sets whether to cast on the player instead of an NPC; default false.</summary>
+        /// <remarks>Self-targeted actions ignore NPC IDs and navigation. The condition or quest completion determines when to stop.</remarks>
+        [XmlAttribute("TargetSelf")]
+        [DefaultValue(false)]
+        public bool TargetSelf { get; set; }
         [XmlAttribute("NpcIds")]
         [XmlAttribute("NpcId")]
         public int[] NpcIds { get; set; }
@@ -105,6 +110,10 @@ namespace LlamaUtilities.OrderbotTags
 
         protected override Composite CreateBehavior()
         {
+            // Self orders must not fall through to hotspot movement after a rejected or instant cast.
+            if (TargetSelf)
+                return new PrioritySelector(ctx => Core.Me, CreateUseSpell());
+
             return
                 new PrioritySelector(
                     ctx => Target,
@@ -221,6 +230,10 @@ namespace LlamaUtilities.OrderbotTags
         protected override void OnStart()
         {
             SetupConditional();
+
+            // Self-targeted actions need no location configuration.
+            if (TargetSelf)
+                return;
 
             if (Hotspots != null)
             {
