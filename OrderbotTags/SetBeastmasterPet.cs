@@ -7,7 +7,7 @@ using Clio.XmlEngine;
 using ff14bot;
 using ff14bot.Enums;
 using ff14bot.Managers;
-using ff14bot.Navigation;
+using ff14bot.Behavior;
 using TreeSharp;
 
 namespace LlamaUtilities.OrderbotTags
@@ -24,7 +24,7 @@ namespace LlamaUtilities.OrderbotTags
         // Global 7.56 player actions: First, Second, Third Battlehorn. Cast on self, not the pet.
         // Each horn action targets the player.
         private static readonly uint[] HornActions = { 44881, 44892, 44894 };
-        // Allow mount and familiar arrival animations to settle before another request.
+        // Allow familiar arrival animations to settle before changing assignments.
         private const int TransitionDelayMilliseconds = 1000;
         // Tolerate recast rounding and server latency without waiting indefinitely.
         private const int CooldownGraceMilliseconds = 5000;
@@ -186,22 +186,8 @@ namespace LlamaUtilities.OrderbotTags
             if (IsSummoned(pet))
                 return true;
 
-            // Horns have a cast time; movement cancels them. Do not leave duties or change targets.
-            Navigator.PlayerMover.MoveStop();
-            if (Core.Me.IsMounted)
-            {
-                ActionManager.Dismount();
-                // Arrival from GetTo may still be completing the mount transition. Give
-                // dismount its own timeout, then a short animation/server settling interval;
-                // neither consumes the subsequent horn cooldown/readiness wait.
-                if (!await Coroutine.Wait(Timeout, () => !Core.Me.IsMounted))
-                {
-                    Fail("Could not dismount before summoning the Battlehorn.");
-                    return false;
-                }
-                await Coroutine.Sleep(TransitionDelayMilliseconds);
-                Navigator.PlayerMover.MoveStop();
-            }
+            // The host helper owns stopping, dismounting and the transition delay.
+            await CommonTasks.StopAndDismount();
 
             // RB 1.0.913 CanCast rejects usable horn actions. Check state and cooldown here;
             // the familiar readback below remains the success criterion.
@@ -253,13 +239,8 @@ namespace LlamaUtilities.OrderbotTags
             return true;
         }
 
-        // Re-read recast memory on every coroutine poll; do not retain a cooldown snapshot.
-        private static TimeSpan ReadCooldown(uint action)
-        {
-            using (Core.Memory.AcquireFrame())
-            using (Core.Memory.TemporaryCacheState(false))
-                return DataManager.GetSpellData(action).Cooldown;
-        }
+        // OrderBot refreshes memory each tick; keep reads inside its normal cache/frame scope.
+        private static TimeSpan ReadCooldown(uint action) => DataManager.GetSpellData(action).Cooldown;
 
         // Clamp the millisecond conversion to the coroutine API's integer range. The five-second
         // buffer absorbs recast rounding and server/tick latency without extending waits forever.
@@ -268,25 +249,17 @@ namespace LlamaUtilities.OrderbotTags
 
         private bool IsAssigned(BeastmasterPet pet)
         {
-            using (Core.Memory.AcquireFrame())
-            using (Core.Memory.TemporaryCacheState(false))
-            {
-                var slots = PetManager.BeastmasterPetSlots;
-                return slots.Length == PetManager.BeastmasterPetSlotCount && slots[Battlehorn - 1] == pet;
-            }
+            var slots = PetManager.BeastmasterPetSlots;
+            return slots.Length == PetManager.BeastmasterPetSlotCount && slots[Battlehorn - 1] == pet;
         }
 
         private bool IsSummoned(BeastmasterPet pet)
         {
-            using (Core.Memory.AcquireFrame())
-            using (Core.Memory.TemporaryCacheState(false))
-            {
-                // As in Magitek, the gauge uses horns 1-3. Require a valid pet as well so a
-                // stale gauge/assignment alone cannot count as a successful summon.
-                var familiar = Core.Me.Pet;
-                return IsAssigned(pet) && ActionResourceManager.BeastMaster.ActiveBattlehorn == Battlehorn &&
-                    familiar != null && familiar.IsValid;
-            }
+            // As in Magitek, the gauge uses horns 1-3. Require a valid pet as well so a
+            // stale gauge/assignment alone cannot count as a successful summon.
+            var familiar = Core.Me.Pet;
+            return IsAssigned(pet) && ActionResourceManager.BeastMaster.ActiveBattlehorn == Battlehorn &&
+                familiar != null && familiar.IsValid;
         }
 
         private void Fail(string message)
