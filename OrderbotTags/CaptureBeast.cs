@@ -1,4 +1,4 @@
-﻿#if !RB_TC
+#if !RB_TC
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -23,7 +23,7 @@ namespace LlamaUtilities.OrderbotTags
 {
     /// <summary>Patrols for specified beasts and fights until RB confirms the requested bestiary pet is captured.</summary>
     /// <remarks>
-    /// Requires RB 1.0.913+. Ticks the selected combat routine above the capture threshold and
+    /// Requires RB 1.0.916+. Ticks the selected combat routine above the capture threshold and
     /// pauses it while applying Capture. No Magitek assembly or catalogue
     /// is required. Optional Magitek auto-capture suppression is restored when the tag exits.
     /// Ground navigation stays in the starting zone. Death and bounded failures stop the bot.
@@ -210,24 +210,14 @@ namespace LlamaUtilities.OrderbotTags
 
             if (!_initialized)
             {
-                // The unlock mask is loaded on opening the bestiary after login. An empty list
-                // alone cannot distinguish missing data from no captures; request it once here.
-                if (PetManager.UnlockedBeastmasterPets.Count == 0)
-                {
-                    var opened = RaptureAtkUnitManager.GetWindowByName("XBMMonsterNotebook") == null;
-                    if (opened)
-                        ChatManager.SendChat("/bestiary");
-                    if (!await Coroutine.Wait(10000, () => RaptureAtkUnitManager.GetWindowByName("XBMMonsterNotebook") != null))
-                        return Fail("Could not open the bestiary to request unlock data.");
-                    await Coroutine.Sleep(500);
-                    if (opened)
-                        RaptureAtkUnitManager.GetWindowByName("XBMMonsterNotebook")?.SendAction(1, 3, 0xFFFFFFFF);
-                }
+                // Load the login mask before selecting targets so missing data cannot look like a locked pet.
+                if (!await PetManager.EnsureBeastmasterPetUnlockStateAsync(10000))
+                    return Fail("Could not load Beastmaster capture data from the server.");
                 _initialized = true;
                 return true;
             }
 
-            var unlocked = PetManager.IsBeastmasterPetUnlocked((BeastmasterPet)PetId);
+            var unlocked = await PetManager.IsBeastmasterPetUnlockedAsync((BeastmasterPet)PetId);
             if (unlocked && !Core.Me.InCombat)
             {
                 _done = true;

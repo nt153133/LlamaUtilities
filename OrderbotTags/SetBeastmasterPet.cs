@@ -1,4 +1,4 @@
-﻿#if !RB_TC
+#if !RB_TC
 using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
@@ -14,7 +14,7 @@ namespace LlamaUtilities.OrderbotTags
 {
     /// <summary>Assigns a captured Beastmaster pet by bestiary ID and optionally summons its Battlehorn.</summary>
     /// <remarks>
-    /// Requires RB 1.0.913 or later. Uses the native slot API instead of localized bestiary callbacks.
+    /// Requires RB 1.0.916 or later. Uses the native slot API instead of localized bestiary callbacks.
     /// Assignment can dismiss the current familiar and moves a pet out of any previous slot.
     /// Runs exclusively on the OrderBot coroutine; failure stops the profile without marking success.
     /// </remarks>
@@ -110,26 +110,15 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task<bool> EnsurePetUnlocked(BeastmasterPet pet)
         {
-            // RB's unlock list stays empty until the bestiary requests the login mask. Open it
-            // only when needed, and close only the window this tag opened; never toggle an open book.
-            var openedBook = false;
-            if (PetManager.UnlockedBeastmasterPets.Count == 0 &&
-                RaptureAtkUnitManager.GetWindowByName("XBMMonsterNotebook") == null)
+            // Request the login unlock mask directly; a load failure is not an uncaptured pet.
+            if (!await PetManager.EnsureBeastmasterPetUnlockStateAsync(Timeout))
             {
-                ChatManager.SendChat("/bestiary");
-                openedBook = true;
+                Fail("Could not load Beastmaster capture data from the server.");
+                return false;
             }
-            var unlocked = await Coroutine.Wait(Timeout, () => PetManager.IsBeastmasterPetUnlocked(pet));
-            if (openedBook)
+            if (!await PetManager.IsBeastmasterPetUnlockedAsync(pet, Timeout))
             {
-                var book = RaptureAtkUnitManager.GetWindowByName("XBMMonsterNotebook");
-                // Standard addon close callback; all assignment/readback still uses PetManager.
-                book?.SendAction(1, 3, 0xFFFFFFFF);
-                await Coroutine.Wait(Timeout, () => RaptureAtkUnitManager.GetWindowByName("XBMMonsterNotebook") == null);
-            }
-            if (!unlocked)
-            {
-                Fail($"Pet {PetId} ({pet}) is not reported unlocked. Capture it or open the bestiary to load its unlock data.");
+                Fail($"Pet {PetId} ({pet}) has not been captured.");
                 return false;
             }
 
