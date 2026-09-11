@@ -195,7 +195,12 @@ namespace LlamaUtilities.OrderbotTags
         internal const uint ForlornNpcId = 6738;
 
 
-        private static readonly Stopwatch ClusterTimer = Stopwatch.StartNew();
+        // Recalculate the crowd position slowly, but service Navigator every tick. Throttling
+        // MoveTo itself leaves the previous movement direction held while a path is pending.
+        private readonly Stopwatch clusterTimer = Stopwatch.StartNew();
+        private Vector3? clusterDestination;
+        private const float ClusterArrivalDistance = 5f;
+        private const float ClusterBoundaryInset = 10f;
 
 
         // After a FATE retires, combat can linger briefly even though its enemies are already
@@ -404,6 +409,7 @@ namespace LlamaUtilities.OrderbotTags
             maximumLevel = hasExplicitMaxLevel ? Convert.ToInt32(MaxLevel) : 0;
             idleTimeoutSeconds = Convert.ToInt32(Timeout);
             currentstep = 0;
+            clusterDestination = null;
             canHoverWhileIdle = false;
             ownsIdleFlight = false;
             nextIdleFlightAttemptUtc = default(DateTime);
@@ -467,7 +473,8 @@ namespace LlamaUtilities.OrderbotTags
                     CountDeath();
                 }
                 return RunStatus.Failure;
-            }), new ActionRunCoroutine(_ => HandleIdleFlightCombat()));
+            }), new ActionRunCoroutine(_ => HandleLevelSync()),
+                new ActionRunCoroutine(_ => HandleIdleFlightCombat()));
             TreeHooks.Instance.InsertHook("TreeStart", 0, deathObservationHook);
 
             // MaxLevel = "34";
@@ -575,10 +582,6 @@ namespace LlamaUtilities.OrderbotTags
                 new Decorator(_ => currentstep == 0 && DateTime.Now > idleStartedAt.AddSeconds(idleTimeoutSeconds),
                     new Action(_ => OnTimeout())),
                 new Decorator(_ => IsTrackedFateTransitionPending(), new Action(_ => RunStatus.Success)),
-                new Decorator(_ => NeedsLevelSync(Core.Me.ElementalLevel) && Core.Me.ElementalLevel > 0,
-                    new ActionRunCoroutine(_ => ApplyLevelSync("Applying Eureka Level Sync."))),
-                new Decorator(_ => NeedsLevelSync(Core.Player.ClassLevel),
-                    new ActionRunCoroutine(_ => ApplyLevelSync("Applying Level Sync."))),
                 new Decorator(_ => NeedsFateTravel(), CreateFateTravelBehavior()),
                 new Decorator(_ => currentstep == 1 && trackedFateId != 0 && Poi.Current.Type != PoiType.Kill,
                     new ActionRunCoroutine(_ => MoveToFocusedFate())),
@@ -588,19 +591,42 @@ namespace LlamaUtilities.OrderbotTags
         }
 
 
-        private bool NeedsLevelSync(int playerLevel)
+        /// <summary>
+        /// Syncs before combat can claim the tick. Use live containing events rather than the
+        /// selected event's cached level: aggro and overlapping FATEs can precede selection.
+        /// RB exposes the sync action but no availability predicate, so the containing event's
+        /// level cap determines whether an unsynced player needs it.
+        /// </summary>
+        private async Task<bool> HandleLevelSync()
         {
-            return currentstep == 1 && FateManager.WithinFate &&
-                   fateMaxLevel < playerLevel && !Core.Me.IsLevelSynced;
-        }
+            if (isDone || CommonBehaviors.IsLoading || Core.Player == null || !Core.Player.IsValid ||
+                Core.Me.IsDead || recoveringFromDeath || Core.Me.IsLevelSynced || !FateManager.WithinFate)
+            {
+                return false;
+            }
 
+            // Eureka's cap uses elemental level. Falling through to class level there would
+            // request sync forever for players whose elemental level is already below the cap.
+            var playerLevel = Core.Me.ElementalLevel > 0 ? Core.Me.ElementalLevel : Core.Player.ClassLevel;
+            var needsSync = FateManager.ActiveFates.Any(eventData =>
+                TryReadFateSnapshot(eventData, out var fate) && fate.IsValid &&
+                fate.Status == FateStatus.ACTIVE && fate.MaxLevel > 0 && playerLevel > fate.MaxLevel &&
+                Core.Player.Location.Distance(fate.Location) <= fate.Radius);
+            if (!needsSync)
+            {
+                return false;
+            }
 
-        private async Task<bool> ApplyLevelSync(string message)
-        {
-            Log.Information(message);
+            // Claim this tick while the client processes sync, preventing a Kill POI from
+            // starting attacks first. Recheck on the next tick if the UI wasn't ready yet.
             ToDoList.LevelSync();
-            await Coroutine.Sleep(500);
-            return false;
+            await Coroutine.Wait(1000, () => CommonBehaviors.IsLoading || Core.Me.IsDead ||
+                                           Core.Me.IsLevelSynced || !FateManager.WithinFate);
+            if (!CommonBehaviors.IsLoading && Core.Me.IsLevelSynced)
+            {
+                Log.Information("Level sync confirmed before combat.");
+            }
+            return true;
         }
 
 
@@ -855,6 +881,7 @@ namespace LlamaUtilities.OrderbotTags
                 participatedInTrackedFate = false;
                 canHoverWhileIdle = false;
                 ownsIdleFlight = false;
+                clusterDestination = null;
                 var idleHuntTarget = Poi.Current?.BattleCharacter;
                 if (huntedTargetObjectId != 0 && idleHuntTarget?.ObjectId == huntedTargetObjectId)
                 {
@@ -1064,6 +1091,7 @@ namespace LlamaUtilities.OrderbotTags
             // discard its terrain verdicts so a later recurrence cannot inherit exhausted retries.
             ClearLandingRecoveryState();
             Position = Vector3.Zero;
+            clusterDestination = null;
             currentstep = 0;
             trackedFateId = 0;
             hasArrivedAtFate = false;
@@ -2169,43 +2197,96 @@ namespace LlamaUtilities.OrderbotTags
 
         private async Task MoveToFocusedFate()
         {
-            Vector3 currentMove;
+            // Protection events still have combat waves. Select their enemies before issuing
+            // downtime movement so the crowd destination cannot compete with a fresh Kill POI.
+            if (TrySetFateCombatPoi())
+            {
+                if (clusterDestination.HasValue)
+                {
+                    Navigator.Stop();
+                    MovementManager.MoveStop();
+                }
+                clusterDestination = null;
+                return;
+            }
+
             if (fateIcon == FateIconType.ProtectNPC || fateIcon == FateIconType.ProtectNPC2)
             {
-                if (ClusterTimer.ElapsedMilliseconds > 5000)
-                {
-                    Log.Information("Moving using cluster logic.");
-
-                    var x = 0.0f;
-                    var y = 0.0f;
-                    var z = 0.0f;
-                    var total = 0.0f;
-                    GameObjectManager.GetObjectsOfType<BattleCharacter>()
-                        .Where(bc =>
-                                   ((bc.IsFate && bc.FateId == trackedFateId && !bc.CanAttack) || bc.Type == GameObjectType.Pc) &&
-                                   bc.Location.Distance(Position) < fateRadius)
-                        .ForEach(bc =>
-                        {
-                            total++;
-                            x += bc.Location.X;
-                            y += bc.Location.Y;
-                            z += bc.Location.Z;
-                        });
-                    if (total > 0)
-                    {
-                        currentMove = new Vector3(x / total, y / total, z / total);
-                        Navigator.MoveTo(currentMove);
-                    }
-
-                    ClusterTimer.Restart();
-                }
+                MoveWithinProtectionFate();
             }
             else
             {
-                if (!TrySetFateCombatPoi())
-                {
-                    await ApproachFateTargetForLineOfSight();
-                }
+                await ApproachFateTargetForLineOfSight();
+            }
+        }
+
+        /// <summary>
+        /// Follows the protection event's crowd without letting an old heading or an escort's
+        /// moving boundary carry the player away. Only destination sampling is throttled.
+        /// </summary>
+        private void MoveWithinProtectionFate()
+        {
+            if (ShouldStop() || Core.Me.IsDead || MovementManager.IsFlying ||
+                !TryReadFateSnapshot(FateManager.GetFateById(trackedFateId), out var fate) ||
+                !IsUsableFateSnapshot(fate, trackedFateId, false))
+            {
+                clusterDestination = null;
+                Navigator.Stop();
+                MovementManager.MoveStop();
+                return;
+            }
+
+            var interiorRadius = Math.Max(1f, fate.Radius - ClusterBoundaryInset);
+            var outsideFate = Core.Player.Location.Distance(fate.Location) > fate.Radius;
+            if (outsideFate || (clusterDestination.HasValue &&
+                                clusterDestination.Value.Distance(fate.Location) > interiorRadius))
+            {
+                // An escort can move while we fight or await a route. Recover on the ground
+                // toward its current center rather than rearming the initial flight approach.
+                clusterDestination = fate.Location;
+                clusterTimer.Restart();
+            }
+            else if (!clusterDestination.HasValue || clusterTimer.ElapsedMilliseconds >= 5000)
+            {
+                var positions = GameObjectManager.GetObjectsOfType<BattleCharacter>()
+                    .Where(actor => actor.IsValid && !actor.IsDead && actor.IsVisible &&
+                                    actor.ObjectId != Core.Player.ObjectId &&
+                                    ((actor.IsFate && actor.FateId == trackedFateId && !actor.CanAttack) ||
+                                     actor.Type == GameObjectType.Pc))
+                    .Select(actor => actor.Location)
+                    .Where(location => location.Distance(fate.Location) <= interiorRadius)
+                    .ToArray();
+
+                // Keep the average inside an inset of the live event. Exclude ourselves so an
+                // empty wave cannot gradually pull its own destination toward a drifting player.
+                clusterDestination = positions.Length == 0 ? fate.Location :
+                    new Vector3(positions.Average(location => location.X),
+                                positions.Average(location => location.Y),
+                                positions.Average(location => location.Z));
+                clusterTimer.Restart();
+            }
+
+            var destination = clusterDestination.Value;
+            if (Core.Player.Location.Distance(destination) <= ClusterArrivalDistance)
+            {
+                Navigator.Stop();
+                MovementManager.MoveStop();
+                return;
+            }
+
+            // MoveTo is a per-tick navigation operation, not a fire-and-forget route request.
+            // Continuing to pulse it also lets the navigator turn and stop at intermediate nodes.
+            var result = Navigator.MoveTo(new MoveToParameters(destination, $"Following protection FATE {trackedFateId}")
+            {
+                DistanceTolerance = ClusterArrivalDistance,
+                // These are short adjustments among event actors, not a new travel leg.
+                UseMount = false
+            });
+            if (result == MoveResult.Failed || result == MoveResult.PathGenerationFailed)
+            {
+                Navigator.Stop();
+                MovementManager.MoveStop();
+                clusterDestination = fate.Location;
             }
         }
 

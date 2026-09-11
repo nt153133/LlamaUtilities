@@ -235,13 +235,6 @@ namespace LlamaUtilities.OrderbotTags
                 return true;
             }
 
-            if (Core.Me.IsMounted)
-            {
-                Navigator.PlayerMover.MoveStop();
-                ActionManager.Dismount();
-                return true;
-            }
-
             // Resolve the entity again each pulse; an old native wrapper may be invalid after a kill.
             var target = FindTarget();
             if (_targetId != GameObjectManager.EmptyGameObject && (target == null || !target.IsAlive))
@@ -260,7 +253,8 @@ namespace LlamaUtilities.OrderbotTags
                 // Handle actual attackers even during the server-result grace period. This is a
                 // selected-routine fight, with Capture reserved for the requested NPCs.
                 target = GameObjectManager.Attackers.OfType<BattleCharacter>()
-                    .Where(t => t.IsValid && t.IsAlive && t.CanAttack && t.IsTargetable)
+                    .Where(t => t.IsValid && t.IsAlive && t.CanAttack && t.IsTargetable &&
+                        (!_unreachableUntil.TryGetValue(t.ObjectId, out var until) || _clock.ElapsedMilliseconds >= until))
                     .OrderBy(t => t.Distance2D()).FirstOrDefault();
                 if (target == null && Core.Me.InCombat)
                 {
@@ -304,10 +298,32 @@ namespace LlamaUtilities.OrderbotTags
 
         private bool HandleTarget(BattleCharacter target)
         {
+            if (!target.IsTargetable || !target.CanAttack)
+            {
+                // Live Goobbue patrols can lose attackability between selection and approach.
+                // This is a lost candidate, not a failed profile. Reuse the path-failure cooldown
+                // per entity so a flickering target cannot be selected again on the next pulse.
+                Log.Information($"Skipping unavailable target {target.Name}; selecting another beast.");
+                _unreachableUntil[target.ObjectId] = _clock.ElapsedMilliseconds + UnreachableRetryMilliseconds;
+                if (_isCaptureTarget)
+                    _attempts--; // An invalidated candidate must not exhaust the capture-attempt budget.
+                ResetTarget();
+                Navigator.PlayerMover.MoveStop();
+                if (_ownsTarget)
+                    Core.Me.ClearTarget();
+                _ownsTarget = false;
+                return true;
+            }
             if (_clock.ElapsedMilliseconds - _targetStartedAt > TargetTimeout * 1000L)
                 return Fail($"Target {target.Name} did not finish within {TargetTimeout} seconds.");
-            if (!target.IsTargetable || !target.CanAttack)
-                return Fail("The selected target became untargetable or unattackable.");
+            // Patrol movement may mount through RB's normal distance/settings policy. Dismount
+            // only after selecting a fight, otherwise every patrol pulse cancels mounted travel.
+            if (Core.Me.IsMounted)
+            {
+                Navigator.PlayerMover.MoveStop();
+                ActionManager.Dismount();
+                return true;
+            }
 
             if (!_capturePaused)
                 target.Target();
@@ -446,7 +462,9 @@ namespace LlamaUtilities.OrderbotTags
                     _hotspotIndex = (_hotspotIndex + 1) % HotSpots.Count;
                 return;
             }
-            if (Navigator.MoveTo(new MoveToParameters(destination, "CaptureBeast patrol") { DistanceTolerance = 3f, UseMount = false }) == MoveResult.Failed)
+            // Preserve MoveToParameters' default UseMount: RB owns the configured mount,
+            // distance threshold and mount availability. Short legs still walk; no second travel loop.
+            if (Navigator.MoveTo(new MoveToParameters(destination, "CaptureBeast patrol") { DistanceTolerance = 3f }) == MoveResult.Failed)
                 Fail("Ground navigation could not reach a capture patrol point.");
         }
 
