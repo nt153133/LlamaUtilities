@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if !RB_TC
+using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Buddy.Coroutines;
@@ -296,3 +297,4 @@ namespace LlamaUtilities.OrderbotTags
         }
     }
 }
+#endif

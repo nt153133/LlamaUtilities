@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if !RB_TC
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -524,3 +525,4 @@ namespace LlamaUtilities.OrderbotTags
         }
     }
 }
+#endif
