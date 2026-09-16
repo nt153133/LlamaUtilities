@@ -1,6 +1,7 @@
 #if !RB_TC
 using System;
 using System.ComponentModel;
+using System.Reflection;
 using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.XmlEngine;
@@ -98,6 +99,9 @@ namespace LlamaUtilities.OrderbotTags
                 return;
             }
 
+            if (!DisableMagitekAutoSummon())
+                return;
+
             if (!await EnsurePetUnlocked(pet) || !await WaitForCurrentCast() || !await AssignPet(pet))
                 return;
 
@@ -108,6 +112,43 @@ namespace LlamaUtilities.OrderbotTags
             _isDone = true;
         }
 
+        // A profile-selected familiar must remain under profile control after this tag ends.
+        // Reflect against the active routine to avoid a hard Magitek dependency; old routines
+        // without this option retain their existing behavior. Persist false rather than restoring
+        // it on completion, which would let the next routine pulse undo the requested setup.
+        private bool DisableMagitekAutoSummon()
+        {
+            var settingsType = RoutineManager.Current?.GetType().Assembly.GetType("Magitek.Models.BeastMaster.BeastMasterSettings");
+            if (settingsType == null)
+                return true;
+
+            var property = settingsType.GetProperty("SummonFamiliar", BindingFlags.Public | BindingFlags.Instance);
+            if (property == null)
+                return true;
+
+            try
+            {
+                var settings = settingsType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
+                if (settings == null || property.PropertyType != typeof(bool) || !property.CanRead || !property.CanWrite)
+                {
+                    Fail("Magitek's SummonFamiliar setting could not be updated; its settings API may have changed.");
+                    return false;
+                }
+                if (!(bool)property.GetValue(settings))
+                    return true;
+
+                property.SetValue(settings, false);
+                settingsType.GetMethod("Save", BindingFlags.Public | BindingFlags.Instance, null, Type.EmptyTypes, null)?.Invoke(settings, null);
+                Log.Information("Disabled Magitek's Summon Familiar setting so the profile controls Battlehorn assignment and summoning.");
+                return true;
+            }
+            catch (Exception exception)
+            {
+                var cause = exception is TargetInvocationException invocation && invocation.InnerException != null ? invocation.InnerException : exception;
+                Fail("Could not disable Magitek's Summon Familiar setting: " + cause.Message);
+                return false;
+            }
+        }
         private async Task<bool> EnsurePetUnlocked(BeastmasterPet pet)
         {
             // Request the login unlock mask directly; a load failure is not an uncaptured pet.
