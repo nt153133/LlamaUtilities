@@ -92,6 +92,15 @@ namespace LlamaUtilities.OrderbotTags
         [DefaultValue(0)]
         public int MinProgress { get; set; }
 
+        /// <summary>
+        /// Gets or sets the minimum completion percentage for selecting boss FATEs (0–100).
+        /// Defaults to zero to preserve existing profiles; bosses must also meet MinProgress.
+        /// This delays selection without preventing self-defense against an attacker.
+        /// </summary>
+        [XmlAttribute("BossMinProgress")]
+        [DefaultValue(0)]
+        public int BossMinProgress { get; set; }
+
 
         /// <summary>Gets or sets whether to refresh shared-FATE progress before selection for profile conditions.</summary>
         [XmlAttribute("CheckShareFate")]
@@ -1327,11 +1336,11 @@ namespace LlamaUtilities.OrderbotTags
                     }
                     continue;
                 }
-                if (snapshot.Progress < MinProgress)
+                if (snapshot.Progress < GetMinimumProgress(snapshot))
                 {
                     if (logCandidates && reportedPolicySkipFateIds.Add(snapshot.Id))
                     {
-                        Log.Information($"Skipping FATE \"{snapshot.Name}\". Progress {snapshot.Progress}% is below the configured {MinProgress}% minimum.");
+                        Log.Information($"Skipping FATE \"{snapshot.Name}\". Progress {snapshot.Progress}% is below the configured {GetMinimumProgress(snapshot)}% minimum.");
                     }
                 }
                 else if (snapshot.Icon.ToString() == "Boss" && snapshot.Progress > 85)
@@ -1427,7 +1436,7 @@ namespace LlamaUtilities.OrderbotTags
                     !IsLandingFailureCoolingDown(snapshot.Id) &&
                     (!hasExplicitMinLevel || snapshot.Level >= minimumLevel) &&
                     (!hasExplicitMaxLevel || snapshot.Level <= maximumLevel) &&
-                    snapshot.Progress >= MinProgress &&
+                    snapshot.Progress >= GetMinimumProgress(snapshot) &&
                     !(snapshot.Icon.ToString() == "Boss" && snapshot.Progress > 85) &&
                     !IsBlacklistedFate(snapshot.Name, snapshot.Id))
                 {
@@ -1469,6 +1478,16 @@ namespace LlamaUtilities.OrderbotTags
 
 
         /// <summary>
+        /// Shares the progress threshold across open selection, focused IDs, and travel reselection.
+        /// The boss setting may raise the general minimum but cannot weaken it.
+        /// </summary>
+        private int GetMinimumProgress(FateSnapshot fate)
+        {
+            return fate.Icon.ToString() == "Boss" ? Math.Max(MinProgress, BossMinProgress) : MinProgress;
+        }
+
+
+        /// <summary>
         /// Selects from focused IDs using containment, then distance. Level bounds apply only when
         /// explicitly supplied by the profile.
         /// </summary>
@@ -1482,7 +1501,7 @@ namespace LlamaUtilities.OrderbotTags
                 FateSnapshot snapshot;
                 if (!TryReadFateSnapshot(fate, out snapshot) ||
                     !ids.Contains((int)snapshot.Id) ||
-                    snapshot.Progress < MinProgress ||
+                    snapshot.Progress < GetMinimumProgress(snapshot) ||
                     // Focused FateId profiles historically did not require level attributes. Apply
                     // each bound only when its XML attribute was supplied, preserving those profiles
                     // while still honoring intentional one-sided or two-sided constraints.
